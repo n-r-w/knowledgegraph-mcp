@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps you resolve common issues with the Knowledge Graph MCP Service, especially related to multi-backend testing and database connectivity.
+This guide helps you resolve common issues with the Knowledge Graph MCP Service, including input validation errors, database connectivity, and multi-backend testing issues.
 
 ## Quick Diagnostics
 
@@ -30,6 +30,152 @@ npm run test:multi-backend -- --testNamePattern="Backend Availability"
 PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT version();"
 ```
 
+## Input Validation Errors
+
+The service includes comprehensive input validation to prevent database constraint violations and ensure data integrity. Here are common validation errors and their solutions:
+
+### Entity Creation Errors
+
+#### Error: `Entity at index X must have a non-empty name`
+
+**Cause**: Entity name is missing, empty, or contains only whitespace.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "", entityType: "person", observations: ["works at company"] }
+{ name: "   ", entityType: "person", observations: ["works at company"] }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works at company"] }
+```
+
+#### Error: `Entity at index X must have a non-empty entityType`
+
+**Cause**: Entity type is missing, empty, or contains only whitespace.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "John Smith", entityType: "", observations: ["works at company"] }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works at company"] }
+```
+
+#### Error: `Entity "EntityName" observations must be an array`
+
+**Cause**: Observations field is not an array (e.g., string, object, null).
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "John Smith", entityType: "person", observations: "works at company" }
+{ name: "John Smith", entityType: "person", observations: null }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works at company"] }
+```
+
+#### Error: `Entity "EntityName" observation at index X must be a string`
+
+**Cause**: Individual observation is not a string (e.g., number, object, null).
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "John Smith", entityType: "person", observations: ["works at company", 123, null] }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works at company", "age 30", "lives in NYC"] }
+```
+
+### Observation Update Errors
+
+#### Error: `At least one observation update must be provided`
+
+**Cause**: Empty observations array passed to add_observations.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+manager.addObservations([], project);
+
+// ✅ Correct
+manager.addObservations([{
+  entityName: "John Smith",
+  observations: ["new observation"]
+}], project);
+```
+
+#### Error: `Observation update for entity "EntityName" must contain at least one observation`
+
+**Cause**: Empty observations array in update object.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{
+  entityName: "John Smith",
+  observations: []
+}
+
+// ✅ Correct
+{
+  entityName: "John Smith",
+  observations: ["new observation"]
+}
+```
+
+#### Error: `Observation at index X for entity "EntityName" must be a non-empty string`
+
+**Cause**: Observation is empty string, whitespace only, or not a string.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{
+  entityName: "John Smith",
+  observations: ["valid observation", "", "   ", 123]
+}
+
+// ✅ Correct
+{
+  entityName: "John Smith",
+  observations: ["valid observation", "another valid observation"]
+}
+```
+
+### Tag Validation Errors
+
+#### Error: `Entity "EntityName" tags must be an array`
+
+**Cause**: Tags field is not an array when provided.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "John Smith", entityType: "person", observations: ["works"], tags: "important" }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works"], tags: ["important"] }
+// Or omit tags entirely (they're optional)
+{ name: "John Smith", entityType: "person", observations: ["works"] }
+```
+
+#### Error: `Entity "EntityName" tag at index X must be a string`
+
+**Cause**: Individual tag is not a string.
+
+**Solution**:
+```javascript
+// ❌ Incorrect
+{ name: "John Smith", entityType: "person", observations: ["works"], tags: ["important", 123] }
+
+// ✅ Correct
+{ name: "John Smith", entityType: "person", observations: ["works"], tags: ["important", "urgent"] }
+```
+
 ## Database Issues
 
 ### PostgreSQL Connection Problems
@@ -44,10 +190,10 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT versio
    ```bash
    # macOS (Homebrew)
    brew services start postgresql
-   
+
    # Ubuntu/Debian
    sudo systemctl start postgresql
-   
+
    # Windows
    # Use Services app or PostgreSQL Service Manager
    ```
@@ -56,7 +202,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT versio
    ```bash
    # Check if PostgreSQL is listening
    netstat -an | grep 5432
-   
+
    # Check PostgreSQL process
    ps aux | grep postgres
    ```
@@ -65,7 +211,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT versio
    ```bash
    # macOS
    brew list postgresql
-   
+
    # Ubuntu/Debian
    dpkg -l | grep postgresql
    ```
@@ -80,7 +226,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT versio
    ```bash
    # macOS/Linux
    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '1';"
-   
+
    # Or create new user
    sudo -u postgres createuser --superuser --pwprompt testuser
    ```
@@ -89,7 +235,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d postgres -c "SELECT versio
    ```bash
    # Find config file
    sudo -u postgres psql -c "SHOW hba_file;"
-   
+
    # Edit to allow local connections
    # Add line: local all postgres md5
    ```
@@ -137,7 +283,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # Check if better-sqlite3 is installed
    npm list better-sqlite3
-   
+
    # Reinstall if needed
    npm install better-sqlite3
    ```
@@ -162,9 +308,9 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # PostgreSQL: Check for slow queries
    PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d knowledgegraph_test -c "
-   SELECT query, mean_exec_time, calls 
-   FROM pg_stat_statements 
-   ORDER BY mean_exec_time DESC 
+   SELECT query, mean_exec_time, calls
+   FROM pg_stat_statements
+   ORDER BY mean_exec_time DESC
    LIMIT 10;"
    ```
 
@@ -172,8 +318,8 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # PostgreSQL: Kill hanging connections
    PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -c "
-   SELECT pg_terminate_backend(pid) 
-   FROM pg_stat_activity 
+   SELECT pg_terminate_backend(pid)
+   FROM pg_stat_activity
    WHERE datname = 'knowledgegraph_test' AND state = 'idle in transaction';"
    ```
 
@@ -195,7 +341,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # Run storage tests only
    npx jest tests/storage-providers-multi-backend.test.ts
-   
+
    # Run search tests only
    npx jest tests/search-multi-backend.test.ts
    ```
@@ -226,7 +372,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # Verify TypeScript compilation
    npx tsc --noEmit
-   
+
    # Check for specific errors
    npx tsc --listFiles | grep -E "(core|storage|search)"
    ```
@@ -250,7 +396,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # Check if compiled files exist
    ls -la dist/tests/utils/
-   
+
    # Rebuild if missing
    npm run build
    ```
@@ -284,8 +430,8 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # PostgreSQL: Check connection pool
    PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -c "
-   SELECT count(*) as active_connections 
-   FROM pg_stat_activity 
+   SELECT count(*) as active_connections
+   FROM pg_stat_activity
    WHERE datname = 'knowledgegraph_test';"
    ```
 
@@ -308,7 +454,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    afterEach(async () => {
      await cleanupTestManager(manager, backendName);
    });
-   
+
    afterAll(async () => {
      // Ensure all connections are closed
      await new Promise(resolve => setTimeout(resolve, 100));
@@ -319,7 +465,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    ```bash
    # Force exit after tests
    npm run test:multi-backend -- --forceExit
-   
+
    # Detect open handles
    npm run test:multi-backend -- --detectOpenHandles
    ```
@@ -354,7 +500,7 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -l | grep knowledgegraph_test
    # Using nvm
    nvm install 18
    nvm use 18
-   
+
    # Using Homebrew (macOS)
    brew install node@18
    ```

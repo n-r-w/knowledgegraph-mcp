@@ -193,7 +193,7 @@ describe('Fuzzy Search Integration Tests', () => {
 
         // Should find entities with "frontend" tag
         expect(results.entities.length).toBeGreaterThan(0);
-        expect(results.entities.every(e => e.tags.includes('frontend'))).toBe(true);
+        expect(results.entities.every(e => e.tags?.includes('frontend'))).toBe(true);
       } catch (error) {
         console.error('Tag search test failed:', error);
         throw error;

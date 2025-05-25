@@ -77,7 +77,7 @@ describe('Search Functionality - Multi-Backend Tests', () => {
         const results = await manager.searchNodes('web', testProject);
 
         expect(results.entities.length).toBeGreaterThan(0);
-        const webEntities = results.entities.filter((r: Entity) => r.tags.includes('web'));
+        const webEntities = results.entities.filter((r: Entity) => r.tags?.includes('web'));
         expect(webEntities.length).toBeGreaterThan(0);
       }, 10000);
 

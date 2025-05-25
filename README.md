@@ -141,6 +141,8 @@ Close and reopen Claude Desktop. You should now see "Knowledge Graph" in your av
 
 In Claude, try saying: "Remember that I prefer morning meetings" and Claude should save this to your knowledge graph.
 
+> **Note**: The service includes comprehensive input validation to prevent errors. If you encounter any issues, check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for common solutions.
+
 ## How It Works
 
 The knowledge graph stores information in four simple concepts:
@@ -195,11 +197,13 @@ Create new entities in the knowledge graph.
 
 **Input:**
 - `entities` (array of objects): Each object contains:
-  - `name` (string): Entity identifier
-  - `entityType` (string): Type classification
-  - `observations` (string[]): Associated observations
+  - `name` (string): Entity identifier (required, non-empty)
+  - `entityType` (string): Type classification (required, non-empty)
+  - `observations` (string[]): Associated observations (required, must contain at least one non-empty observation)
   - `tags` (string[], optional): Tags for exact-match searching
 - `project` (string, optional): Project name to isolate data
+
+> **Important**: All entities must have at least one observation. Empty observations arrays are not allowed and will result in validation errors.
 
 #### create_relations
 Connect entities with relationships.
@@ -216,9 +220,11 @@ Add facts to existing entities.
 
 **Input:**
 - `observations` (array of objects): Each object contains:
-  - `entityName` (string): Target entity
-  - `observations` (string[]): New observations to add
+  - `entityName` (string): Target entity (required, must exist)
+  - `observations` (string[]): New observations to add (required, must contain at least one non-empty observation)
 - `project` (string, optional): Project name to isolate data
+
+> **Important**: Each update must contain at least one non-empty observation. Empty observations arrays are not allowed.
 
 #### add_tags
 Add labels to entities for categorization.
@@ -361,9 +367,10 @@ task test:comprehensive
 ```
 
 **Test Coverage:**
-- ✅ **42 tests** across both backends
+- ✅ **198 tests** across both backends (including new validation tests)
 - ✅ **Storage Provider Tests**: CRUD operations, health checks, capabilities
 - ✅ **Search Functionality Tests**: Fuzzy search, exact search, performance
+- ✅ **Input Validation Tests**: Comprehensive validation for all MCP tools
 - ✅ **Automatic Backend Detection**: Graceful handling of unavailable databases
 - ✅ **Performance Comparison**: Backend-specific performance metrics
 
@@ -392,6 +399,11 @@ npm run test:performance   # Performance benchmarks
 
 ## Common Issues
 
+**Input validation errors:**
+- **"Entity must have at least one observation"**: Ensure all entities include non-empty observations arrays
+- **"Observation must be a non-empty string"**: Check that all observations contain actual text content
+- **"Entity name must be non-empty"**: Verify entity names are provided and not empty strings
+
 **Can't connect to database:**
 - For PostgreSQL: Make sure the database exists and you have the right connection string
 - For SQLite: No setup needed, the database file is created automatically
@@ -407,6 +419,8 @@ npm run test:performance   # Performance benchmarks
 **Tests failing:**
 - For PostgreSQL tests: Ensure PostgreSQL is running at localhost:5432
 - For multi-backend tests: Run `npm run test:multi-backend` to see detailed output
+
+For more detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ## Based on MCP Memory Server
 

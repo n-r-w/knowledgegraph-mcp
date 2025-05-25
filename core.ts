@@ -13,7 +13,7 @@ export interface Entity {
   name: string;
   entityType: string;
   observations: string[];
-  tags: string[];  // NEW: Array of exact-match tags
+  tags?: string[];  // NEW: Array of exact-match tags (optional for input, required internally)
 }
 
 export interface Relation {
@@ -112,15 +112,20 @@ export class KnowledgeGraphManager {
 
   async createEntities(entities: Entity[], project?: string): Promise<Entity[]> {
     const resolvedProject = resolveProject(project);
+
+    // Validate input entities
+    this.validateEntities(entities);
+
     const graph = await this.loadGraph(resolvedProject);
 
-    // Ensure backward compatibility by adding empty tags array if not provided
-    const entitiesWithTags = entities.map(entity => ({
+    // Ensure backward compatibility and proper defaults
+    const entitiesWithDefaults = entities.map(entity => ({
       ...entity,
+      observations: entity.observations || [],
       tags: entity.tags || []
     }));
 
-    const newEntities = entitiesWithTags.filter(e => !graph.entities.some(existingEntity => existingEntity.name === e.name));
+    const newEntities = entitiesWithDefaults.filter(e => !graph.entities.some(existingEntity => existingEntity.name === e.name));
     graph.entities.push(...newEntities);
     await this.saveGraph(graph, resolvedProject);
     return newEntities;
@@ -141,12 +146,22 @@ export class KnowledgeGraphManager {
 
   async addObservations(observations: { entityName: string; observations: string[] }[], project?: string): Promise<{ entityName: string; addedObservations: string[] }[]> {
     const resolvedProject = resolveProject(project);
+
+    // Validate input observations
+    this.validateObservationUpdates(observations);
+
     const graph = await this.loadGraph(resolvedProject);
     const results = observations.map(o => {
       const entity = graph.entities.find(e => e.name === o.entityName);
       if (!entity) {
         throw new Error(`Entity with name ${o.entityName} not found`);
       }
+
+      // Ensure entity has observations array (backward compatibility)
+      if (!entity.observations) {
+        entity.observations = [];
+      }
+
       const newObservations = o.observations.filter(content => !entity.observations.includes(content));
       entity.observations.push(...newObservations);
       return { entityName: o.entityName, addedObservations: newObservations };
@@ -221,9 +236,9 @@ export class KnowledgeGraphManager {
         if (!entity.tags || entity.tags.length === 0) return false;
 
         if (options.tagMatchMode === 'all') {
-          return options.exactTags!.every(tag => entity.tags.includes(tag));
+          return options.exactTags!.every(tag => entity.tags!.includes(tag));
         } else {
-          return options.exactTags!.some(tag => entity.tags.includes(tag));
+          return options.exactTags!.some(tag => entity.tags!.includes(tag));
         }
       });
 
@@ -301,8 +316,8 @@ export class KnowledgeGraphManager {
       }
 
       // Add only new tags (avoid duplicates)
-      const newTags = update.tags.filter(tag => !entity.tags.includes(tag));
-      entity.tags.push(...newTags);
+      const newTags = update.tags.filter(tag => !entity.tags!.includes(tag));
+      entity.tags!.push(...newTags);
 
       return { entityName: update.entityName, addedTags: newTags };
     });
@@ -331,8 +346,8 @@ export class KnowledgeGraphManager {
       }
 
       // Remove specified tags
-      const removedTags = update.tags.filter(tag => entity.tags.includes(tag));
-      entity.tags = entity.tags.filter(tag => !update.tags.includes(tag));
+      const removedTags = update.tags.filter(tag => entity.tags!.includes(tag));
+      entity.tags = entity.tags!.filter(tag => !update.tags.includes(tag));
 
       return { entityName: update.entityName, removedTags };
     });
@@ -342,6 +357,104 @@ export class KnowledgeGraphManager {
   }
 
 
+
+  /**
+   * Validate entities before creation to prevent database constraint violations
+   */
+  private validateEntities(entities: Entity[]): void {
+    if (!entities || !Array.isArray(entities)) {
+      throw new Error('Entities must be a non-empty array');
+    }
+
+    if (entities.length === 0) {
+      throw new Error('At least one entity must be provided');
+    }
+
+    entities.forEach((entity, index) => {
+      // Validate entity structure
+      if (!entity || typeof entity !== 'object') {
+        throw new Error(`Entity at index ${index} must be an object`);
+      }
+
+      // Validate required fields
+      if (!entity.name || typeof entity.name !== 'string' || entity.name.trim() === '') {
+        throw new Error(`Entity at index ${index} must have a non-empty name`);
+      }
+
+      if (!entity.entityType || typeof entity.entityType !== 'string' || entity.entityType.trim() === '') {
+        throw new Error(`Entity at index ${index} must have a non-empty entityType`);
+      }
+
+      // Validate observations - must be array and not null/undefined
+      if (entity.observations !== undefined && entity.observations !== null) {
+        if (!Array.isArray(entity.observations)) {
+          throw new Error(`Entity "${entity.name}" observations must be an array`);
+        }
+
+        // Check each observation is a string
+        entity.observations.forEach((obs, obsIndex) => {
+          if (typeof obs !== 'string') {
+            throw new Error(`Entity "${entity.name}" observation at index ${obsIndex} must be a string`);
+          }
+        });
+      }
+
+      // Validate tags if provided
+      if (entity.tags !== undefined && entity.tags !== null) {
+        if (!Array.isArray(entity.tags)) {
+          throw new Error(`Entity "${entity.name}" tags must be an array`);
+        }
+
+        // Check each tag is a string
+        entity.tags.forEach((tag, tagIndex) => {
+          if (typeof tag !== 'string') {
+            throw new Error(`Entity "${entity.name}" tag at index ${tagIndex} must be a string`);
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Validate observation updates to prevent database constraint violations
+   */
+  private validateObservationUpdates(observations: { entityName: string; observations: string[] }[]): void {
+    if (!observations || !Array.isArray(observations)) {
+      throw new Error('Observations must be a non-empty array');
+    }
+
+    if (observations.length === 0) {
+      throw new Error('At least one observation update must be provided');
+    }
+
+    observations.forEach((update, index) => {
+      // Validate update structure
+      if (!update || typeof update !== 'object') {
+        throw new Error(`Observation update at index ${index} must be an object`);
+      }
+
+      // Validate entityName
+      if (!update.entityName || typeof update.entityName !== 'string' || update.entityName.trim() === '') {
+        throw new Error(`Observation update at index ${index} must have a non-empty entityName`);
+      }
+
+      // Validate observations array
+      if (!update.observations || !Array.isArray(update.observations)) {
+        throw new Error(`Observation update for entity "${update.entityName}" must have a non-empty observations array`);
+      }
+
+      if (update.observations.length === 0) {
+        throw new Error(`Observation update for entity "${update.entityName}" must contain at least one observation`);
+      }
+
+      // Check each observation is a string
+      update.observations.forEach((obs, obsIndex) => {
+        if (typeof obs !== 'string' || obs.trim() === '') {
+          throw new Error(`Observation at index ${obsIndex} for entity "${update.entityName}" must be a non-empty string`);
+        }
+      });
+    });
+  }
 
   /**
    * Helper method to build a filtered graph with relations

@@ -32,12 +32,18 @@ The testing system is built around the concept of running the same test suite ag
    - Case-insensitive and partial matching
    - Performance characteristics
 
-3. **Unit Tests** (various `*.test.ts` files)
+3. **Input Validation Tests** (`tests/input-validation.test.ts`)
+   - Entity creation validation
+   - Observation update validation
+   - Error message verification
+   - Data type and constraint checking
+
+4. **Unit Tests** (various `*.test.ts` files)
    - Individual component testing
    - Mock-based testing for isolated functionality
    - Strategy pattern testing
 
-4. **Performance Tests** (`tests/performance/`)
+5. **Performance Tests** (`tests/performance/`)
    - Benchmark comparisons between backends
    - Load testing scenarios
    - Performance regression detection
@@ -71,6 +77,9 @@ npm run test:performance
 
 # Coverage report
 npm run test:coverage
+
+# Run input validation tests specifically
+npm test tests/input-validation.test.ts
 ```
 
 ### Using Taskfile
@@ -97,9 +106,10 @@ task test:search
 
 ### Current Status ✅
 
-- **42 tests passing** across both backends
+- **198 tests passing** across both backends (including new validation tests)
 - **100% success rate** for multi-backend testing
 - **0 test failures** in production-ready implementation
+- **Comprehensive input validation** preventing database constraint violations
 
 ### Test Breakdown
 
@@ -107,10 +117,12 @@ task test:search
 |------------|--------------|------------------|-------|
 | Storage Providers | 7 ✅ | 7 ✅ | 14 |
 | Search Functionality | 10 ✅ | 10 ✅ | 20 |
+| Input Validation | 20 ✅ | - | 20 |
 | Strategy Creation | 2 ✅ | - | 2 |
 | Performance | 1 ✅ | 1 ✅ | 2 |
 | Factory Tests | 4 ✅ | - | 4 |
-| **Total** | **24** | **18** | **42** |
+| Core Functionality | 68 ✅ | 68 ✅ | 136 |
+| **Total** | **112** | **86** | **198** |
 
 ## Backend Requirements
 
@@ -180,7 +192,7 @@ describe('My Feature Tests', () => {
   runTestsForAvailableBackends((config: StorageConfig, backendName: string) => {
     describe('Feature Tests', () => {
       let manager: any;
-      
+
       beforeEach(async () => {
         manager = await createTestManager(config, backendName);
       });
@@ -205,7 +217,7 @@ import { getBackendCapabilities } from './utils/backend-test-helpers.js';
 
 test('should handle backend-specific behavior', async () => {
   const capabilities = getBackendCapabilities(config.type);
-  
+
   if (capabilities.supportsDatabaseSearch) {
     // PostgreSQL-specific test logic
   } else {
@@ -217,6 +229,14 @@ test('should handle backend-specific behavior', async () => {
 ## Troubleshooting
 
 ### Common Issues
+
+**Input Validation Test Failures:**
+```
+Entity at index 0 must have a non-empty name
+```
+- Check that test data includes all required fields
+- Verify observations arrays are not empty
+- Ensure entity names and types are non-empty strings
 
 **PostgreSQL Connection Errors:**
 ```
@@ -265,9 +285,10 @@ npx jest tests/storage-providers-multi-backend.test.ts --verbose
 |---------|------------|---------------|
 | SQLite | Storage Tests | 2-5 seconds |
 | SQLite | Search Tests | 5-10 seconds |
+| SQLite | Validation Tests | 1-3 seconds |
 | PostgreSQL | Storage Tests | 10-15 seconds |
 | PostgreSQL | Search Tests | 15-25 seconds |
-| **Total** | **All Tests** | **30-45 seconds** |
+| **Total** | **All Tests** | **45-60 seconds** |
 
 ### Performance Thresholds
 
@@ -287,7 +308,7 @@ The multi-backend testing infrastructure is designed for CI/CD environments:
     # Start PostgreSQL service
     sudo systemctl start postgresql
     sudo -u postgres createdb knowledgegraph_test
-    
+
     # Run tests
     npm run test:comprehensive
 ```

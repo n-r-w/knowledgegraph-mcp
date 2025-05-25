@@ -31,27 +31,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "create_entities",
-        description: "Create new entities (people, concepts, objects) in the knowledge graph. Use this when you encounter new information about entities that don't exist yet. Entities with existing names will be ignored (use add_observations to update existing entities).",
+        description: "Create new entities (people, concepts, objects) in the knowledge graph. Use this when you encounter new information about entities that don't exist yet. Entities with existing names will be ignored (use add_observations to update existing entities). IMPORTANT: All entities must have at least one observation - empty observations arrays are not allowed.",
         inputSchema: {
           type: "object",
           properties: {
             entities: {
               type: "array",
-              description: "An array of entities to create in the knowledge graph",
+              description: "An array of entities to create in the knowledge graph. Each entity must have at least one observation.",
               items: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Unique identifier for the entity (e.g., 'John Smith', 'React.js', 'Project Alpha')" },
-                  entityType: { type: "string", description: "Category of the entity (e.g., 'person', 'technology', 'project', 'company', 'concept')" },
+                  name: { type: "string", description: "Unique identifier for the entity (e.g., 'John Smith', 'React.js', 'Project Alpha'). Must be non-empty." },
+                  entityType: { type: "string", description: "Category of the entity (e.g., 'person', 'technology', 'project', 'company', 'concept'). Must be non-empty." },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Array of factual statements about this entity (e.g., ['Software engineer at Google', 'Lives in San Francisco'])"
+                    description: "Array of factual statements about this entity. REQUIRED: Must contain at least one non-empty observation (e.g., ['Software engineer at Google', 'Lives in San Francisco']). Empty arrays are not allowed."
                   },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Optional categorical labels for filtering and organization (e.g., ['urgent', 'technical', 'completed'])"
+                    description: "Optional categorical labels for filtering and organization (e.g., ['urgent', 'technical', 'completed']). Can be empty array or omitted."
                   },
                 },
                 required: ["name", "entityType", "observations"],
@@ -96,21 +96,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "Add new factual information to existing entities. Use this to record specific facts, details, or updates about entities you've already created. Each observation should be a single, atomic fact. Don't duplicate existing observations.",
+        description: "Add new factual information to existing entities. Use this to record specific facts, details, or updates about entities you've already created. Each observation should be a single, atomic fact. Don't duplicate existing observations. IMPORTANT: Each update must contain at least one non-empty observation.",
         inputSchema: {
           type: "object",
           properties: {
             observations: {
               type: "array",
-              description: "An array of observation updates to add to existing entities",
+              description: "An array of observation updates to add to existing entities. Each update must contain at least one observation.",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "The name of the entity to add the observations to" },
+                  entityName: { type: "string", description: "The name of the entity to add the observations to. Must be non-empty and entity must exist." },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of observations to add"
+                    description: "An array of observations to add. REQUIRED: Must contain at least one non-empty observation string. Empty arrays are not allowed."
                   },
                 },
                 required: ["entityName", "observations"],
