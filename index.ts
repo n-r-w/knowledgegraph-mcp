@@ -37,6 +37,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             entities: {
               type: "array",
+              description: "An array of entities to create in the knowledge graph",
               items: {
                 type: "object",
                 properties: {
@@ -73,6 +74,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             relations: {
               type: "array",
+              description: "An array of relations to create between entities in the knowledge graph",
               items: {
                 type: "object",
                 properties: {
@@ -100,6 +102,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             observations: {
               type: "array",
+              description: "An array of observation updates to add to existing entities",
               items: {
                 type: "object",
                 properties: {
@@ -150,6 +153,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             deletions: {
               type: "array",
+              description: "An array of observation deletion requests specifying which observations to remove from entities",
               items: {
                 type: "object",
                 properties: {
@@ -279,6 +283,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             updates: {
               type: "array",
+              description: "An array of tag addition requests specifying which tags to add to which entities",
               items: {
                 type: "object",
                 properties: {
@@ -309,6 +314,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             updates: {
               type: "array",
+              description: "An array of tag removal requests specifying which tags to remove from which entities",
               items: {
                 type: "object",
                 properties: {

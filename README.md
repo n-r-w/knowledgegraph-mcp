@@ -63,7 +63,7 @@ Edit your Claude Desktop configuration file:
   "mcpServers": {
     "Knowledge Graph": {
       "command": "npx",
-      "args": ["knowledgegraph-mcp"]
+      "args": ["-y", "knowledgegraph-mcp"]
     }
   }
 }
@@ -95,7 +95,7 @@ Edit your Claude Desktop configuration file:
   "mcpServers": {
     "Knowledge Graph": {
       "command": "npx",
-      "args": ["knowledgegraph-mcp"],
+      "args": ["-y", "knowledgegraph-mcp"],
       "env": {
         "KNOWLEDGEGRAPH_STORAGE_TYPE": "postgresql",
         "KNOWLEDGEGRAPH_CONNECTION_STRING": "postgresql://postgres:yourpassword@localhost:5432/knowledgegraph"
@@ -116,7 +116,7 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
     "servers": {
       "Knowledge Graph": {
         "command": "npx",
-        "args": ["knowledgegraph-mcp"],
+        "args": ["-y", "knowledgegraph-mcp"],
         "env": {
           "KNOWLEDGEGRAPH_CONNECTION_STRING": "sqlite://./knowledgegraph.db"
         }
