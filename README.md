@@ -1,4 +1,4 @@
-# KnowledgeGraph MCP Server. WARNING: early alpha, use at your own risk
+# KnowledgeGraph MCP Server
 
 A simple way to give Claude persistent memory across conversations. This server lets Claude remember information about you, your projects, and your preferences using a local knowledge graph.
 
