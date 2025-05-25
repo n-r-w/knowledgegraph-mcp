@@ -28,7 +28,7 @@ npx knowledgegraph-mcp --help
 **Option B: Docker (Recommended for reliability)**
 ```bash
 # Clone and build
-git clone https://github.com/rvnikulenk/knowledgegraph-mcp.git
+git clone https://github.com/n-r-w/knowledgegraph-mcp.git
 cd knowledgegraph-mcp
 docker build -t knowledgegraph-mcp .
 ```

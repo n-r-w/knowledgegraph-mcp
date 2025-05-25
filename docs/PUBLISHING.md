@@ -115,7 +115,7 @@ Make sure you're the owner of the package or have publishing rights.
 
 - **Package Name**: knowledgegraph-mcp
 - **Registry**: https://www.npmjs.com/
-- **Repository**: https://github.com/rvnikulenk/knowledgegraph-mcp
+- **Repository**: https://github.com/n-r-w/knowledgegraph-mcp
 - **Binary Command**: `knowledgegraph-mcp`
 
 ## Files Included in Package
