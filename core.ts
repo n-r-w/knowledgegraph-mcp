@@ -139,7 +139,7 @@ export class KnowledgeGraphManager {
     return newRelations;
   }
 
-  async addObservations(observations: { entityName: string; contents: string[] }[], project?: string): Promise<{ entityName: string; addedObservations: string[] }[]> {
+  async addObservations(observations: { entityName: string; observations: string[] }[], project?: string): Promise<{ entityName: string; addedObservations: string[] }[]> {
     const resolvedProject = resolveProject(project);
     const graph = await this.loadGraph(resolvedProject);
     const results = observations.map(o => {
@@ -147,7 +147,7 @@ export class KnowledgeGraphManager {
       if (!entity) {
         throw new Error(`Entity with name ${o.entityName} not found`);
       }
-      const newObservations = o.contents.filter(content => !entity.observations.includes(content));
+      const newObservations = o.observations.filter(content => !entity.observations.includes(content));
       entity.observations.push(...newObservations);
       return { entityName: o.entityName, addedObservations: newObservations };
     });

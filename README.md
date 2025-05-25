@@ -2,17 +2,6 @@
 
 A simple way to give Claude persistent memory across conversations. This server lets Claude remember information about you, your projects, and your preferences using a local knowledge graph.
 
-## Based on MCP Memory Server
-
-This is an enhanced version of the official [MCP Memory Server](https://github.com/modelcontextprotocol/servers/blob/main/src/memory/README.md) with additional features:
-
-- **Multiple Storage Options**: PostgreSQL (recommended) or SQLite
-- **Project Separation**: Keep different projects isolated
-- **Better Search**: Find information with fuzzy search
-- **Easy Setup**: Docker support and simple installation
-
-The API is fully compatible with the original MCP memory server.
-
 ## Complete Setup Guide
 
 Follow these steps in order to get the knowledge graph working with Claude:
@@ -228,7 +217,7 @@ Add facts to existing entities.
 **Input:**
 - `observations` (array of objects): Each object contains:
   - `entityName` (string): Target entity
-  - `contents` (string[]): New observations to add
+  - `observations` (string[]): New observations to add
 - `project` (string, optional): Project name to isolate data
 
 #### add_tags
@@ -362,6 +351,19 @@ You have access to a persistent Knowledge Graph system. Follow these steps for e
 **Server not starting:**
 - Make sure Node.js 18+ is installed
 - Check that all environment variables are set correctly
+
+## Based on MCP Memory Server
+
+This is an enhanced version of the official [MCP Memory Server](https://github.com/modelcontextprotocol/servers/blob/main/src/memory/README.md) with additional features:
+
+- **Multiple Storage Options**: PostgreSQL (recommended) or SQLite
+- **Project Separation**: Keep different projects isolated
+- **Better Search**: Find information with fuzzy search
+- **Easy Setup**: Docker support and simple installation
+
+**BREAKING CHANGE:** The `add_observations` tool now uses `observations` field instead of `contents` for consistency with `delete_observations`.
+
+**Why this change:** The original MCP Memory Server had inconsistent field names (`contents` vs `observations`) which confused LLMs and users. Our implementation now uses `observations` consistently for both `add_observations` and `delete_observations` tools, making the API more intuitive and LLM-friendly.
 
 ## License
 

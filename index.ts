@@ -107,13 +107,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 type: "object",
                 properties: {
                   entityName: { type: "string", description: "The name of the entity to add the observations to" },
-                  contents: {
+                  observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of observation contents to add"
+                    description: "An array of observations to add"
                   },
                 },
-                required: ["entityName", "contents"],
+                required: ["entityName", "observations"],
               },
             },
             project: {
@@ -358,7 +358,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     case "create_relations":
       return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.createRelations(args.relations as Relation[], project), null, 2) }] };
     case "add_observations":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.addObservations(args.observations as { entityName: string; contents: string[] }[], project), null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project), null, 2) }] };
     case "delete_entities":
       await knowledgeGraphManager.deleteEntities(args.entityNames as string[], project);
       return { content: [{ type: "text", text: "Entities deleted successfully" }] };
