@@ -117,41 +117,20 @@ export function runTestsForAllBackends(
     BACKEND_CONFIGS.forEach((backend) => {
       const testDescription = `${backend.name} Backend`;
 
-      if (skipUnavailable) {
-        describe(testDescription, () => {
-          let isAvailable = false;
-
-          beforeAll(async () => {
+      describe(testDescription, () => {
+        if (skipUnavailable && backend.name === 'PostgreSQL') {
+          // For PostgreSQL, check availability before each test
+          beforeEach(async () => {
             const available = availableBackends?.find(b => b.name === backend.name);
-            isAvailable = available?.available ?? false;
+            const isAvailable = available?.available ?? false;
+            if (!isAvailable) {
+              throw new Error('PostgreSQL server not available - test skipped');
+            }
           });
+        }
 
-          if (backend.name === 'SQLite') {
-            // SQLite tests always run
-            testSuite(backend.config, backend.name);
-          } else {
-            // PostgreSQL tests are conditional - use dynamic describe
-            describe('PostgreSQL Tests', () => {
-              beforeAll(() => {
-                if (!isAvailable) {
-                  console.warn('PostgreSQL server not available - skipping PostgreSQL tests');
-                }
-              });
-
-              // Replace the original testSuite call with conditional execution
-              if (isAvailable) {
-                testSuite(backend.config, backend.name);
-              } else {
-                test.skip('PostgreSQL tests skipped - server not available', () => { });
-              }
-            });
-          }
-        });
-      } else {
-        describe(testDescription, () => {
-          testSuite(backend.config, backend.name);
-        });
-      }
+        testSuite(backend.config, backend.name);
+      });
     });
   });
 }
