@@ -105,10 +105,7 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
     "servers": {
       "Knowledge Graph": {
         "command": "npx",
-        "args": ["-y", "knowledgegraph-mcp"],
-        "env": {
-          "KNOWLEDGEGRAPH_CONNECTION_STRING": "sqlite://./knowledgegraph.db"
-        }
+        "args": ["-y", "knowledgegraph-mcp"],        
       }
     }
   }
