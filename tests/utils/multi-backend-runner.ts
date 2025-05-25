@@ -39,36 +39,76 @@ export const BACKEND_CONFIGS: BackendTestConfig[] = [
 ];
 
 /**
+ * Get PostgreSQL connection strings to try (in order of preference)
+ */
+function getPostgreSQLConnectionStrings(): string[] {
+  // Try environment variable first
+  if (process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING &&
+    process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING.startsWith('postgresql://')) {
+    return [process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING];
+  }
+
+  // Common PostgreSQL setups to try
+  return [
+    'postgresql://postgres:1@localhost:5432/knowledgegraph_test', // Default test password
+    'postgresql://postgres:password@localhost:5432/knowledgegraph_test',
+    'postgresql://postgres:@localhost:5432/knowledgegraph_test', // No password
+    'postgresql://postgres:postgres@localhost:5432/knowledgegraph_test', // Default password
+  ];
+}
+
+/**
  * Check if PostgreSQL is available for testing
  */
 export async function checkPostgreSQLAvailability(): Promise<boolean> {
-  try {
-    const { Pool } = await import('pg');
-    const pgConfig = BACKEND_CONFIGS.find(c => c.name === 'PostgreSQL');
-    if (!pgConfig) return false;
+  const { Pool } = await import('pg');
+  const connectionStrings = getPostgreSQLConnectionStrings();
 
-    const pool = new Pool({
-      connectionString: pgConfig.config.connectionString,
-      max: 1,
-      idleTimeoutMillis: 1000,
-      connectionTimeoutMillis: 2000,
-    });
+  for (const connectionString of connectionStrings) {
+    try {
+      console.log(`Testing PostgreSQL connection: ${connectionString.replace(/:[^:@]*@/, ':***@')}`);
 
-    const client = await pool.connect();
-    client.release();
-    await pool.end();
-    return true;
-  } catch (error) {
-    console.warn('PostgreSQL not available for testing:', error instanceof Error ? error.message : error);
-    return false;
+      const pool = new Pool({
+        connectionString,
+        max: 1,
+        idleTimeoutMillis: 1000,
+        connectionTimeoutMillis: 2000,
+      });
+
+      const client = await pool.connect();
+      client.release();
+      await pool.end();
+
+      console.log('PostgreSQL connection successful');
+
+      // Update the backend config with the working connection string
+      const pgBackend = BACKEND_CONFIGS.find(b => b.name === 'PostgreSQL');
+      if (pgBackend) {
+        pgBackend.config.connectionString = connectionString;
+      }
+
+      return true;
+    } catch (error) {
+      console.warn(`PostgreSQL connection failed for ${connectionString.replace(/:[^:@]*@/, ':***@')}:`,
+        error instanceof Error ? error.message : error);
+    }
   }
+
+  console.warn('PostgreSQL not available for testing - tried all connection strings');
+  return false;
 }
 
 /**
  * Get available backend configurations for testing
  */
 export async function getAvailableBackends(): Promise<BackendTestConfig[]> {
-  const backends = [...BACKEND_CONFIGS];
+  // Create deep copies to avoid mutation issues
+  const backends: BackendTestConfig[] = BACKEND_CONFIGS.map(config => ({
+    ...config,
+    config: { ...config.config }
+  }));
+
+
 
   // Check PostgreSQL availability
   const pgBackend = backends.find(b => b.name === 'PostgreSQL');
@@ -124,7 +164,9 @@ export function runTestsForAllBackends(
             const available = availableBackends?.find(b => b.name === backend.name);
             const isAvailable = available?.available ?? false;
             if (!isAvailable) {
-              throw new Error('PostgreSQL server not available - test skipped');
+              const skipReason = available?.skipReason || 'PostgreSQL server not available';
+              console.log(`Skipping PostgreSQL test: ${skipReason}`);
+              pending(`PostgreSQL test skipped: ${skipReason}`);
             }
           });
         }

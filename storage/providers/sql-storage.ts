@@ -31,6 +31,38 @@ export class SQLStorageProvider implements StorageProvider {
     if (config.type !== StorageType.POSTGRESQL) {
       throw new Error(`Only PostgreSQL is supported, got: ${config.type}`);
     }
+
+    // Validate PostgreSQL connection string format
+    this.validateConnectionString(config.connectionString);
+  }
+
+  /**
+   * Validate PostgreSQL connection string format
+   */
+  private validateConnectionString(connectionString: string): void {
+    try {
+      // Basic format validation for PostgreSQL connection strings
+      if (!connectionString.startsWith('postgresql://') && !connectionString.startsWith('postgres://')) {
+        throw new Error(`PostgreSQL connection string must start with 'postgresql://' or 'postgres://'`);
+      }
+
+      // Try to parse as URL to validate format
+      const url = new URL(connectionString);
+      if (url.protocol !== 'postgresql:' && url.protocol !== 'postgres:') {
+        throw new Error(`Invalid PostgreSQL protocol: ${url.protocol}`);
+      }
+
+      // Validate required components
+      if (!url.hostname) {
+        throw new Error('PostgreSQL connection string must include hostname');
+      }
+
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('Invalid URL')) {
+        throw new Error(`Invalid PostgreSQL connection string format. Expected format: postgresql://username:password@host:port/database`);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -38,6 +70,8 @@ export class SQLStorageProvider implements StorageProvider {
    */
   async initialize(): Promise<void> {
     try {
+      console.log(`Initializing PostgreSQL with connection string: ${this.config.connectionString.replace(/:[^:@]*@/, ':***@')}`);
+
       // Initialize PostgreSQL connection
       this.pgPool = new PgPool({
         connectionString: this.config.connectionString,
@@ -53,9 +87,21 @@ export class SQLStorageProvider implements StorageProvider {
       await this.createPostgreSQLTables();
       await this.initializeFuzzySearch();
 
-      console.log(`PostgreSQL database initialized`);
+      console.log(`PostgreSQL database initialized successfully`);
     } catch (error) {
-      throw new Error(`Failed to initialize PostgreSQL database: ${error}`);
+      // Clean up pool if initialization failed
+      if (this.pgPool) {
+        try {
+          await this.pgPool.end();
+        } catch (cleanupError) {
+          console.warn('Error cleaning up failed PostgreSQL pool:', cleanupError);
+        }
+        this.pgPool = null;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`PostgreSQL initialization failed: ${errorMessage}`);
+      throw new Error(`Failed to initialize PostgreSQL database: ${errorMessage}`);
     }
   }
 
@@ -329,7 +375,11 @@ export class SQLStorageProvider implements StorageProvider {
    */
   async initializeFuzzySearch(): Promise<void> {
     try {
-      await this.enableTrigramExtension();
+      // Check if trigram extension is available before enabling
+      const hasExtension = await this.hasTrigramExtension();
+      if (!hasExtension) {
+        await this.enableTrigramExtension();
+      }
       await this.createFuzzySearchIndexes();
       console.log('PostgreSQL fuzzy search initialized');
     } catch (error) {

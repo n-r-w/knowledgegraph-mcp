@@ -136,7 +136,7 @@ task test:search
 - Requires running PostgreSQL server
 - **Host**: `localhost:5432`
 - **Username**: `postgres`
-- **Password**: `1`
+- **Password**: `password` (or your PostgreSQL password)
 - **Test Database**: `knowledgegraph_test`
 
 #### PostgreSQL Setup
@@ -155,8 +155,8 @@ task test:search
 # Create test database
 psql -U postgres -c "CREATE DATABASE knowledgegraph_test;"
 
-# Verify connection
-PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d knowledgegraph_test -c "SELECT version();"
+# Verify connection (replace 'password' with your actual PostgreSQL password)
+PGPASSWORD=password psql -h localhost -p 5432 -U postgres -d knowledgegraph_test -c "SELECT version();"
 ```
 
 ## Test Configuration
@@ -167,8 +167,8 @@ PGPASSWORD=1 psql -h localhost -p 5432 -U postgres -d knowledgegraph_test -c "SE
 # Test database connection (optional - defaults to in-memory SQLite)
 KNOWLEDGEGRAPH_TEST_CONNECTION_STRING="sqlite://:memory:"
 
-# For PostgreSQL testing
-KNOWLEDGEGRAPH_TEST_CONNECTION_STRING="postgresql://postgres:1@localhost:5432/knowledgegraph_test"
+# For PostgreSQL testing (replace 'password' with your actual PostgreSQL password)
+KNOWLEDGEGRAPH_TEST_CONNECTION_STRING="postgresql://postgres:password@localhost:5432/knowledgegraph_test"
 ```
 
 ### Jest Configuration
