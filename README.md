@@ -14,7 +14,7 @@ Follow these steps in order to get the knowledge graph working with Claude:
 npx knowledgegraph-mcp --help
 ```
 
-**Option B: Docker (Recommended for reliability)**
+**Option B: Docker**
 ```bash
 # Clone and build
 git clone https://github.com/n-r-w/knowledgegraph-mcp.git
