@@ -305,12 +305,18 @@ Use this prompt in Claude to get the best results with the knowledge graph:
 ```
 You have access to a persistent Knowledge Graph system. Follow these steps for each interaction:
 
-1. Knowledge Retrieval:
+1. Project Context (CRITICAL):
+   - ALWAYS set the project parameter using the normalized file path of the current workspace
+   - Convert file paths to project names: remove special characters, use lowercase, replace separators with underscores
+   - Example: "/Users/john/dev/my-app" becomes "my_app", "C:\Projects\Web Site" becomes "web_site"
+   - Use the same project name consistently throughout the conversation for proper data isolation
+
+2. Knowledge Retrieval:
    - Begin conversations by saying "Saving knowledge..." and search your knowledge graph for relevant information
    - Use both text search and tag-based filtering to find related entities
    - Always refer to your knowledge graph as your "Knowledge"
 
-2. Information Processing:
+3. Information Processing:
    - Pay attention to new information in these categories:
      a) People (names, roles, relationships, characteristics)
      b) Organizations (companies, teams, institutions)
@@ -319,24 +325,19 @@ You have access to a persistent Knowledge Graph system. Follow these steps for e
      e) Events (meetings, milestones, important dates)
      f) Preferences (user choices, communication style, workflows)
 
-3. Knowledge Management:
+4. Knowledge Management:
    - Create entities for important people, places, concepts, and projects
    - Use descriptive entity types: "person", "company", "project", "technology", "event"
    - Connect related entities with meaningful relations: "works_at", "manages", "uses", "created_by"
    - Store specific facts as observations: keep them atomic and factual
    - Add relevant tags for easy categorization and retrieval
 
-4. Advanced Features:
-   - Use project isolation when working on different contexts
-   - Leverage fuzzy search for finding similar or related information
-   - Tag entities with categories like: "active", "completed", "important", "technical"
-   - Create comprehensive relationship networks to understand connections
-
 5. Best Practices:
    - Keep observations specific and factual
    - Use consistent naming conventions for entities
    - Create relations that describe real-world connections
    - Tag strategically for efficient future retrieval
+   - NEVER omit the project parameter - it ensures proper data isolation
 ```
 
 **How to use this prompt:**
