@@ -130,15 +130,20 @@ export function runTestsForAllBackends(
             // SQLite tests always run
             testSuite(backend.config, backend.name);
           } else {
-            // PostgreSQL tests are conditional
+            // PostgreSQL tests are conditional - use dynamic describe
             describe('PostgreSQL Tests', () => {
-              beforeEach(function (this: any) {
+              beforeAll(() => {
                 if (!isAvailable) {
-                  this.skip();
+                  console.warn('PostgreSQL server not available - skipping PostgreSQL tests');
                 }
               });
 
-              testSuite(backend.config, backend.name);
+              // Replace the original testSuite call with conditional execution
+              if (isAvailable) {
+                testSuite(backend.config, backend.name);
+              } else {
+                test.skip('PostgreSQL tests skipped - server not available', () => { });
+              }
             });
           }
         });

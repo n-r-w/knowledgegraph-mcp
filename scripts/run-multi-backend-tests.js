@@ -2,13 +2,13 @@
 
 /**
  * Multi-Backend Test Runner
- * 
+ *
  * This script ensures that tests run against both SQLite and PostgreSQL backends,
  * providing clear feedback about which backends are available and test results.
  */
 
 import { spawn } from 'child_process';
-import { checkPostgreSQLAvailability } from '../tests/utils/multi-backend-runner.js';
+import { checkPostgreSQLAvailability } from '../dist/tests/utils/multi-backend-runner.js';
 
 const colors = {
   reset: '\x1b[0m',
@@ -61,7 +61,7 @@ async function runCommand(command, args = [], options = {}) {
 
 async function checkBackendAvailability() {
   logSection('Checking Backend Availability');
-  
+
   const backends = {
     sqlite: true, // SQLite is always available
     postgresql: false
@@ -87,7 +87,7 @@ async function checkBackendAvailability() {
 
 async function runTestSuite(suiteName, command, args = []) {
   logSection(`Running ${suiteName}`);
-  
+
   try {
     await runCommand(command, args);
     log(`✓ ${suiteName} completed successfully`, colors.green);
@@ -100,7 +100,7 @@ async function runTestSuite(suiteName, command, args = []) {
 
 async function main() {
   logHeader('Multi-Backend Test Runner');
-  
+
   let exitCode = 0;
   const results = {
     backendCheck: false,
@@ -154,18 +154,18 @@ async function main() {
 
   // Summary
   logHeader('Test Results Summary');
-  
-  log(`Backend Availability Check: ${results.backendCheck ? '✓ PASSED' : '✗ FAILED'}`, 
-      results.backendCheck ? colors.green : colors.red);
-  
-  log(`Multi-Backend Tests: ${results.multiBackendTests ? '✓ PASSED' : '✗ FAILED'}`, 
-      results.multiBackendTests ? colors.green : colors.red);
-  
-  log(`Original Test Suite: ${results.originalTests ? '✓ PASSED' : '✗ FAILED'}`, 
-      results.originalTests ? colors.green : colors.red);
+
+  log(`Backend Availability Check: ${results.backendCheck ? '✓ PASSED' : '✗ FAILED'}`,
+    results.backendCheck ? colors.green : colors.red);
+
+  log(`Multi-Backend Tests: ${results.multiBackendTests ? '✓ PASSED' : '✗ FAILED'}`,
+    results.multiBackendTests ? colors.green : colors.red);
+
+  log(`Original Test Suite: ${results.originalTests ? '✓ PASSED' : '✗ FAILED'}`,
+    results.originalTests ? colors.green : colors.red);
 
   const allPassed = results.backendCheck && results.multiBackendTests && results.originalTests;
-  
+
   if (allPassed) {
     log('\n🎉 All tests passed successfully!', colors.green + colors.bright);
     log('Both SQLite and PostgreSQL backends are working correctly.', colors.green);
