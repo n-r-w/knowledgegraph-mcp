@@ -48,10 +48,10 @@ tasks:
 
   # Testing Tasks
   test:
-    desc: Run all tests
+    desc: Run comprehensive multi-backend test suite
     deps: [build]
     cmds:
-      - npm test
+      - npm run test:comprehensive
 
   test:watch:
     desc: Run tests in watch mode
@@ -72,10 +72,16 @@ tasks:
       - npm run test:performance
 
   test:unit:
-    desc: Run unit tests only (excluding performance tests)
+    desc: Run unit tests only (excluding performance and multi-backend tests)
     deps: [build]
     cmds:
-      - npx jest --testPathIgnorePatterns=performance
+      - npx jest --testPathIgnorePatterns=performance --testPathIgnorePatterns=multi-backend
+
+  test:original:
+    desc: Run original test suite only (without multi-backend tests)
+    deps: [build]
+    cmds:
+      - npx jest --testPathIgnorePatterns=multi-backend
 
   test:integration:
     desc: Run integration tests
@@ -88,6 +94,24 @@ tasks:
     deps: [build]
     cmds:
       - npx jest tests/search/
+
+  test:multi-backend:
+    desc: Run multi-backend tests against both SQLite and PostgreSQL
+    deps: [build]
+    cmds:
+      - npm run test:multi-backend
+
+  test:all-backends:
+    desc: Run all tests including multi-backend tests
+    deps: [build]
+    cmds:
+      - npm run test:all-backends
+
+  test:comprehensive:
+    desc: Run comprehensive multi-backend test suite with detailed reporting
+    deps: [build]
+    cmds:
+      - npm run test:comprehensive
 
   # Benchmarking Tasks
   benchmark:

@@ -338,6 +338,58 @@ You have access to a persistent Knowledge Graph system. Follow these steps for e
 - Modify categories based on your specific use case
 - Start with this template and customize as needed
 
+## Development and Testing
+
+### Multi-Backend Testing
+
+This project includes comprehensive multi-backend testing to ensure compatibility across both SQLite and PostgreSQL:
+
+**Run tests against both backends:**
+```bash
+npm run test:multi-backend
+```
+
+**Run all tests (original + multi-backend):**
+```bash
+npm run test:all-backends
+```
+
+**Using Taskfile (if installed):**
+```bash
+task test:multi-backend
+task test:comprehensive
+```
+
+**Test Coverage:**
+- ✅ **42 tests** across both backends
+- ✅ **Storage Provider Tests**: CRUD operations, health checks, capabilities
+- ✅ **Search Functionality Tests**: Fuzzy search, exact search, performance
+- ✅ **Automatic Backend Detection**: Graceful handling of unavailable databases
+- ✅ **Performance Comparison**: Backend-specific performance metrics
+
+**Requirements for Full Testing:**
+- **SQLite**: Always available (uses in-memory databases)
+- **PostgreSQL**: Requires running PostgreSQL at `localhost:5432` with:
+  - Username: `postgres`, Password: `1`
+  - Test database: `knowledgegraph_test`
+
+### Development Setup
+
+**Clone and setup:**
+```bash
+git clone https://github.com/n-r-w/knowledgegraph-mcp.git
+cd knowledgegraph-mcp
+npm install
+npm run build
+```
+
+**Run tests:**
+```bash
+npm test                    # All tests including multi-backend
+npm run test:unit          # Unit tests only
+npm run test:performance   # Performance benchmarks
+```
+
 ## Common Issues
 
 **Can't connect to database:**
@@ -351,6 +403,10 @@ You have access to a persistent Knowledge Graph system. Follow these steps for e
 **Server not starting:**
 - Make sure Node.js 18+ is installed
 - Check that all environment variables are set correctly
+
+**Tests failing:**
+- For PostgreSQL tests: Ensure PostgreSQL is running at localhost:5432
+- For multi-backend tests: Run `npm run test:multi-backend` to see detailed output
 
 ## Based on MCP Memory Server
 
