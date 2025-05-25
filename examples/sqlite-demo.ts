@@ -84,7 +84,7 @@ async function sqliteDemo() {
     });
     console.log(`Found ${tagResults.entities.length} entities with tag "frontend":`);
     tagResults.entities.forEach(entity => {
-      console.log(`  - ${entity.name} (tags: ${entity.tags.join(', ')})`);
+      console.log(`  - ${entity.name} (tags: ${entity.tags?.join(', ') || 'none'})`);
     });
     console.log();
 

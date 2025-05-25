@@ -109,7 +109,7 @@ async function demonstrateTagSystem() {
     const frontendResults = await manager.searchNodes('', { exactTags: ['frontend'], tagMatchMode: 'any' }, 'tag_demo');
     console.log(`🔍 Frontend technologies (${frontendResults.entities.length} found):`);
     frontendResults.entities.forEach(entity => {
-      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags.join(', ')}]`);
+      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags?.join(', ') || 'none'}]`);
     });
     console.log();
 
@@ -117,7 +117,7 @@ async function demonstrateTagSystem() {
     const jsResults = await manager.searchNodes('', { exactTags: ['javascript'], tagMatchMode: 'any' }, 'tag_demo');
     console.log(`🔍 JavaScript technologies (${jsResults.entities.length} found):`);
     jsResults.entities.forEach(entity => {
-      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags.join(', ')}]`);
+      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags?.join(', ') || 'none'}]`);
     });
     console.log();
 
@@ -125,7 +125,7 @@ async function demonstrateTagSystem() {
     const dbResults = await manager.searchNodes('', { exactTags: ['database'], tagMatchMode: 'any' }, 'tag_demo');
     console.log(`🔍 Database technologies (${dbResults.entities.length} found):`);
     dbResults.entities.forEach(entity => {
-      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags.join(', ')}]`);
+      console.log(`   • ${entity.name} (${entity.entityType}) - Tags: [${entity.tags?.join(', ') || 'none'}]`);
     });
     console.log();
 
@@ -134,7 +134,7 @@ async function demonstrateTagSystem() {
     const frontendJsResults = await manager.searchNodes('', { exactTags: ['frontend', 'javascript'], tagMatchMode: 'all' }, 'tag_demo');
     console.log(`🔍 Frontend + JavaScript technologies (${frontendJsResults.entities.length} found):`);
     frontendJsResults.entities.forEach(entity => {
-      console.log(`   • ${entity.name} - Tags: [${entity.tags.join(', ')}]`);
+      console.log(`   • ${entity.name} - Tags: [${entity.tags?.join(', ') || 'none'}]`);
     });
     console.log();
 
@@ -158,9 +158,9 @@ async function demonstrateTagSystem() {
     const vueEntity = updatedGraph.entities.find(e => e.name === 'Vue.js');
     const pgEntity = updatedGraph.entities.find(e => e.name === 'PostgreSQL');
 
-    console.log(`📝 React tags: [${reactEntity?.tags.join(', ')}]`);
-    console.log(`📝 Vue.js tags: [${vueEntity?.tags.join(', ')}]`);
-    console.log(`📝 PostgreSQL tags: [${pgEntity?.tags.join(', ')}]`);
+    console.log(`📝 React tags: [${reactEntity?.tags?.join(', ') || 'none'}]`);
+    console.log(`📝 Vue.js tags: [${vueEntity?.tags?.join(', ') || 'none'}]`);
+    console.log(`📝 PostgreSQL tags: [${pgEntity?.tags?.join(', ') || 'none'}]`);
     console.log();
 
     // 6. Demonstrate removing tags
@@ -180,7 +180,7 @@ async function demonstrateTagSystem() {
     const enhancedResults = await manager.searchNodes('nosql', 'tag_demo');
     console.log(`🔍 Search for "nosql" (${enhancedResults.entities.length} found):`);
     enhancedResults.entities.forEach(entity => {
-      console.log(`   • ${entity.name} - Found via tags: [${entity.tags.join(', ')}]`);
+      console.log(`   • ${entity.name} - Found via tags: [${entity.tags?.join(', ') || 'none'}]`);
     });
     console.log();
 
