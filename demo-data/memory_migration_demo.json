@@ -1,0 +1,5 @@
+{"type":"entity","name":"JavaScript","entityType":"Programming Language","observations":["Dynamic typing","Prototype-based inheritance","First-class functions","Event-driven programming"]}
+{"type":"entity","name":"Node.js","entityType":"Runtime Environment","observations":["Server-side JavaScript","Event-driven architecture","Non-blocking I/O","NPM package manager"]}
+{"type":"entity","name":"TypeScript","entityType":"Programming Language","observations":["Superset of JavaScript","Static typing","Compile-time type checking","Better IDE support"]}
+{"type":"relation","from":"Node.js","to":"JavaScript","relationType":"runs"}
+{"type":"relation","from":"TypeScript","to":"JavaScript","relationType":"compiles_to"}

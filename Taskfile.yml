@@ -1,0 +1,365 @@
+version: "3"
+
+vars:
+  NODE_VERSION: "22"
+  DOCKER_IMAGE: "knowledgegraph-mcp"
+  DOCKER_TAG: "latest"
+
+dotenv: [".env"]
+
+tasks:
+  # Development Tasks
+  install:
+    desc: Install dependencies
+    cmds:
+      - npm install
+
+  clean:
+    desc: Clean build artifacts and node_modules
+    cmds:
+      - rm -rf dist/
+      - rm -rf coverage/
+      - rm -rf node_modules/
+      - rm -rf benchmark-reports/
+
+  build:
+    desc: Build TypeScript to JavaScript
+    deps: [install]
+    cmds:
+      - npm run build
+    sources:
+      - "**/*.ts"
+      - "tsconfig.json"
+    generates:
+      - "dist/**/*.js"
+      - "dist/**/*.d.ts"
+
+  watch:
+    desc: Watch and rebuild on changes
+    deps: [install]
+    cmds:
+      - npm run watch
+
+  dev:
+    desc: Start development server with auto-reload
+    deps: [build]
+    cmds:
+      - node dist/index.js
+
+  # Testing Tasks
+  test:
+    desc: Run all tests
+    deps: [build]
+    cmds:
+      - npm test
+
+  test:watch:
+    desc: Run tests in watch mode
+    deps: [install]
+    cmds:
+      - npm run test:watch
+
+  test:coverage:
+    desc: Run tests with coverage report
+    deps: [build]
+    cmds:
+      - npm run test:coverage
+
+  test:performance:
+    desc: Run performance tests
+    deps: [build]
+    cmds:
+      - npm run test:performance
+
+  test:unit:
+    desc: Run unit tests only (excluding performance tests)
+    deps: [build]
+    cmds:
+      - npx jest --testPathIgnorePatterns=performance
+
+  test:integration:
+    desc: Run integration tests
+    deps: [build]
+    cmds:
+      - npx jest tests/storage-providers.test.ts tests/knowledge-graph-manager.test.ts
+
+  test:search:
+    desc: Run search-related tests
+    deps: [build]
+    cmds:
+      - npx jest tests/search/
+
+  # Benchmarking Tasks
+  benchmark:
+    desc: Run all benchmarks
+    deps: [build]
+    cmds:
+      - npm run benchmark
+
+  benchmark:search:
+    desc: Run search performance benchmarks
+    deps: [build]
+    cmds:
+      - npm run benchmark:search
+
+  benchmark:database:
+    desc: Run database performance benchmarks
+    deps: [build]
+    cmds:
+      - npm run benchmark:database
+
+  benchmark:load:
+    desc: Run load testing benchmarks
+    deps: [build]
+    cmds:
+      - npm run benchmark:load
+
+  # Database Tasks
+  db:setup:
+    desc: Setup PostgreSQL database
+    cmds:
+      - |
+        echo "Creating PostgreSQL database..."
+        psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE knowledgegraph;" || echo "Database may already exist"
+        echo "Database setup complete"
+
+  db:drop:
+    desc: Drop PostgreSQL database
+    cmds:
+      - |
+        echo "Dropping PostgreSQL database..."
+        psql -h localhost -p 5432 -U postgres -c "DROP DATABASE IF EXISTS knowledgegraph;"
+        echo "Database dropped"
+
+  db:reset:
+    desc: Reset PostgreSQL database (drop and recreate)
+    cmds:
+      - task: db:drop
+      - task: db:setup
+
+  db:migrate:
+    desc: Run database migrations
+    deps: [build]
+    cmds:
+      - node dist/scripts/migrate-to-text.js
+
+  # Docker Tasks
+  docker:build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
+
+  docker:run:
+    desc: Run Docker container
+    deps: [docker:build]
+    cmds:
+      - |
+        docker run -it --rm \
+          -e KNOWLEDGEGRAPH_STORAGE_TYPE="$KNOWLEDGEGRAPH_STORAGE_TYPE" \
+          -e KNOWLEDGEGRAPH_CONNECTION_STRING="$KNOWLEDGEGRAPH_CONNECTION_STRING" \
+          -e KNOWLEDGEGRAPH_PROJECT="$KNOWLEDGEGRAPH_PROJECT" \
+          --network host \
+          {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+
+  docker:run:sqlite:
+    desc: Run Docker container with SQLite backend
+    deps: [docker:build]
+    cmds:
+      - |
+        docker run -it --rm \
+          -e KNOWLEDGEGRAPH_STORAGE_TYPE=sqlite \
+          -e KNOWLEDGEGRAPH_CONNECTION_STRING="sqlite://./knowledgegraph.db" \
+          -e KNOWLEDGEGRAPH_PROJECT="$KNOWLEDGEGRAPH_PROJECT" \
+          -v $(pwd)/data:/app/data \
+          {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+
+  docker:test:
+    desc: Run tests in Docker container
+    deps: [docker:build]
+    cmds:
+      - |
+        docker run --rm \
+          -e KNOWLEDGEGRAPH_STORAGE_TYPE=sqlite \
+          -e KNOWLEDGEGRAPH_CONNECTION_STRING="sqlite://:memory:" \
+          {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} npm test
+
+  docker:clean:
+    desc: Clean Docker images and containers
+    cmds:
+      - docker rmi {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} || true
+      - docker system prune -f
+
+  # Linting and Code Quality
+  lint:
+    desc: Run TypeScript compiler check
+    deps: [install]
+    cmds:
+      - npx tsc --noEmit
+
+  lint:fix:
+    desc: Fix TypeScript issues where possible
+    deps: [install]
+    cmds:
+      - npx tsc --noEmit --pretty
+
+  # Utility Tasks
+  check:
+    desc: Run all checks (lint, test, build)
+    cmds:
+      - task: lint
+      - task: test
+      - task: build
+
+  ci:
+    desc: Run CI pipeline (install, lint, test, build)
+    cmds:
+      - task: install
+      - task: lint
+      - task: test:coverage
+      - task: build
+
+  # Demo and Examples
+  demo:sqlite:
+    desc: Run SQLite demo
+    deps: [build]
+    env:
+      KNOWLEDGEGRAPH_STORAGE_TYPE: sqlite
+      KNOWLEDGEGRAPH_CONNECTION_STRING: "sqlite://./demo-data/memory.db"
+    cmds:
+      - node dist/examples/sqlite-demo.js
+
+  demo:storage:
+    desc: Run storage demo
+    deps: [build]
+    cmds:
+      - node dist/examples/storage-demo.js
+
+  demo:tags:
+    desc: Run tag system demo
+    deps: [build]
+    cmds:
+      - node dist/examples/tag-system-demo.js
+
+  # Health and Status
+  health:
+    desc: Check service health
+    deps: [build]
+    cmds:
+      - node scripts/health-check.js
+
+  # Package and Release
+  package:
+    desc: Prepare package for distribution
+    deps: [clean, install, lint, test, build]
+    cmds:
+      - npm pack
+
+  # Environment Setup
+  env:setup:
+    desc: Setup development environment
+    cmds:
+      - task: install
+      - task: db:setup
+      - task: build
+      - echo "✅ Development environment setup complete"
+
+  env:setup:sqlite:
+    desc: Setup development environment with SQLite (uses default home directory path)
+    env:
+      KNOWLEDGEGRAPH_STORAGE_TYPE: sqlite
+    cmds:
+      - task: install
+      - task: build
+      - echo "✅ SQLite development environment setup complete"
+      - echo "📁 Database will be created at: ~/.knowledge-graph/knowledgegraph.db"
+
+  # Performance and Monitoring
+  perf:profile:
+    desc: Profile application performance
+    deps: [build]
+    cmds:
+      - node --prof dist/index.js &
+      - sleep 10
+      - pkill -f "node --prof"
+      - node --prof-process isolate-*.log > profile.txt
+      - echo "Profile saved to profile.txt"
+
+  perf:memory:
+    desc: Check memory usage
+    deps: [build]
+    cmds:
+      - node --inspect dist/index.js &
+      - sleep 5
+      - echo "Memory profiling available at chrome://inspect"
+      - pkill -f "node --inspect"
+
+  # Security and Validation
+  security:audit:
+    desc: Run security audit
+    cmds:
+      - npm audit
+      - npm audit --audit-level high
+
+  security:fix:
+    desc: Fix security vulnerabilities
+    cmds:
+      - npm audit fix
+
+  # Documentation
+  docs:generate:
+    desc: Generate API documentation
+    deps: [build]
+    cmds:
+      - echo "📚 Generating documentation..."
+      - npx typedoc --out docs/api src/
+      - echo "✅ Documentation generated in docs/api/"
+
+  docs:serve:
+    desc: Serve documentation locally
+    cmds:
+      - ./scripts/serve-docs.sh
+
+  # Backup and Restore
+  backup:data:
+    desc: Backup database data
+    cmds:
+      - ./scripts/backup-data.sh
+
+  restore:data:
+    desc: Show available backups for restore
+    cmds:
+      - ./scripts/list-backups.sh
+
+  # Maintenance
+  maintenance:cleanup:
+    desc: Cleanup old files and logs
+    cmds:
+      - rm -f *.log
+      - rm -f isolate-*.log
+      - rm -f profile.txt
+      - rm -rf .nyc_output/
+      - find . -name "*.tmp" -delete
+      - echo "Cleanup complete"
+
+  maintenance:update:
+    desc: Update dependencies
+    cmds:
+      - npm update
+      - npm audit fix
+      - echo "Dependencies updated"
+
+  # Help
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  help:detailed:
+    desc: Show detailed task descriptions
+    cmds:
+      - ./scripts/show-help.sh
+
+  default:
+    desc: Default task - show help
+    cmds:
+      - task: help:detailed

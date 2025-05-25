@@ -1,0 +1,11 @@
+{"type":"entity","name":"React","entityType":"JavaScript Library","observations":["Component-based architecture","Virtual DOM for performance","Developed by Meta (Facebook)","Declarative programming model"],"tags":["frontend","javascript","ui","popular","hooks","jsx"]}
+{"type":"entity","name":"Vue.js","entityType":"JavaScript Framework","observations":["Progressive framework","Easy learning curve","Excellent documentation","Template-based syntax"],"tags":["frontend","javascript","ui","progressive","beginner-friendly","composition-api","reactive"]}
+{"type":"entity","name":"Django","entityType":"Python Framework","observations":["Batteries-included philosophy","ORM for database operations","Admin interface out of the box","MTV (Model-Template-View) pattern"],"tags":["backend","python","web","orm","admin"]}
+{"type":"entity","name":"Express.js","entityType":"Node.js Framework","observations":["Minimal and flexible","Middleware-based architecture","Fast and unopinionated","Large ecosystem"],"tags":["backend","javascript","nodejs","minimal","middleware"]}
+{"type":"entity","name":"PostgreSQL","entityType":"Database","observations":["ACID compliant","Advanced SQL features","Extensible with custom functions","Strong consistency guarantees"],"tags":["database","sql","relational","acid","enterprise","open-source"]}
+{"type":"entity","name":"MongoDB","entityType":"Database","observations":["Document-oriented storage","Flexible schema","Horizontal scaling","JSON-like documents"],"tags":["database","nosql","document","scalable"]}
+{"type":"relation","from":"React","to":"Vue.js","relationType":"competes_with"}
+{"type":"relation","from":"Express.js","to":"Django","relationType":"alternative_to"}
+{"type":"relation","from":"React","to":"Express.js","relationType":"often_used_with"}
+{"type":"relation","from":"Django","to":"PostgreSQL","relationType":"commonly_uses"}
+{"type":"relation","from":"Express.js","to":"MongoDB","relationType":"frequently_paired_with"}

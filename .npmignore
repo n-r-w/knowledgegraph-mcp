@@ -1,0 +1,57 @@
+# Source files
+src/
+tests/
+*.test.ts
+*.test.js
+
+# Development files
+.env
+.env.example
+.env.*
+tsconfig.json
+jest.config.js
+Taskfile.yml
+
+# Documentation (keep README.md)
+docs/
+IMPLEMENTATION_PLAN.md
+PERFORMANCE_TESTING.md
+
+# Build artifacts
+*.tsbuildinfo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Node modules (should not be in repo anyway)
+node_modules/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Performance test results
+benchmark-results.json

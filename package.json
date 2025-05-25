@@ -1,0 +1,74 @@
+{
+  "name": "knowledgegraph-mcp",
+  "version": "0.6.3",
+  "description": "MCP server for enabling persistent knowledge storage for Claude through a knowledge graph with multiple storage backends",
+  "license": "MIT",
+  "author": "rvnikulenk",
+  "homepage": "https://github.com/rvnikulenk/knowledgegraph-mcp",
+  "bugs": "https://github.com/rvnikulenk/knowledgegraph-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvnikulenk/knowledgegraph-mcp.git"
+  },
+  "type": "module",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "knowledge-graph",
+    "memory",
+    "ai",
+    "anthropic",
+    "persistent-memory",
+    "sqlite",
+    "postgresql",
+    "search",
+    "fuzzy-search"
+  ],
+  "bin": {
+    "knowledgegraph-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/*.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run test && npm run build",
+    "preversion": "npm run test",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish",
+    "watch": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:performance": "jest tests/performance --testTimeout=60000",
+    "benchmark": "npm run build && node dist/scripts/run-benchmarks.js",
+    "benchmark:search": "jest tests/performance/search-performance.test.ts --testTimeout=60000",
+    "benchmark:database": "jest tests/performance/database-performance.test.ts --testTimeout=60000",
+    "benchmark:load": "jest tests/performance/load-testing.test.ts --testTimeout=120000"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.1",
+    "better-sqlite3": "^11.10.0",
+    "fuse.js": "^7.1.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22",
+    "@types/pg": "^8.10.0",
+    "jest": "^29.7.0",
+    "shx": "^0.3.4",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.6.2"
+  }
+}
