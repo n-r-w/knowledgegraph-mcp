@@ -31,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "create_entities",
-        description: "Create multiple new entities in the knowledge graph",
+        description: "Create new entities (people, concepts, objects) in the knowledge graph. Use this when you encounter new information about entities that don't exist yet. Entities with existing names will be ignored (use add_observations to update existing entities).",
         inputSchema: {
           type: "object",
           properties: {
@@ -41,17 +41,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "The name of the entity" },
-                  entityType: { type: "string", description: "The type of the entity" },
+                  name: { type: "string", description: "Unique identifier for the entity (e.g., 'John Smith', 'React.js', 'Project Alpha')" },
+                  entityType: { type: "string", description: "Category of the entity (e.g., 'person', 'technology', 'project', 'company', 'concept')" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of observation contents associated with the entity"
+                    description: "Array of factual statements about this entity (e.g., ['Software engineer at Google', 'Lives in San Francisco'])"
                   },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of tags for exact-match searching (optional)"
+                    description: "Optional categorical labels for filtering and organization (e.g., ['urgent', 'technical', 'completed'])"
                   },
                 },
                 required: ["name", "entityType", "observations"],
@@ -68,7 +68,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
+        description: "Create relationships between existing entities (e.g., 'John works_at Google', 'React uses JavaScript'). Use this to connect entities with meaningful relationships. Both entities must exist first. Use active voice for relation types (e.g., 'manages', 'created_by', 'depends_on').",
         inputSchema: {
           type: "object",
           properties: {
@@ -78,9 +78,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  from: { type: "string", description: "The name of the entity where the relation starts" },
-                  to: { type: "string", description: "The name of the entity where the relation ends" },
-                  relationType: { type: "string", description: "The type of the relation" },
+                  from: { type: "string", description: "Name of the source entity (must exist in the knowledge graph)" },
+                  to: { type: "string", description: "Name of the target entity (must exist in the knowledge graph)" },
+                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on', 'located_in')" },
                 },
                 required: ["from", "to", "relationType"],
               },
@@ -96,7 +96,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "Add new observations to existing entities in the knowledge graph",
+        description: "Add new factual information to existing entities. Use this to record specific facts, details, or updates about entities you've already created. Each observation should be a single, atomic fact. Don't duplicate existing observations.",
         inputSchema: {
           type: "object",
           properties: {
@@ -127,7 +127,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_entities",
-        description: "Delete multiple entities and their associated relations from the knowledge graph",
+        description: "Permanently remove entities and all their relationships from the knowledge graph. Use this when entities are no longer relevant or were created in error. This cascades to delete all relations involving these entities. Use with caution - this cannot be undone.",
         inputSchema: {
           type: "object",
           properties: {
@@ -147,7 +147,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_observations",
-        description: "Delete specific observations from entities in the knowledge graph",
+        description: "Remove specific outdated or incorrect facts from entities while keeping the entities themselves. Use this to correct misinformation or remove obsolete details. The entity remains with its other observations and relationships intact.",
         inputSchema: {
           type: "object",
           properties: {
@@ -178,7 +178,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "Delete multiple relations from the knowledge graph",
+        description: "Remove specific relationships between entities while keeping the entities themselves. Use this when relationships change or were incorrectly established (e.g., someone changes jobs, a project ends). Entities remain unaffected.",
         inputSchema: {
           type: "object",
           properties: {
@@ -206,7 +206,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "read_graph",
-        description: "Read the entire knowledge graph",
+        description: "Retrieve the complete knowledge graph with all entities and relationships. Use this to get a full overview of stored knowledge, understand the current state, or when you need to see all connections. Returns everything in the specified project.",
         inputSchema: {
           type: "object",
           properties: {
@@ -220,11 +220,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "search_nodes",
-        description: "Search for nodes based on query, exact tag matches, or fuzzy search",
+        description: "Find entities by text search or tags. Use this to locate specific information before reading, updating, or connecting entities. Searches across entity names, types, observations, and tags. Use exact search for precise matches or fuzzy search for similar terms.",
         inputSchema: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Search query for general text search across names, types, observations, and tags" },
+            query: { type: "string", description: "Text to search for across entity names, types, observations, and tags (e.g., 'JavaScript', 'Google employee', 'urgent tasks')" },
             exactTags: {
               type: "array",
               items: { type: "string" },
@@ -257,7 +257,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "open_nodes",
-        description: "Open specific nodes in the knowledge graph by their names",
+        description: "Retrieve specific entities by their exact names along with their relationships to other requested entities. Use this when you know the exact entity names and want detailed information about them and how they connect to each other.",
         inputSchema: {
           type: "object",
           properties: {
@@ -277,7 +277,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "Add tags to existing entities",
+        description: "Add categorical labels to entities for better organization and filtering. Use this to categorize entities (e.g., 'urgent', 'completed', 'person', 'technical'). Tags enable efficient exact-match searching and grouping of related entities.",
         inputSchema: {
           type: "object",
           properties: {
@@ -308,7 +308,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "Remove specific tags from entities",
+        description: "Remove categorical labels from entities when they're no longer applicable (e.g., remove 'in-progress' when task is completed, remove 'urgent' when priority changes). The entity and its other tags remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
