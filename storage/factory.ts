@@ -34,7 +34,7 @@ export class StorageFactory implements IStorageFactory {
    * Get default storage configuration from environment variables
    */
   static getDefaultConfig(): StorageConfig {
-    const storageType = (process.env.KNOWLEDGEGRAPH_STORAGE_TYPE as StorageType) || StorageType.POSTGRESQL;
+    const storageType = (process.env.KNOWLEDGEGRAPH_STORAGE_TYPE as StorageType) || StorageType.SQLITE;
 
     // Set default connection string based on storage type
     let defaultConnectionString: string;

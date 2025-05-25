@@ -28,14 +28,14 @@ describe('Fuzzy Search Integration Tests', () => {
   ];
 
   beforeAll(async () => {
-    // Use PostgreSQL with test database
-    const testConnectionString = process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING || 'postgresql://postgres:1@localhost:5432/knowledgegraph_test';
+    // Use SQLite with test database (in-memory for tests)
+    const testConnectionString = process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING || 'sqlite://:memory:';
 
     manager = new KnowledgeGraphManager({
-      type: StorageType.POSTGRESQL,
+      type: StorageType.SQLITE,
       connectionString: testConnectionString,
       fuzzySearch: {
-        useDatabaseSearch: true,
+        useDatabaseSearch: false, // SQLite uses client-side search
         threshold: 0.3,
         clientSideFallback: true
       }

@@ -35,15 +35,16 @@ docker build -t knowledgegraph-mcp .
 
 ### Step 2: Choose Your Database
 
-**SQLite (Recommended for beginners - No setup needed):**
+**SQLite (Default - No setup needed):**
 - No database installation required
 - Database file created automatically in `{home}/.knowledge-graph/`
-- Perfect for personal use
+- Perfect for personal use and most scenarios
+- **This is the default backend**
 
 **PostgreSQL (For advanced users):**
 - Install PostgreSQL on your system
 - Create a database: `CREATE DATABASE knowledgegraph;`
-- Better for production use
+- Better for production use with multiple concurrent users
 
 ### Step 3: Configure client
 
@@ -56,16 +57,13 @@ Edit your Claude Desktop configuration file:
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-**If you chose NPX + SQLite (easiest):**
+**If you chose NPX + SQLite (default and easiest):**
 ```json
 {
   "mcpServers": {
     "Knowledge Graph": {
       "command": "npx",
-      "args": ["knowledgegraph-mcp"],
-      "env": {
-        "KNOWLEDGEGRAPH_STORAGE_TYPE": "sqlite"
-      }
+      "args": ["knowledgegraph-mcp"]
     }
   }
 }
@@ -73,7 +71,7 @@ Edit your Claude Desktop configuration file:
 
 > **Note**: SQLite will automatically create the database in `{home}/.knowledge-graph/knowledgegraph.db`. To use a custom location, add: `"KNOWLEDGEGRAPH_SQLITE_PATH": "/path/to/your/database.db"`
 
-**If you chose Docker + SQLite:**
+**If you chose Docker + SQLite (default):**
 ```json
 {
   "mcpServers": {
@@ -82,7 +80,6 @@ Edit your Claude Desktop configuration file:
       "args": [
         "run", "-i", "--rm",
         "-v", "${HOME}/.knowledge-graph:/app/.knowledge-graph",
-        "-e", "KNOWLEDGEGRAPH_STORAGE_TYPE=sqlite",
         "knowledgegraph-mcp"
       ]
     }
@@ -112,7 +109,7 @@ Edit your Claude Desktop configuration file:
 
 If you also want to use this with VS Code, add this to your User Settings (JSON) or create `.vscode/mcp.json`:
 
-**Using NPX + SQLite:**
+**Using NPX + SQLite (default):**
 ```json
 {
   "mcp": {
@@ -121,7 +118,6 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
         "command": "npx",
         "args": ["knowledgegraph-mcp"],
         "env": {
-          "KNOWLEDGEGRAPH_STORAGE_TYPE": "sqlite",
           "KNOWLEDGEGRAPH_CONNECTION_STRING": "sqlite://./knowledgegraph.db"
         }
       }
@@ -130,7 +126,7 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
 }
 ```
 
-**Using Docker:**
+**Using Docker (default SQLite):**
 ```json
 {
   "mcp": {
@@ -139,7 +135,6 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
         "command": "docker",
         "args": [
           "run", "-i", "--rm",
-          "-e", "KNOWLEDGEGRAPH_STORAGE_TYPE=sqlite",
           "-e", "KNOWLEDGEGRAPH_CONNECTION_STRING=sqlite://./knowledgegraph.db",
           "knowledgegraph-mcp"
         ]

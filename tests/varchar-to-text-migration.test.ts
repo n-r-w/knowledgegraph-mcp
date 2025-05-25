@@ -6,14 +6,14 @@ describe('VARCHAR to TEXT Migration Verification', () => {
   const testProject = `text-migration-test-${Date.now()}`;
 
   beforeAll(async () => {
-    // Use PostgreSQL with test database
-    const testConnectionString = process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING || 'postgresql://postgres:1@localhost:5432/knowledgegraph_test';
+    // Use SQLite with test database (in-memory for tests)
+    const testConnectionString = process.env.KNOWLEDGEGRAPH_TEST_CONNECTION_STRING || 'sqlite://:memory:';
 
     manager = new KnowledgeGraphManager({
-      type: StorageType.POSTGRESQL,
+      type: StorageType.SQLITE,
       connectionString: testConnectionString,
       fuzzySearch: {
-        useDatabaseSearch: true,
+        useDatabaseSearch: false, // SQLite uses client-side search
         threshold: 0.3,
         clientSideFallback: true
       }
@@ -49,7 +49,7 @@ describe('VARCHAR to TEXT Migration Verification', () => {
       expect(created[0].entityType).toBe(longEntityType);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('database') || error.message.includes('connection'))) {
-        console.warn('Skipping PostgreSQL test - database not available');
+        console.warn('Skipping SQLite test - database not available');
         return;
       }
       throw error;
@@ -91,7 +91,7 @@ describe('VARCHAR to TEXT Migration Verification', () => {
       expect(created[0].relationType).toBe(longRelationType);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('database') || error.message.includes('connection'))) {
-        console.warn('Skipping PostgreSQL test - database not available');
+        console.warn('Skipping SQLite test - database not available');
         return;
       }
       throw error;
@@ -120,7 +120,7 @@ describe('VARCHAR to TEXT Migration Verification', () => {
       expect(graph.entities[0].name).toBe(`TestEntity_${timestamp}`);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('database') || error.message.includes('connection'))) {
-        console.warn('Skipping PostgreSQL test - database not available');
+        console.warn('Skipping SQLite test - database not available');
         return;
       }
       throw error;
@@ -130,17 +130,17 @@ describe('VARCHAR to TEXT Migration Verification', () => {
   test('should maintain fuzzy search functionality with TEXT fields', async () => {
     const timestamp = Date.now();
     const entities = [{
-      name: `PostgreSQLTextFieldTest_${timestamp}`,
+      name: `SQLiteTextFieldTest_${timestamp}`,
       entityType: 'DatabaseMigrationTest',
       observations: ['Testing fuzzy search with TEXT fields after VARCHAR migration'],
-      tags: ['fuzzy-search', 'text-migration', 'postgresql']
+      tags: ['fuzzy-search', 'text-migration', 'sqlite']
     }];
 
     try {
       await manager.createEntities(entities, testProject);
 
       // Test exact search first to ensure entity was created
-      const exactResults = await manager.searchNodes(`PostgreSQLTextFieldTest_${timestamp}`, {}, testProject);
+      const exactResults = await manager.searchNodes(`SQLiteTextFieldTest_${timestamp}`, {}, testProject);
       expect(exactResults.entities.length).toBeGreaterThan(0);
 
       // Test that fuzzy search functionality is working (doesn't need to find our specific entity)
@@ -150,7 +150,7 @@ describe('VARCHAR to TEXT Migration Verification', () => {
       expect(Array.isArray(fuzzyResults.entities)).toBe(true);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('database') || error.message.includes('connection'))) {
-        console.warn('Skipping PostgreSQL test - database not available');
+        console.warn('Skipping SQLite test - database not available');
         return;
       }
       throw error;

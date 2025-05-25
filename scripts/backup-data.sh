@@ -11,8 +11,8 @@ timestamp=$(date +%Y%m%d_%H%M%S)
 mkdir -p backups
 
 # Check storage type from environment or use default
-STORAGE_TYPE=${KNOWLEDGEGRAPH_STORAGE_TYPE:-postgresql}
-CONNECTION_STRING=${KNOWLEDGEGRAPH_CONNECTION_STRING:-postgresql://postgres:1@localhost:5432/knowledgegraph}
+STORAGE_TYPE=${KNOWLEDGEGRAPH_STORAGE_TYPE:-sqlite}
+CONNECTION_STRING=${KNOWLEDGEGRAPH_CONNECTION_STRING:-sqlite://~/.knowledge-graph/knowledgegraph.db}
 
 echo "🔄 Creating backup for $STORAGE_TYPE storage..."
 
@@ -23,12 +23,12 @@ if [ "$STORAGE_TYPE" = "postgresql" ]; then
 elif [ "$STORAGE_TYPE" = "sqlite" ]; then
     # Extract database path from connection string
     db_path=$(echo "$CONNECTION_STRING" | sed 's/sqlite:\/\///')
-    
+
     if [ "$db_path" = ":memory:" ]; then
         echo "⚠️  Cannot backup in-memory SQLite database"
         exit 1
     fi
-    
+
     if [ -f "$db_path" ]; then
         backup_file="backups/backup_${timestamp}.db"
         cp "$db_path" "$backup_file"
