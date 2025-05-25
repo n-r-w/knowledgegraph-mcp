@@ -1,6 +1,6 @@
 {
   "name": "knowledgegraph-mcp",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "MCP server for enabling persistent knowledge storage for Claude through a knowledge graph with multiple storage backends",
   "license": "MIT",
   "author": "Roman Nikulenkov",
@@ -37,7 +37,7 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm run test && npm run build",
     "preversion": "npm run test",
-    "version": "npm run build && git add -A dist",
+    "version": "npm run build",
     "postversion": "git push && git push --tags",
     "publish:patch": "npm version patch && npm publish",
     "publish:minor": "npm version minor && npm publish",
