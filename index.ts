@@ -68,7 +68,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_entities",
-        description: "🆕 CREATE new entities ONLY after search_nodes confirms they don't exist. WHEN TO USE: search_nodes returned empty results for new entities you need. VALIDATION CHECKLIST: ✓ Each entity has ≥1 non-empty observation ✓ Entity names are unique and descriptive ✓ EntityType is one of: person, technology, project, company, concept, event, preference ✓ Project parameter matches workspace (calculate once, reuse everywhere). IMMEDIATE NEXT STEPS: Add relations and tags to new entities. AVOID: Creating entities that already exist (will be ignored).",
+        description: "🆕 CREATE new entities ONLY after search_knowledge confirms they don't exist. WHEN TO USE: search_knowledge returned empty results for new entities you need. VALIDATION CHECKLIST: ✓ Each entity has ≥1 non-empty observation ✓ Entity names are unique and descriptive ✓ EntityType is one of: person, technology, project, company, concept, event, preference ✓ Project parameter matches workspace (calculate once, reuse everywhere). IMMEDIATE NEXT STEPS: Add relations and tags to new entities. AVOID: Creating entities that already exist (will be ignored).",
         inputSchema: {
           type: "object",
           properties: {
@@ -105,7 +105,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "📝 ADD factual observations to existing entities. WHEN TO USE: search_nodes found the entity and you have new information to add. PREREQUISITE: Target entity must exist (verify with search_nodes first). REQUIREMENT: ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific. AVOID: Adding observations to non-existent entities (will fail).",
+        description: "📝 ADD factual observations to existing entities. WHEN TO USE: search_knowledge found the entity and you have new information to add. PREREQUISITE: Target entity must exist (verify with search_knowledge first). REQUIREMENT: ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific. AVOID: Adding observations to non-existent entities (will fail).",
         inputSchema: {
           type: "object",
           properties: {
@@ -136,7 +136,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "🔗 CONNECT entities that already exist in the graph. WHEN TO USE: You have two existing entities that should be connected. PREREQUISITE VALIDATION: ✓ Both entities exist (verify with search_nodes first) ✓ Relationship type uses active voice (e.g., 'manages' not 'managed_by') ✓ Relationship makes logical sense (person works_at company, not reverse). COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to. AVOID: Creating relations before entities exist (will fail), passive voice relations.",
+        description: "🔗 CONNECT entities that already exist in the graph. WHEN TO USE: You have two existing entities that should be connected. PREREQUISITE VALIDATION: ✓ Both entities exist (verify with search_knowledge first) ✓ Relationship type uses active voice (e.g., 'manages' not 'managed_by') ✓ Relationship makes logical sense (person works_at company, not reverse). COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to. AVOID: Creating relations before entities exist (will fail), passive voice relations.",
         inputSchema: {
           type: "object",
           properties: {
@@ -256,45 +256,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "search_nodes",
-        description: "SEARCH entities by text or tags. MANDATORY STRATEGY: 1) Try searchMode='exact' first 2) If no results, use searchMode='fuzzy' 3) If still empty, lower fuzzyThreshold to 0.1. EXACT MODE: Perfect substring matches. FUZZY MODE: Similar/misspelled terms. TAG SEARCH: Use exactTags for precise category filtering.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            query: { type: "string", description: "Text to search for across entity names, types, observations, and tags (e.g., 'JavaScript', 'Google employee', 'urgent tasks')" },
-            exactTags: {
-              type: "array",
-              items: { type: "string" },
-              description: "Tags for exact-match searching (case-sensitive). When provided, general query is ignored. Use for category filtering."
-            },
-            tagMatchMode: {
-              type: "string",
-              enum: ["any", "all"],
-              description: "For exactTags: 'any'=entities with ANY tag, 'all'=entities with ALL tags (default: any)"
-            },
-            searchMode: {
-              type: "string",
-              enum: ["exact", "fuzzy"],
-              description: "EXACT: substring matching (fast, precise). FUZZY: similarity matching (slower, broader). DEFAULT: exact. Use fuzzy only if exact returns no results."
-            },
-            fuzzyThreshold: {
-              type: "number",
-              minimum: 0.0,
-              maximum: 1.0,
-              description: "Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results."
-            },
-            project: {
-              type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
-              pattern: "^[a-zA-Z0-9_-]+$"
-            }
-          },
-          required: ["query"],
-        },
-      },
-      {
         name: "open_nodes",
-        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE: You know exact entity names and want detailed info about them and their connections. RETURNS: Requested entities plus relationships between them. PREREQUISITE: Entity names must be exact matches. USE CASE: Deep dive into specific entities after finding them with search_nodes.",
+        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE: You know exact entity names and want detailed info about them and their connections. RETURNS: Requested entities plus relationships between them. PREREQUISITE: Entity names must be exact matches. USE CASE: Deep dive into specific entities after finding them with search_knowledge.",
         inputSchema: {
           type: "object",
           properties: {
@@ -314,7 +277,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "🏷️ ADD status/category tags for INSTANT filtering. WHEN TO USE: After creating entities to categorize them for easy retrieval. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). PREREQUISITE: Target entities must exist. REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal']. NEXT STEP: Use search_nodes(exactTags=['tag']) to find tagged entities.",
+        description: "🏷️ ADD status/category tags for INSTANT filtering. WHEN TO USE: After creating entities to categorize them for easy retrieval. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). PREREQUISITE: Target entities must exist. REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal']. NEXT STEP: Use search_knowledge(exactTags=['tag']) to find tagged entities.",
         inputSchema: {
           type: "object",
           properties: {
@@ -421,7 +384,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       let successMsg = `� SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
 
       if (entityCount === 0) {
-        successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_nodes(searchMode='fuzzy')";
+        successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_knowledge(searchMode='fuzzy')";
       } else if (entityCount > 20) {
         successMsg += "\n⚠️ MANY RESULTS: Consider adding tags for filtering. Use exactTags=['category']";
       }
@@ -443,7 +406,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     case "create_relations": {
       const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
       const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
-      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_nodes to explore connected entities" : "";
+      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_knowledge to explore connected entities" : "";
       return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "delete_entities": {
@@ -481,7 +444,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const result = await knowledgeGraphManager.addTags(args.updates as { entityName: string; tags: string[] }[], project);
       const totalAdded = result.reduce((sum, r) => sum + r.addedTags.length, 0);
       const successMsg = `🏷️ SUCCESS: Added ${totalAdded} tags to ${result.length} entities`;
-      const nextSteps = totalAdded > 0 ? "\n🔍 NEXT STEPS: Use search_nodes(exactTags=['tag']) to find tagged entities" : "";
+      const nextSteps = totalAdded > 0 ? "\n🔍 NEXT STEPS: Use search_knowledge(exactTags=['tag']) to find tagged entities" : "";
       return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "remove_tags": {

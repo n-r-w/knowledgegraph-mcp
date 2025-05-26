@@ -159,9 +159,9 @@ All LLMs behave differently. For some, general instructions are enough, while ot
    - CRITICAL: Use EXACT same project value throughout entire conversation
 
 ## SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_nodes(query="...", searchMode="exact")
-2. IF NO RESULTS: search_nodes(query="...", searchMode="fuzzy")
-3. IF STILL EMPTY: search_nodes(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+1. FIRST: search_knowledge(query="...", searchMode="exact")
+2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
+3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
 4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
 ## ENTITY CREATION RULES
@@ -193,10 +193,10 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 
 ## INITIALIZATION SEQUENCE (EXECUTE EVERY TIME)
 1. OUTPUT: "Saving knowledge..."
-2. EXECUTE: search_nodes(query=relevant_context, searchMode="exact", project=workspace_project)
-3. IF EMPTY: search_nodes(query=relevant_context, searchMode="fuzzy", project=workspace_project)
-4. IF STILL EMPTY: search_nodes(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
-5. FOR CATEGORIES: search_nodes(exactTags=["relevant_tag"], project=workspace_project)
+2. EXECUTE: search_knowledge(query=relevant_context, searchMode="exact", project=workspace_project)
+3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project=workspace_project)
+4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
+5. FOR CATEGORIES: search_knowledge(exactTags=["relevant_tag"], project=workspace_project)
 
 ## PROJECT PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
 - CALCULATE ONCE: project = workspace_path → lowercase → remove special chars → underscores
@@ -256,8 +256,8 @@ RULE: Use EXACT same project value in ALL tool calls for same workspace
 
 ## EVERY CONVERSATION:
 1. Say "Saving knowledge..."
-2. search_nodes(query=context, project=YOUR_CALCULATED_PROJECT_ID)
-3. If empty: search_nodes(query=context, searchMode="fuzzy", project=YOUR_CALCULATED_PROJECT_ID)
+2. search_knowledge(query=context, project=YOUR_CALCULATED_PROJECT_ID)
+3. If empty: search_knowledge(query=context, searchMode="fuzzy", project=YOUR_CALCULATED_PROJECT_ID)
 
 ## WHEN CREATING:
 - Entities: MUST have ≥1 observation + relevant tags
@@ -337,9 +337,9 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - CRITICAL: Use EXACT same project value throughout entire conversation
 
 ### SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_nodes(query="...", searchMode="exact")
-2. IF NO RESULTS: search_nodes(query="...", searchMode="fuzzy")
-3. IF STILL EMPTY: search_nodes(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+1. FIRST: search_knowledge(query="...", searchMode="exact")
+2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
+3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
 4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
 ### ENTITY CREATION RULES
@@ -495,7 +495,7 @@ The server provides these tools for managing your knowledge graph:
 **Input:**
 - `project` (string, optional): Project name to isolate data
 
-#### search_nodes
+#### search_knowledge
 **SEARCH** entities by text or tags.
 - **MANDATORY STRATEGY:** 1) Try searchMode='exact' first 2) If no results, use searchMode='fuzzy' 3) If still empty, lower fuzzyThreshold to 0.1
 - **EXACT MODE:** Perfect substring matches (fast, precise)
@@ -634,14 +634,10 @@ For more detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHO
 
 This is an enhanced version of the official [MCP Memory Server](https://github.com/modelcontextprotocol/servers/blob/main/src/memory/README.md) with additional features:
 
-- **Multiple Storage Options**: PostgreSQL (recommended) or SQLite
+- **Multiple Storage Options**: PostgreSQL (recommended) or SQLite (local file)
 - **Project Separation**: Keep different projects isolated
 - **Better Search**: Find information with fuzzy search
 - **Easy Setup**: Docker support and simple installation
-
-**BREAKING CHANGE:** The `add_observations` tool now uses `observations` field instead of `contents` for consistency with `delete_observations`.
-
-**Why this change:** The original MCP Memory Server had inconsistent field names (`contents` vs `observations`) which confused LLMs and users. Our implementation now uses `observations` consistently for both `add_observations` and `delete_observations` tools, making the API more intuitive and LLM-friendly.
 
 ## License
 
