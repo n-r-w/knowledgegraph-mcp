@@ -31,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_knowledge",
-        description: "🔍 START HERE - Always search first to check if entities exist before creating. SUPPORTS MULTIPLE QUERIES: Use single string for one object or array for multiple objects. WHEN TO USE: 'I need to find information about X' or 'Does X already exist?' or 'Find multiple objects: X, Y, Z'. DECISION TREE: 1) Single object? → Use query='term' 2) Multiple objects? → Use query=['term1', 'term2', 'term3'] 3) Looking for specific entities? → Use searchMode='exact' 4) No exact results? → Retry with searchMode='fuzzy' 5) Still no results? → Lower fuzzyThreshold to 0.1 6) Looking by category? → Use exactTags instead of query. MANDATORY STRATEGY: exact → fuzzy → lower threshold. EXAMPLES: query='JavaScript' OR query=['JavaScript', 'React', 'Node.js']. AVOID: Starting with fuzzy search (slower and less precise).",
+        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE:\n1. EXISTENCE CHECK: 'Does X already exist?'\n2. INFORMATION RETRIEVAL: 'Find facts about X'\n3. MULTIPLE OBJECT SEARCH: 'Find X, Y and Z at once'\n4. CATEGORY FILTERING: 'Find all urgent tasks'\n\nSEARCH STRATEGY FLOWCHART:\n1. EXACT SEARCH (FASTEST): search_knowledge(query='term', searchMode='exact')\n2. MULTIPLE TERMS: search_knowledge(query=['term1', 'term2', 'term3']) for batch search\n3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query='term', searchMode='fuzzy')\n4. BROADER SEARCH (LAST RESORT): search_knowledge(query='term', fuzzyThreshold=0.1)\n5. CATEGORY SEARCH: search_knowledge(exactTags=['urgent', 'completed'])\n\nMUST USE BEFORE:\n✓ create_entities: Verify non-existence first\n✓ add_observations: Confirm entity exists first\n✓ create_relations: Verify both entities exist\n\nAVOID: Starting with fuzzy search (slower and less precise)",
         inputSchema: {
           type: "object",
           properties: {
@@ -74,7 +74,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_entities",
-        description: "🆕 CREATE new entities ONLY after search_knowledge confirms they don't exist. WHEN TO USE: search_knowledge returned empty results for new entities you need. VALIDATION CHECKLIST: ✓ Each entity has ≥1 non-empty observation ✓ Entity names are unique and descriptive ✓ EntityType is one of: person, technology, project, company, concept, event, preference ✓ Project parameter matches workspace (calculate once, reuse everywhere). IMMEDIATE NEXT STEPS: Add relations and tags to new entities. AVOID: Creating entities that already exist (will be ignored).",
+        description: "🆕 CREATE new entities for persistent memory. WHEN TO USE:\n1. NEW INFORMATION: 'Remember X for future conversations'\n2. AFTER SEARCH FAILS: search_knowledge returned empty results\n3. STRUCTURED DATA: Need to track complex information with relationships\n\nPREREQUISITE CHECKLIST:\n✓ VERIFIED NON-EXISTENCE: Always run search_knowledge first\n✓ VALID ENTITY TYPE: Must be one of: person, technology, project, company, concept, event, preference\n✓ MEANINGFUL OBSERVATIONS: Each entity needs ≥1 specific fact\n✓ DESCRIPTIVE NAMING: Use specific names (e.g., 'John_Smith_Engineer' not just 'John')\n\nNEXT STEPS AFTER CREATION:\n1. create_relations: Connect to other entities\n2. add_tags: Categorize for easy retrieval\n\nAVOID: Creating duplicate entities or using generic names",
         inputSchema: {
           type: "object",
           properties: {
@@ -111,7 +111,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "📝 ADD factual observations to existing entities. WHEN TO USE: search_knowledge found the entity and you have new information to add. PREREQUISITE: Target entity must exist (verify with search_knowledge first). REQUIREMENT: ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific. AVOID: Adding observations to non-existent entities (will fail).",
+        description: "📝 ADD factual observations to existing entities. WHEN TO USE:\n1. UPDATING KNOWLEDGE: 'Add new information about X'\n2. SUPPLEMENTING ENTITIES: 'Remember additional details about X'\n3. TRACKING CHANGES: 'Record that X has changed'\n\nDECISION CRITERIA:\n✓ ENTITY EXISTS: Must verify with search_knowledge first\n✓ NEW INFORMATION: Don't duplicate existing observations\n✓ ATOMIC FACTS: Keep each observation focused on a single fact\n\nINPUT REQUIREMENTS:\n✓ TARGET ENTITY: Must be exact entity name that exists\n✓ OBSERVATIONS: At least one non-empty string per update\n\nEXAMPLES:\n- 'User prefers dark mode' (for a preference entity)\n- 'React v18 released March 2022' (for a technology entity)\n\nAVOID: Adding to non-existent entities or duplicate observations",
         inputSchema: {
           type: "object",
           properties: {
@@ -142,7 +142,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "🔗 CONNECT entities that already exist in the graph. WHEN TO USE: You have two existing entities that should be connected. PREREQUISITE VALIDATION: ✓ Both entities exist (verify with search_knowledge first) ✓ Relationship type uses active voice (e.g., 'manages' not 'managed_by') ✓ Relationship makes logical sense (person works_at company, not reverse). COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to. AVOID: Creating relations before entities exist (will fail), passive voice relations.",
+        description: "🔗 CONNECT entities to build relationship network. WHEN TO USE:\n1. ESTABLISHING CONNECTIONS: 'X is related to Y'\n2. DEFINING HIERARCHIES: 'X depends on Y'\n3. OWNERSHIP/ASSIGNMENT: 'X is assigned to Y'\n4. BUILDING KNOWLEDGE GRAPH: After creating multiple entities\n\nPREREQUISITE VALIDATION:\n✓ ENTITY EXISTENCE: Both entities MUST exist (verify with search_knowledge)\n✓ DIRECTIONALITY: Always use active voice relationships\n - CORRECT: 'person works_at company'\n - INCORRECT: 'company employs person'\n✓ SEMANTIC CORRECTNESS: Relationship must make logical sense\n\nCOMMON RELATIONSHIP PATTERNS:\n- works_at: Person → Company\n- manages: Person → Project/Person\n- depends_on: Technology → Technology\n- created_by: Project → Person\n- assigned_to: Task → Person\n- uses: Project → Technology\n\nAVOID: Relations with non-existent entities or illogical connections",
         inputSchema: {
           type: "object",
           properties: {
@@ -170,7 +170,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_entities",
-        description: "🗑️ PERMANENTLY DELETE entities and all their relationships. WARNING: Cannot be undone, cascades to remove all connections. WHEN TO USE: Entities no longer relevant or created in error. CRITICAL: This is destructive and irreversible. PREREQUISITE: Confirm entities exist and should be deleted. USE CASE: Cleanup, error correction.",
+        description: "🗑️ PERMANENTLY DELETE entities and all their relationships. WHEN TO USE:\n1. ERROR CORRECTION: 'Remove entity created by mistake'\n2. OUTDATED INFORMATION: 'Delete obsolete entity'\n3. CLEANUP: 'Remove test entities'\n\n⚠️ HIGH-RISK OPERATION: This action is destructive and irreversible\n\nPREREQUISITE SAFETY CHECKS:\n✓ ENTITY EXISTS: Verify with search_knowledge first\n✓ INTENTIONAL DELETION: Confirm this entity should be permanently removed\n✓ CASCADING EFFECTS: All relations involving this entity will also be deleted\n✓ NO ALTERNATIVES: Consider if add_observations or delete_observations would be better\n\nSAFER ALTERNATIVES:\n- delete_observations: To remove specific facts while keeping entity\n- remove_tags: To change entity status without deletion\n\nAVOID: Deleting entities that might be needed later (cannot be recovered)",
         inputSchema: {
           type: "object",
           properties: {
@@ -190,7 +190,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_observations",
-        description: "🗑️ REMOVE specific observations from entities while keeping entities intact. WHEN TO USE: Correct misinformation or remove obsolete details. PRESERVATION: Entity and other observations remain unchanged. USE CASE: Data correction, removing outdated information. SAFE: Less destructive than delete_entities.",
+        description: "🗑️ SELECTIVELY REMOVE specific facts while preserving entity. WHEN TO USE:\n1. CORRECT ERRORS: 'Fix incorrect information about X'\n2. UPDATE INFORMATION: 'Remove outdated facts about X'\n3. PRECISION EDITING: 'Delete specific details while keeping entity'\n\nSAFETY ADVANTAGES:\n✓ NON-DESTRUCTIVE: Entity remains intact\n✓ SELECTIVE: Only removes specified observations\n✓ PRESERVES RELATIONS: All entity connections remain unchanged\n✓ KEEPS TAGS: Entity categorization remains intact\n\nDECISION CRITERIA:\n✓ ENTITY EXISTS: Verify with search_knowledge first\n✓ SPECIFIC OBSERVATIONS: Know exactly which facts to remove\n✓ PARTIAL UPDATE: Only want to remove some facts, not the entire entity\n\nUSE INSTEAD OF delete_entities WHEN:\n- Information is partially correct (remove only wrong facts)\n- Entity should continue to exist in knowledge graph\n\nAVOID: Removing all observations without deleting entity",
         inputSchema: {
           type: "object",
           properties: {
@@ -221,7 +221,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "🗑️ UPDATE relationship structure when connections change. WHEN TO USE: Relationships become outdated or incorrect. CRITICAL for: job changes (remove old 'works_at'), project completion (remove 'assigned_to'), technology migration (remove old 'uses'). MAINTAINS accurate network structure. WORKFLOW: Always remove outdated relations to prevent confusion. SAFE: Entities remain unchanged.",
+        description: "🗑️ UPDATE relationship network when connections change. WHEN TO USE:\n1. STATUS CHANGES: 'Person no longer works at Company'\n2. PROJECT COMPLETION: 'Task is no longer assigned to Person'\n3. ROLE CHANGES: 'Person no longer manages Project'\n4. DEPENDENCY UPDATES: 'Project no longer uses Technology'\n\nKEY SITUATIONS REQUIRING RELATION UPDATES:\n✓ JOB CHANGES: Remove old 'works_at' relations when someone changes jobs\n✓ PROJECT COMPLETION: Remove 'assigned_to' when tasks are finished\n✓ TECHNOLOGY MIGRATION: Remove 'uses' when systems are upgraded\n✓ RESPONSIBILITY SHIFTS: Remove 'manages' when roles change\n\nDECISION CRITERIA:\n✓ RELATIONSHIP EXISTED: Verify with search_knowledge or read_graph first\n✓ RELATIONSHIP IS OUTDATED: Connection no longer accurate\n✓ ENTITIES STILL VALID: Both entities should continue to exist\n\nSAFETY FEATURES:\n✓ PRESERVES ENTITIES: Both connected entities remain intact\n✓ SELECTIVE REMOVAL: Only specified relations are removed\n✓ DATA INTEGRITY: Maintains accurate knowledge graph\n\nAVOID: Leaving outdated relationships in the knowledge graph",
         inputSchema: {
           type: "object",
           properties: {
@@ -283,7 +283,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "🏷️ ADD status/category tags for INSTANT filtering. WHEN TO USE: After creating entities to categorize them for easy retrieval. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). PREREQUISITE: Target entities must exist. REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal']. NEXT STEP: Use search_knowledge(exactTags=['tag']) to find tagged entities.",
+        description: "🏷️ ADD categorical tags for INSTANT filtering. WHEN TO USE:\n1. CATEGORIZATION: 'Mark entity X as urgent/completed/etc'\n2. STATUS TRACKING: 'Update task status to in-progress'\n3. TYPE ASSIGNMENT: 'Tag as technical/personal/feature'\n4. PRIORITY MARKING: 'Flag entity as important/urgent'\n\nKEY TAGGING SCENARIOS:\n✓ PROJECT MANAGEMENT: Track task status (urgent, in-progress, completed)\n✓ CONTENT ORGANIZATION: Categorize by type (technical, personal, feature)\n✓ PRIORITY TRACKING: Assign importance (high, medium, low)\n✓ FILTERING PREPARATION: Enable precise searching by tag\n\nCOMMON TAG CATEGORIES:\n- STATUS: ['urgent', 'in-progress', 'completed', 'blocked']\n- TYPE: ['bug', 'feature', 'enhancement', 'technical', 'personal']\n- PRIORITY: ['high', 'medium', 'low']\n- DOMAIN: ['frontend', 'backend', 'database', 'documentation']\n\nQUICK RETRIEVAL:\n- Use search_knowledge(exactTags=['tag']) to instantly find all entities with specific tag\n\nAVOID: Using tags when observations would be more appropriate for descriptive content",
         inputSchema: {
           type: "object",
           properties: {
@@ -314,7 +314,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "🏷️ UPDATE entity status by removing outdated tags. WHEN TO USE: Status changes require tag cleanup (e.g., remove 'in-progress' when completed, 'urgent' when resolved). CRITICAL for status tracking and clean search results. WORKFLOW: Always remove old status tags when adding new ones. MAINTAINS accurate categorization.",
+        description: "🏷️ REMOVE outdated tags to maintain accurate categorization. WHEN TO USE:\n1. STATUS UPDATES: 'Task is no longer in-progress'\n2. PRIORITY CHANGES: 'Issue is no longer urgent'\n3. CATEGORY CHANGES: 'Project is no longer backend-focused'\n4. TAG CLEANUP: After entity purpose or classification changes\n\nCRITICAL STATUS MANAGEMENT SCENARIOS:\n✓ TASK COMPLETION: Remove 'in-progress' tag when adding 'completed'\n✓ PRIORITY RESOLUTION: Remove 'urgent' tag when issue addressed\n✓ ROLE CHANGES: Remove domain tags when project focus shifts\n✓ CLASSIFICATION CLEANUP: Remove incorrect or outdated categorization\n\nTAG LIFECYCLE MANAGEMENT:\n1. SEARCH entity with search_knowledge to confirm current tags\n2. REMOVE outdated tags with remove_tags\n3. ADD new status tags with add_tags\n\nDECISION CRITERIA:\n✓ TAG EXISTS: Verify entity has the tag before removing\n✓ TAG IS OUTDATED: Status or classification no longer applies\n✓ STATUS TRANSITION: Entity is changing state/category\n\nAVOID: Leaving contradictory tags (e.g., both 'in-progress' and 'completed')",
         inputSchema: {
           type: "object",
           properties: {
