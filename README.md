@@ -136,52 +136,83 @@ Close and reopen Claude Desktop. You should now see "Knowledge Graph" in your av
 
 ### Step 5: Test It Works
 
-In Claude, try saying: "Remember that I prefer morning meetings" and Claude should save this to your knowledge graph.
+**Quick Test Commands for LLMs:**
+1. "Remember that I prefer morning meetings" → Creates preference entity
+2. "John Smith works at Google as a software engineer" → Creates person + company + relation
+3. "Find all people who work at Google" → Tests search and relations
+4. "Mark the morning meetings preference as urgent" → Tests tagging
 
 > **Note**: The service includes comprehensive input validation to prevent errors. If you encounter any issues, check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for common solutions.
 
-## How It Works
+## How It Works - LLM Power Features
 
-The knowledge graph stores information in four simple concepts:
+The knowledge graph enables powerful queries through four interconnected concepts:
 
-### 1. Entities
-Think of entities as the main "things" you want to remember - people, projects, companies, etc.
+### 1. Entities - Your Knowledge Nodes
+Store people, projects, companies, technologies as searchable entities.
 
-**Example:**
+**Real Example - Project Management:**
 ```json
 {
-  "name": "John_Smith",
+  "name": "Sarah_Chen",
   "entityType": "person",
-  "observations": ["Speaks fluent Spanish", "Prefers morning meetings"],
-  "tags": ["employee", "team-lead"]
+  "observations": ["Senior React developer", "Leads frontend team", "Available for urgent tasks"],
+  "tags": ["developer", "team-lead", "available"]
 }
 ```
+**LLM Benefit:** Find "all available team leads" instantly with tag search.
 
-### 2. Relations
-Relations connect entities together, showing how they relate.
+### 2. Relations - Enable Discovery Queries
+Connect entities to answer complex questions like "Who works on what?"
 
-**Example:**
+**Real Example - Team Structure:**
 ```json
 {
-  "from": "John_Smith",
-  "to": "Anthropic",
-  "relationType": "works_at"
+  "from": "Sarah_Chen",
+  "to": "Project_Alpha",
+  "relationType": "leads"
 }
 ```
+**LLM Benefit:** Query "Find all projects Sarah leads" or "Who leads Project Alpha?"
 
-### 3. Observations
-Observations are individual facts about entities.
+### 3. Observations - Atomic Facts
+Store specific, searchable facts about entities.
 
-**Example:**
-- "Speaks fluent Spanish"
-- "Graduated in 2019"
-- "Prefers morning meetings"
+**Real Examples - Actionable Information:**
+- "Available for urgent tasks" → Find available people
+- "Uses React 18.2" → Find projects with specific tech
+- "Deadline: March 15, 2024" → Find upcoming deadlines
 
-### 4. Tags
-Tags help you categorize and quickly find entities.
+### 4. Tags - Instant Filtering
+Enable immediate status and category searches.
 
-**Example:**
-- `["employee", "team-lead", "multilingual"]`
+**Real Examples - Project Workflow:**
+- `["urgent", "in-progress", "frontend"]` → Find urgent frontend tasks
+- `["completed", "bug-fix"]` → Track completed bug fixes
+- `["available", "senior"]` → Find available senior staff
+
+## Quick Reference for LLMs
+
+**CRITICAL FIRST STEP - Calculate Project ID:**
+```
+workspace_path → lowercase → remove special chars → underscores
+"/Users/john/dev/My-App" → "my_app"
+"C:\Code\Web Site" → "web_site"
+USE SAME VALUE IN ALL CALLS!
+```
+
+**Essential Workflow:**
+1. **SEARCH FIRST**: `search_nodes(query="...", searchMode="exact", project="my_app")` → try fuzzy if empty
+2. **CREATE ENTITIES**: `create_entities([{name, entityType, observations, tags}], project="my_app")`
+3. **CONNECT**: `create_relations([{from, to, relationType}], project="my_app")`
+4. **TAG STATUS**: `add_tags([{entityName, tags: ["urgent", "completed"]}], project="my_app")`
+
+**Common Queries:**
+- Find by status: `search_nodes(exactTags=["urgent"], project="my_app")`
+- Find by type: `search_nodes(exactTags=["developer"], project="my_app")`
+- Find by text: `search_nodes(query="React", searchMode="fuzzy", project="my_app")`
+
+**Project Parameter:** NEVER omit, ALWAYS use same calculated value
 
 ## Available Tools
 
@@ -331,9 +362,10 @@ Choose the prompt that best fits your LLM integration needs:
 
 ## MANDATORY INITIALIZATION
 1. START every conversation: Say "Saving knowledge..." then SEARCH knowledge graph
-2. PROJECT ISOLATION: ALWAYS use project parameter = normalized_workspace_path
-   - Convert: "/Users/john/dev/my-app" → "my_app"
-   - Convert: "C:\Projects\Web Site" → "web_site"
+2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
+   - RULE: workspace_path → lowercase → remove special chars → underscores
+   - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
+   - CRITICAL: Use EXACT same project value throughout entire conversation
 
 ## SEARCH STRATEGY (MANDATORY SEQUENCE)
 1. FIRST: search_nodes(query="...", searchMode="exact")
@@ -375,10 +407,11 @@ Choose the prompt that best fits your LLM integration needs:
 4. IF STILL EMPTY: search_nodes(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
 5. FOR CATEGORIES: search_nodes(exactTags=["relevant_tag"], project=workspace_project)
 
-## PROJECT PARAMETER (NEVER SKIP)
-- CALCULATE: project = normalize_path(workspace_directory)
+## PROJECT PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
+- CALCULATE ONCE: project = workspace_path → lowercase → remove special chars → underscores
 - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-- APPLY: Use same project value in ALL knowledge graph tool calls
+- RULE: Use EXACT same project value in ALL knowledge graph tool calls
+- WARNING: Different project IDs = data fragmentation and loss
 
 ## ENTITY MANAGEMENT (MANDATORY ACTIONS)
 ### CREATE entities immediately for:
@@ -425,12 +458,32 @@ Choose the prompt that best fits your LLM integration needs:
 ```
 # Knowledge Graph Protocol
 
-INITIALIZATION: Start with "Saving knowledge..." + search_nodes
-PROJECT: Always use project parameter = normalized_workspace_path
-ENTITIES: Create for people, projects, companies, technologies, events, preferences
-CONSTRAINTS: ≥1 observation per entity, active voice relations, atomic facts
-SEARCH: Try exact → fuzzy → adjust threshold
-MAINTENANCE: Update observations, create relations, clean outdated data
+## PROJECT ID (CRITICAL - USE SAME VALUE ALWAYS):
+CALCULATE ONCE: project = workspace_path → lowercase → remove special chars → underscores
+EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_site"
+RULE: Use EXACT same project value in ALL tool calls for same workspace
+
+## EVERY CONVERSATION:
+1. Say "Saving knowledge..."
+2. search_nodes(query=context, project=YOUR_CALCULATED_PROJECT_ID)
+3. If empty: search_nodes(query=context, searchMode="fuzzy", project=YOUR_CALCULATED_PROJECT_ID)
+
+## WHEN CREATING:
+- Entities: MUST have ≥1 observation + relevant tags
+- Relations: Use active voice (works_at, manages, uses)
+- Tags: Add status (urgent, completed, in-progress)
+- ALWAYS include project=YOUR_CALCULATED_PROJECT_ID
+
+## SEARCH STRATEGY:
+- Known terms: searchMode="exact"
+- Similar/typos: searchMode="fuzzy"
+- Categories: exactTags=["tag1", "tag2"]
+
+## MAINTENANCE:
+- Update: add_observations for new facts
+- Connect: create_relations for relationships
+- Clean: delete outdated relations/observations
+- ALWAYS use same project ID in all operations
 ```
 
 ## Implementation Guide

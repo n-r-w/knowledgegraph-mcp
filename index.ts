@@ -59,7 +59,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -87,7 +87,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -118,7 +118,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -138,7 +138,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -169,7 +169,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -197,7 +197,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -212,7 +212,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -248,7 +248,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -268,7 +268,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -299,7 +299,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -330,7 +330,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project name to isolate data (optional, overrides KNOWLEDGEGRAPH_PROJECT env var)",
+              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
