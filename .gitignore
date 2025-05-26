@@ -1,6 +1,11 @@
 # rundom stuff
 .ideas/*
 
+# ai
+.augment-guidelines
+.roo/*
+.roomodes
+
 # Dependencies
 node_modules/
 npm-debug.log*
