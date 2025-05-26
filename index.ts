@@ -353,49 +353,105 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
   const project = args.project as string | undefined;
 
   switch (name) {
-    case "create_entities":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.createEntities(args.entities as Entity[], project), null, 2) }] };
-    case "create_relations":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.createRelations(args.relations as Relation[], project), null, 2) }] };
-    case "add_observations":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project), null, 2) }] };
-    case "delete_entities":
-      await knowledgeGraphManager.deleteEntities(args.entityNames as string[], project);
-      return { content: [{ type: "text", text: "Entities deleted successfully" }] };
-    case "delete_observations":
-      await knowledgeGraphManager.deleteObservations(args.deletions as { entityName: string; observations: string[] }[], project);
-      return { content: [{ type: "text", text: "Observations deleted successfully" }] };
-    case "delete_relations":
-      await knowledgeGraphManager.deleteRelations(args.relations as Relation[], project);
-      return { content: [{ type: "text", text: "Relations deleted successfully" }] };
-    case "read_graph":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.readGraph(project), null, 2) }] };
-    case "search_nodes":
-      // Handle exact tag search, fuzzy search, and general search
+    case "create_entities": {
+      const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);
+      const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
+      const nextSteps = result.length > 0 ? "\n🔗 NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "create_relations": {
+      const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
+      const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
+      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_nodes to explore connected entities" : "";
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "add_observations": {
+      const result = await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project);
+      const totalAdded = result.reduce((sum, r) => sum + r.addedObservations.length, 0);
+      const successMsg = `✅ SUCCESS: Added ${totalAdded} observations to ${result.length} entities`;
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "delete_entities": {
+      const entityNames = args.entityNames as string[];
+      await knowledgeGraphManager.deleteEntities(entityNames, project);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${entityNames.length} entities and all their relations\n⚠️ WARNING: This action cannot be undone` }] };
+    }
+    case "delete_observations": {
+      const deletions = args.deletions as { entityName: string; observations: string[] }[];
+      await knowledgeGraphManager.deleteObservations(deletions, project);
+      const totalDeleted = deletions.reduce((sum, d) => sum + d.observations.length, 0);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${totalDeleted} observations from ${deletions.length} entities` }] };
+    }
+    case "delete_relations": {
+      const relations = args.relations as Relation[];
+      await knowledgeGraphManager.deleteRelations(relations, project);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${relations.length} relations\n🔗 NOTE: Entities remain unchanged` }] };
+    }
+    case "read_graph": {
+      const result = await knowledgeGraphManager.readGraph(project);
+      const entityCount = result.entities.length;
+      const relationCount = result.relations.length;
+      const successMsg = `📊 GRAPH OVERVIEW: ${entityCount} entities, ${relationCount} relations`;
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "search_nodes": {
+      let result;
+      let searchType = "";
+
       if (args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0) {
         // Exact tag search mode
         const options = {
           exactTags: args.exactTags as string[],
           tagMatchMode: (args.tagMatchMode as 'any' | 'all') || 'any'
         };
-        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.searchNodes(args.query as string, options, project), null, 2) }] };
+        result = await knowledgeGraphManager.searchNodes(args.query as string, options, project);
+        searchType = `tag search (${args.exactTags.join(', ')})`;
       } else if (args.searchMode === 'fuzzy') {
         // Fuzzy search mode
         const options = {
           searchMode: 'fuzzy' as const,
           fuzzyThreshold: args.fuzzyThreshold as number || 0.3
         };
-        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.searchNodes(args.query as string, options, project), null, 2) }] };
+        result = await knowledgeGraphManager.searchNodes(args.query as string, options, project);
+        searchType = `fuzzy search "${args.query}"`;
       } else {
         // General text search mode (exact)
-        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.searchNodes(args.query as string, project), null, 2) }] };
+        result = await knowledgeGraphManager.searchNodes(args.query as string, project);
+        searchType = `exact search "${args.query}"`;
       }
-    case "open_nodes":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.openNodes(args.names as string[], project), null, 2) }] };
-    case "add_tags":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.addTags(args.updates as { entityName: string; tags: string[] }[], project), null, 2) }] };
-    case "remove_tags":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.removeTags(args.updates as { entityName: string; tags: string[] }[], project), null, 2) }] };
+
+      const entityCount = result.entities.length;
+      const relationCount = result.relations.length;
+      let successMsg = `🔍 SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
+
+      if (entityCount === 0) {
+        successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_nodes(searchMode='fuzzy')";
+      } else if (entityCount > 20) {
+        successMsg += "\n⚠️ MANY RESULTS: Consider adding tags for filtering. Use exactTags=['category']";
+      }
+
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "open_nodes": {
+      const result = await knowledgeGraphManager.openNodes(args.names as string[], project);
+      const entityCount = result.entities.length;
+      const relationCount = result.relations.length;
+      const successMsg = `📋 RETRIEVED: ${entityCount} entities with ${relationCount} interconnections`;
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "add_tags": {
+      const result = await knowledgeGraphManager.addTags(args.updates as { entityName: string; tags: string[] }[], project);
+      const totalAdded = result.reduce((sum, r) => sum + r.addedTags.length, 0);
+      const successMsg = `🏷️ SUCCESS: Added ${totalAdded} tags to ${result.length} entities`;
+      const nextSteps = totalAdded > 0 ? "\n🔍 NEXT STEPS: Use search_nodes(exactTags=['tag']) to find tagged entities" : "";
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+    case "remove_tags": {
+      const result = await knowledgeGraphManager.removeTags(args.updates as { entityName: string; tags: string[] }[], project);
+      const totalRemoved = result.reduce((sum, r) => sum + r.removedTags.length, 0);
+      const successMsg = `🏷️ SUCCESS: Removed ${totalRemoved} tags from ${result.length} entities`;
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
 
     default:
       throw new Error(`Unknown tool: ${name}`);

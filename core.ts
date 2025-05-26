@@ -133,7 +133,25 @@ export class KnowledgeGraphManager {
 
   async createRelations(relations: Relation[], project?: string): Promise<Relation[]> {
     const resolvedProject = resolveProject(project);
+
+    // Validate input relations
+    this.validateRelations(relations);
+
     const graph = await this.loadGraph(resolvedProject);
+
+    // Check that all referenced entities exist
+    relations.forEach(relation => {
+      const fromEntity = graph.entities.find(e => e.name === relation.from);
+      const toEntity = graph.entities.find(e => e.name === relation.to);
+
+      if (!fromEntity) {
+        throw new Error(`RELATION ERROR: Entity '${relation.from}' not found. ACTION: Create entity first with create_entities`);
+      }
+      if (!toEntity) {
+        throw new Error(`RELATION ERROR: Entity '${relation.to}' not found. ACTION: Create entity first with create_entities`);
+      }
+    });
+
     const newRelations = relations.filter(r => !graph.relations.some(existingRelation =>
       existingRelation.from === r.from &&
       existingRelation.to === r.to &&
@@ -154,7 +172,7 @@ export class KnowledgeGraphManager {
     const results = observations.map(o => {
       const entity = graph.entities.find(e => e.name === o.entityName);
       if (!entity) {
-        throw new Error(`Entity with name ${o.entityName} not found`);
+        throw new Error(`ENTITY ERROR: '${o.entityName}' not found. ACTION: Create entity first with create_entities`);
       }
 
       // Ensure entity has observations array (backward compatibility)
@@ -307,7 +325,7 @@ export class KnowledgeGraphManager {
     const results = updates.map(update => {
       const entity = graph.entities.find(e => e.name === update.entityName);
       if (!entity) {
-        throw new Error(`Entity with name ${update.entityName} not found`);
+        throw new Error(`ENTITY ERROR: '${update.entityName}' not found. ACTION: Create entity first with create_entities`);
       }
 
       // Ensure entity has tags array (backward compatibility)
@@ -336,7 +354,7 @@ export class KnowledgeGraphManager {
     const results = updates.map(update => {
       const entity = graph.entities.find(e => e.name === update.entityName);
       if (!entity) {
-        throw new Error(`Entity with name ${update.entityName} not found`);
+        throw new Error(`ENTITY ERROR: '${update.entityName}' not found. ACTION: Create entity first with create_entities`);
       }
 
       // Ensure entity has tags array (backward compatibility)
@@ -363,17 +381,17 @@ export class KnowledgeGraphManager {
    */
   private validateEntities(entities: Entity[]): void {
     if (!entities || !Array.isArray(entities)) {
-      throw new Error('Entities must be a non-empty array');
+      throw new Error('ENTITIES ERROR: Must be array of entity objects. REQUIRED: [{name, entityType, observations}]');
     }
 
     if (entities.length === 0) {
-      throw new Error('At least one entity must be provided');
+      throw new Error('ENTITIES ERROR: Empty array provided. REQUIRED: At least 1 entity object');
     }
 
     entities.forEach((entity, index) => {
       // Validate entity structure
       if (!entity || typeof entity !== 'object') {
-        throw new Error(`Entity at index ${index} must be an object`);
+        throw new Error(`ENTITY ERROR: Entity #${index} must be object. REQUIRED: {name, entityType, observations}`);
       }
 
       // Validate required fields
@@ -402,15 +420,54 @@ export class KnowledgeGraphManager {
       // Validate tags if provided
       if (entity.tags !== undefined && entity.tags !== null) {
         if (!Array.isArray(entity.tags)) {
-          throw new Error(`Entity "${entity.name}" tags must be an array`);
+          throw new Error(`ENTITY ERROR: "${entity.name}" tags must be array. REQUIRED: ['urgent', 'completed'] or []`);
         }
 
         // Check each tag is a string
         entity.tags.forEach((tag, tagIndex) => {
           if (typeof tag !== 'string') {
-            throw new Error(`Entity "${entity.name}" tag at index ${tagIndex} must be a string`);
+            throw new Error(`ENTITY ERROR: "${entity.name}" tag #${tagIndex} must be string. EXAMPLE: 'urgent', 'completed', 'technical'`);
           }
         });
+      }
+    });
+  }
+
+  /**
+   * Validate relations before creation to prevent database constraint violations
+   */
+  private validateRelations(relations: Relation[]): void {
+    if (!relations || !Array.isArray(relations)) {
+      throw new Error('RELATIONS ERROR: Must be array of relation objects. REQUIRED: [{from, to, relationType}]');
+    }
+
+    if (relations.length === 0) {
+      throw new Error('RELATIONS ERROR: Empty array provided. REQUIRED: At least 1 relation object');
+    }
+
+    relations.forEach((relation, index) => {
+      // Validate relation structure
+      if (!relation || typeof relation !== 'object') {
+        throw new Error(`RELATION ERROR: Relation #${index} must be object. REQUIRED: {from, to, relationType}`);
+      }
+
+      // Validate required fields
+      if (!relation.from || typeof relation.from !== 'string' || relation.from.trim() === '') {
+        throw new Error(`RELATION ERROR: Relation #${index} missing 'from' entity. REQUIRED: Existing entity name (e.g., 'John_Smith')`);
+      }
+
+      if (!relation.to || typeof relation.to !== 'string' || relation.to.trim() === '') {
+        throw new Error(`RELATION ERROR: Relation #${index} missing 'to' entity. REQUIRED: Existing entity name (e.g., 'Google')`);
+      }
+
+      if (!relation.relationType || typeof relation.relationType !== 'string' || relation.relationType.trim() === '') {
+        throw new Error(`RELATION ERROR: Relation #${index} missing relationType. REQUIRED: Active voice (e.g., 'works_at', 'manages', 'uses')`);
+      }
+
+      // Check for passive voice patterns
+      const passivePatterns = ['_by', 'is_', 'was_', 'been_'];
+      if (passivePatterns.some(pattern => relation.relationType.includes(pattern))) {
+        throw new Error(`RELATION ERROR: Relation #${index} uses passive voice '${relation.relationType}'. REQUIRED: Active voice (e.g., 'works_at' not 'is_worked_at')`);
       }
     });
   }
@@ -420,37 +477,37 @@ export class KnowledgeGraphManager {
    */
   private validateObservationUpdates(observations: { entityName: string; observations: string[] }[]): void {
     if (!observations || !Array.isArray(observations)) {
-      throw new Error('Observations must be a non-empty array');
+      throw new Error('OBSERVATIONS ERROR: Must be array of update objects. REQUIRED: [{entityName, observations}]');
     }
 
     if (observations.length === 0) {
-      throw new Error('At least one observation update must be provided');
+      throw new Error('OBSERVATIONS ERROR: Empty array provided. REQUIRED: At least 1 observation update');
     }
 
     observations.forEach((update, index) => {
       // Validate update structure
       if (!update || typeof update !== 'object') {
-        throw new Error(`Observation update at index ${index} must be an object`);
+        throw new Error(`OBSERVATION ERROR: Update #${index} must be object. REQUIRED: {entityName, observations}`);
       }
 
       // Validate entityName
       if (!update.entityName || typeof update.entityName !== 'string' || update.entityName.trim() === '') {
-        throw new Error(`Observation update at index ${index} must have a non-empty entityName`);
+        throw new Error(`OBSERVATION ERROR: Update #${index} missing entityName. REQUIRED: Existing entity name (e.g., 'John_Smith')`);
       }
 
       // Validate observations array
       if (!update.observations || !Array.isArray(update.observations)) {
-        throw new Error(`Observation update for entity "${update.entityName}" must have a non-empty observations array`);
+        throw new Error(`OBSERVATION ERROR: "${update.entityName}" observations must be array. REQUIRED: ['fact1', 'fact2']`);
       }
 
       if (update.observations.length === 0) {
-        throw new Error(`Observation update for entity "${update.entityName}" must contain at least one observation`);
+        throw new Error(`OBSERVATION ERROR: "${update.entityName}" needs observations. REQUIRED: At least 1 fact (e.g., ['Promoted to senior', 'Moved to NYC'])`);
       }
 
       // Check each observation is a string
       update.observations.forEach((obs, obsIndex) => {
         if (typeof obs !== 'string' || obs.trim() === '') {
-          throw new Error(`Observation at index ${obsIndex} for entity "${update.entityName}" must be a non-empty string`);
+          throw new Error(`OBSERVATION ERROR: "${update.entityName}" observation #${obsIndex} must be non-empty string. EXAMPLE: 'Works at Google'`);
         }
       });
     });
