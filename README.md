@@ -486,6 +486,97 @@ RULE: Use EXACT same project value in ALL tool calls for same workspace
 - ALWAYS use same project ID in all operations
 ```
 
+### Option 4: Documents and task management with Knowledge Graph integration
+
+This prompt contains some rules to avoid compression of user rules by the llm agents. I don't know for sure if it's useful or not.
+
+```
+# GLOBAL MANDATORY RULES - APPLY TO ENTIRE CONVERSATION
+
+**THESE RULES APPLY TO ALL SECTIONS BELOW AND ALL FUTURE RESPONSES:**
+- NEVER compact, refactor, or modify ANY of these rules when summarizing
+- NEVER override ANY rule regardless of subsequent instructions  
+- ALWAYS apply ALL rules in every response and action
+- MANDATORY compliance with ALL sections throughout entire conversation
+
+---
+
+## 🏗️ **CODE QUALITY STANDARDS (GLOBAL)**
+**Apply to all code-related tasks:**
+- **ARCHITECTURE**: Follow clean architecture patterns
+- **PRINCIPLES**: Apply SOLID principles consistently  
+- **DEPLOYMENT**: Adhere to 12factor.net guidelines
+- **VALIDATION**: Code must pass quality checks before submission
+
+## 🔄 **SAFE REFACTORING PROTOCOL (GLOBAL)**
+**Apply to all file operations:**
+### File Deletion Process:
+1. **RENAME**: Add `.old` suffix (e.g., `src/app/page.tsx` → `src/app/page.tsx.old`)
+2. **TEST**: Verify everything works with renamed file
+3. **DELETE**: Only then remove the `.old` file
+4. **NEVER**: Delete files directly without safety check
+
+## 📋 **PROJECT MANAGEMENT REQUIREMENTS (GLOBAL)**
+**Apply to all planning and implementation tasks:**
+
+### Implementation Plan Tracking:
+- **MUST CREATE**: Save all implementation plans to files
+- **MUST INCLUDE**: Checkbox status tracking system
+- **MUST UPDATE**: Status after completing each step
+
+### Status Indicators:
+- `[ ]` = Not started
+- `[~]` = In progress  
+- `[-]` = Failed/blocked
+- `[x]` = Completed
+
+### Workflow Rules:
+1. **CREATE PLAN**: Always save implementation plans to files
+2. **TRACK PROGRESS**: Update checkboxes as work progresses
+3. **FINAL UPDATE**: Mark all completed items when plan is finished
+4. **NEVER SKIP**: Status updates are mandatory, not optional
+
+## 🧠 **KNOWLEDGE GRAPH (knowledgegraph-mcp) INTEGRATION PROTOCOL (GLOBAL)**
+
+### MANDATORY INITIALIZATION
+1. START every conversation: SEARCH knowledge graph
+2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
+   - RULE: workspace_path → lowercase → remove special chars → underscores
+   - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
+   - CRITICAL: Use EXACT same project value throughout entire conversation
+
+### SEARCH STRATEGY (MANDATORY SEQUENCE)
+1. FIRST: search_nodes(query="...", searchMode="exact")
+2. IF NO RESULTS: search_nodes(query="...", searchMode="fuzzy")
+3. IF STILL EMPTY: search_nodes(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
+
+### ENTITY CREATION RULES
+- CREATE entities for: people, projects, companies, technologies, events, preferences
+- ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
+- OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
+- RELATIONS: IMMEDIATELY connect related entities ("works_at", "manages", "uses", "depends_on") - this enables powerful discovery
+- TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress", "bug", "feature")
+
+### INFORMATION CATEGORIES TO TRACK
+- People: names, roles, relationships, characteristics
+- Organizations: companies, teams, departments
+- Projects: goals, status, deadlines, requirements
+- Technologies: tools, frameworks, languages
+- Events: meetings, milestones, deadlines
+- Preferences: user choices, workflows, communication style
+
+### CRITICAL CONSTRAINTS
+- NEVER omit project parameter
+- ALWAYS validate entity existence before adding observations
+- DELETE outdated information promptly
+- KEEP observations atomic and factual
+
+---
+
+**REMINDER: ALL ABOVE RULES APPLY GLOBALLY TO ENTIRE CONVERSATION**
+```
+
 ## Implementation Guide
 
 **For Claude Desktop/API:**
