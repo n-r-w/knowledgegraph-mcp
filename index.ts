@@ -30,7 +30,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "search_nodes",
+        name: "search_knowledge",
         description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE: 'I need to find information about X' or 'Does X already exist?'. DECISION TREE: 1) Looking for specific entities? → Use query with searchMode='exact' 2) No exact results? → Retry with searchMode='fuzzy' 3) Still no results? → Lower fuzzyThreshold to 0.1 4) Looking by category? → Use exactTags instead of query. MANDATORY STRATEGY: exact → fuzzy → lower threshold. AVOID: Starting with fuzzy search (slower and less precise).",
         inputSchema: {
           type: "object",
@@ -353,7 +353,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
   const project = args.project as string | undefined;
 
   switch (name) {
-    case "search_nodes": {
+    case "search_knowledge": {
       let result;
       let searchType = "";
 
