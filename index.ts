@@ -57,7 +57,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               maximum: 1.0,
               description: "Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results."
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -94,7 +94,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["name", "entityType", "observations"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -125,7 +125,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["entityName", "observations"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -153,7 +153,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["from", "to", "relationType"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -173,7 +173,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: { type: "string" },
               description: "Array of entity names to delete"
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -204,7 +204,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["entityName", "observations"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -232,7 +232,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               },
               description: "Array of relations to delete"
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -247,7 +247,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -266,7 +266,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: { type: "string" },
               description: "Array of entity names to retrieve",
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -297,7 +297,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["entityName", "tags"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -328,7 +328,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 required: ["entityName", "tags"],
               },
             },
-            project: {
+            project_id: {
               type: "string",
               description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
@@ -350,7 +350,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
   }
 
   // Extract project parameter from args if present
-  const project = args.project as string | undefined;
+  const project = args.project_id as string | undefined;
 
   switch (name) {
     case "search_knowledge": {

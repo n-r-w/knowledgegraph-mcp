@@ -153,15 +153,17 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 
 ## MANDATORY INITIALIZATION
 1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
-2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
-   - RULE: workspace_path → lowercase → remove special chars → underscores
+2. PROJECT ISOLATION: CALCULATE project_id ONCE, use SAME value in ALL calls
+   - RULE: 
+      * workspace_path → lowercase → remove special chars → underscores
+      * keep only letters, numbers, spaces, hyphens, including `-` and `_`
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-   - CRITICAL: Use EXACT same project value throughout entire conversation
+   - CRITICAL: Use EXACT same project_id value throughout entire conversation
 
 ## SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_knowledge(query="...", searchMode="exact")
-2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
-3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+1. FIRST: search_knowledge(query="...", searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
+2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
+3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
 4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
 ## ENTITY CREATION RULES
@@ -180,7 +182,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 - Preferences: user choices, workflows, communication style
 
 ## CRITICAL CONSTRAINTS
-- NEVER omit project parameter
+- NEVER omit project_id parameter
 - ALWAYS validate entity existence before adding observations
 - DELETE outdated information promptly
 - KEEP observations atomic and factual
@@ -193,16 +195,18 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 
 ## INITIALIZATION SEQUENCE (EXECUTE EVERY TIME)
 1. OUTPUT: `Using knowledgegraph-mcp...`
-2. EXECUTE: search_knowledge(query=relevant_context, searchMode="exact", project=workspace_project)
-3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project=workspace_project)
-4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
-5. FOR CATEGORIES: search_knowledge(exactTags=["relevant_tag"], project=workspace_project)
+2. EXECUTE: search_knowledge(query=relevant_context, searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
+3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
+4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
+5. FOR CATEGORIES: search_knowledge(exactTags=["relevant_tag"], project_id=YOUR_CALCULATED_PROJECT_ID)
 
-## PROJECT PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
-- CALCULATE ONCE: project = workspace_path → lowercase → remove special chars → underscores
+## PROJECT_ID PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
+- CALCULATE ONCE: 
+    * project_id = workspace_path → lowercase → remove special chars → underscores
+    * keep only letters, numbers, spaces, hyphens, including `-` and `_`
 - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-- RULE: Use EXACT same project value in ALL knowledge graph tool calls
-- WARNING: Different project IDs = data fragmentation and loss
+- RULE: Use EXACT same project_id value in ALL knowledge graph tool calls
+- WARNING: Different project_id values = data fragmentation and loss
 
 ## ENTITY MANAGEMENT (MANDATORY ACTIONS)
 ### CREATE entities immediately for:
@@ -233,7 +237,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 - THRESHOLD GUIDE: 0.1=very broad, 0.3=balanced, 0.7=very strict
 
 ## CRITICAL CONSTRAINTS (NEVER VIOLATE)
-- NEVER omit project parameter from any knowledge graph tool call
+- NEVER omit project_id parameter from any knowledge graph tool call
 - NEVER create entities without observations
 - NEVER use passive voice in relation types
 - ALWAYS validate entity existence before adding observations
@@ -249,21 +253,23 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 # Knowledge Graph Protocol
 
-## PROJECT ID (CRITICAL - USE SAME VALUE ALWAYS):
-CALCULATE ONCE: project = workspace_path → lowercase → remove special chars → underscores
+## PROJECT ID CALCULATION (CRITICAL - USE SAME VALUE ALWAYS):
+CALCULATE ONCE: 
+  - project_id = workspace_path → lowercase → remove special chars → underscores
+  - keep only letters, numbers, spaces, hyphens, including `-` and `_`
 EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_site"
-RULE: Use EXACT same project value in ALL tool calls for same workspace
+RULE: Use EXACT same project_id value in ALL tool calls
 
 ## EVERY CONVERSATION:
 1. Say "Using knowledgegraph-mcp..."
-2. search_knowledge(query=context, project=YOUR_CALCULATED_PROJECT_ID)
-3. If empty: search_knowledge(query=context, searchMode="fuzzy", project=YOUR_CALCULATED_PROJECT_ID)
+2. search_knowledge(query=context, project_id=YOUR_CALCULATED_PROJECT_ID)
+3. If empty: search_knowledge(query=context, searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
 
 ## WHEN CREATING:
 - Entities: MUST have ≥1 observation + relevant tags
 - Relations: Use active voice (works_at, manages, uses)
 - Tags: Add status (urgent, completed, in-progress)
-- ALWAYS include project=YOUR_CALCULATED_PROJECT_ID
+- ALWAYS include project_id=YOUR_CALCULATED_PROJECT_ID
 
 ## SEARCH STRATEGY:
 - Known terms: searchMode="exact"
@@ -274,7 +280,7 @@ RULE: Use EXACT same project value in ALL tool calls for same workspace
 - Update: add_observations for new facts
 - Connect: create_relations for relationships
 - Clean: delete outdated relations/observations
-- ALWAYS use same project ID in all operations
+- ALWAYS use same project_id in all operations
 ```
 
 #### Prompt 4: Documents and task management with Knowledge Graph integration
@@ -298,6 +304,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 - **PRINCIPLES**: Apply SOLID principles consistently  
 - **DEPLOYMENT**: Adhere to 12factor.net guidelines
 - **VALIDATION**: Code must pass quality checks before submission
+- **TESTING**: Add comprehensive unit tests. If tests fail, look for the reason instead of deleting or disabling tests.
 
 ## 🔄 **SAFE REFACTORING PROTOCOL (GLOBAL)**
 **Apply to all file operations:**
@@ -331,15 +338,19 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 
 ### MANDATORY INITIALIZATION
 1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
-2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
-   - RULE: workspace_path → lowercase → remove special chars → underscores
+2. PROJECT ISOLATION: CALCULATE project_id ONCE, use SAME value in ALL calls
+   - **STEP-BY-STEP ALGORITHM**:
+      1) **EXTRACT**: Take ONLY the last directory name from workspace path
+      2) **LOWERCASE**: Convert all to lowercase
+      3) **CLEAN**: Keep only letters, numbers, spaces, hyphens, including `-` and `_`
+      4) **UNDERSCORES**: Replace spaces and hyphens with underscores
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-   - CRITICAL: Use EXACT same project value throughout entire conversation
+   - CRITICAL: Use EXACT same project_id value throughout entire conversation
 
 ### SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_knowledge(query="...", searchMode="exact")
-2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
-3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+1. FIRST: search_knowledge(query="...", searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
+2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
+3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
 4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
 ### ENTITY CREATION RULES
@@ -358,7 +369,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 - Preferences: user choices, workflows, communication style
 
 ### CRITICAL CONSTRAINTS
-- NEVER omit project parameter
+- NEVER omit project_id parameter
 - ALWAYS validate entity existence before adding observations
 - DELETE outdated information promptly
 - KEEP observations atomic and factual
@@ -447,7 +458,7 @@ The server provides these tools for managing your knowledge graph:
   - `entityType` (string): Category (e.g., 'person', 'project'), non-empty
   - `observations` (string[]): Facts about entity, MUST contain ≥1 non-empty string
   - `tags` (string[], optional): Exact-match labels for filtering
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### create_relations
 **CONNECT** entities to enable powerful queries and discovery.
@@ -460,7 +471,7 @@ The server provides these tools for managing your knowledge graph:
   - `from` (string): Source entity name (must exist)
   - `to` (string): Target entity name (must exist)
   - `relationType` (string): Relationship type in active voice (works_at, manages, depends_on, uses)
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### add_observations
 **ADD** factual observations to existing entities.
@@ -471,7 +482,7 @@ The server provides these tools for managing your knowledge graph:
 - `observations` (ObservationUpdate[]): Array of observation updates. Each REQUIRES:
   - `entityName` (string): Target entity name (must exist)
   - `observations` (string[]): New facts to add, MUST contain ≥1 non-empty string
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### add_tags
 **ADD** status/category tags for INSTANT filtering.
@@ -483,7 +494,7 @@ The server provides these tools for managing your knowledge graph:
 - `updates` (TagUpdate[]): Array of tag updates. Each REQUIRES:
   - `entityName` (string): Target entity name (must exist)
   - `tags` (string[]): Status/category tags to add (exact-match, case-sensitive)
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 ### Data Retrieval Tools
 
@@ -493,7 +504,7 @@ The server provides these tools for managing your knowledge graph:
 - **SCOPE:** Returns everything in specified project
 
 **Input:**
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### search_knowledge
 **SEARCH** entities by text or tags.
@@ -508,7 +519,7 @@ The server provides these tools for managing your knowledge graph:
 - `fuzzyThreshold` (number, optional): Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results
 - `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive). Use for category filtering
 - `tagMatchMode` (string, optional): For exactTags: "any"=entities with ANY tag, "all"=entities with ALL tags (default: "any")
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### open_nodes
 **RETRIEVE** specific entities by exact names with their interconnections.
@@ -517,7 +528,7 @@ The server provides these tools for managing your knowledge graph:
 
 **Input:**
 - `names` (string[]): Array of entity names to retrieve
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 ### Data Management Tools
 
@@ -528,7 +539,7 @@ The server provides these tools for managing your knowledge graph:
 
 **Input:**
 - `entityNames` (string[]): Array of entity names to delete
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### delete_observations
 **REMOVE** specific observations from entities while keeping entities intact.
@@ -539,7 +550,7 @@ The server provides these tools for managing your knowledge graph:
 - `deletions` (ObservationDeletion[]): Array of deletion requests. Each REQUIRES:
   - `entityName` (string): Target entity name
   - `observations` (string[]): Specific observations to remove
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### delete_relations
 **UPDATE** relationship structure when connections change.
@@ -552,7 +563,7 @@ The server provides these tools for managing your knowledge graph:
   - `from` (string): Source entity name
   - `to` (string): Target entity name
   - `relationType` (string): Exact relationship type to remove
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 #### remove_tags
 **UPDATE** entity status by removing outdated tags.
@@ -564,7 +575,7 @@ The server provides these tools for managing your knowledge graph:
 - `updates` (TagUpdate[]): Array of tag removal requests. Each REQUIRES:
   - `entityName` (string): Target entity name
   - `tags` (string[]): Outdated tags to remove (exact-match, case-sensitive)
-- `project` (string, optional): Project name to isolate data
+- `project_id` (string, optional): Project name to isolate data
 
 ## Development and Testing
 
