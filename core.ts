@@ -378,23 +378,23 @@ export class KnowledgeGraphManager {
 
       // Validate required fields
       if (!entity.name || typeof entity.name !== 'string' || entity.name.trim() === '') {
-        throw new Error(`Entity at index ${index} must have a non-empty name`);
+        throw new Error(`ENTITY ERROR: Entity #${index} missing name. REQUIRED: Non-empty string (e.g., 'John_Smith', 'Project_Alpha')`);
       }
 
       if (!entity.entityType || typeof entity.entityType !== 'string' || entity.entityType.trim() === '') {
-        throw new Error(`Entity at index ${index} must have a non-empty entityType`);
+        throw new Error(`ENTITY ERROR: Entity #${index} missing entityType. REQUIRED: Non-empty string (e.g., 'person', 'project', 'company')`);
       }
 
       // Validate observations - must be array and not null/undefined
       if (entity.observations !== undefined && entity.observations !== null) {
         if (!Array.isArray(entity.observations)) {
-          throw new Error(`Entity "${entity.name}" observations must be an array`);
+          throw new Error(`ENTITY ERROR: "${entity.name}" observations must be array. REQUIRED: ['fact1', 'fact2']`);
         }
 
         // Check each observation is a string
         entity.observations.forEach((obs, obsIndex) => {
           if (typeof obs !== 'string') {
-            throw new Error(`Entity "${entity.name}" observation at index ${obsIndex} must be a string`);
+            throw new Error(`ENTITY ERROR: "${entity.name}" observation #${obsIndex} must be string. REQUIRED: Non-empty text fact`);
           }
         });
       }
