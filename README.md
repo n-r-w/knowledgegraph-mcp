@@ -255,7 +255,7 @@ EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_sit
 RULE: Use EXACT same project value in ALL tool calls for same workspace
 
 ## EVERY CONVERSATION:
-1. Say "Saving knowledge..."
+1. Say "Using knowledgegraph-mcp..."
 2. search_knowledge(query=context, project=YOUR_CALCULATED_PROJECT_ID)
 3. If empty: search_knowledge(query=context, searchMode="fuzzy", project=YOUR_CALCULATED_PROJECT_ID)
 
