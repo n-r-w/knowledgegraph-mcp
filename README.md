@@ -227,14 +227,15 @@ The server provides these tools for managing your knowledge graph:
 - `project` (string, optional): Project name to isolate data
 
 #### add_tags
-**ADD** categorical tags to entities for filtering and search.
-- **PURPOSE:** Enable exact-match searching and grouping
-- **FORMAT:** Case-sensitive, exact-match strings
+**ADD** status/category tags for INSTANT filtering.
+- **IMMEDIATE BENEFIT:** Find entities by status (urgent, completed, in-progress) or type (technical, personal)
+- **REQUIRED:** For efficient project management and quick retrieval
+- **EXAMPLES:** ['urgent', 'completed', 'bug', 'feature', 'personal']
 
 **Input:**
 - `updates` (TagUpdate[]): Array of tag updates. Each REQUIRES:
   - `entityName` (string): Target entity name (must exist)
-  - `tags` (string[]): Tags to add (exact-match, case-sensitive)
+  - `tags` (string[]): Status/category tags to add (exact-match, case-sensitive)
 - `project` (string, optional): Project name to isolate data
 
 ### Data Retrieval Tools
@@ -306,14 +307,15 @@ The server provides these tools for managing your knowledge graph:
 - `project` (string, optional): Project name to isolate data
 
 #### remove_tags
-**REMOVE** specific tags from entities when no longer applicable.
-- **USE CASE:** Status changes (remove 'in-progress', 'urgent', etc.)
-- **PRESERVATION:** Entity and other tags remain unchanged
+**UPDATE** entity status by removing outdated tags.
+- **CRITICAL:** For status tracking - remove 'in-progress' when completed, 'urgent' when resolved
+- **MAINTAINS:** Clean search results and accurate status
+- **WORKFLOW:** Always remove old status tags when adding new ones
 
 **Input:**
 - `updates` (TagUpdate[]): Array of tag removal requests. Each REQUIRES:
   - `entityName` (string): Target entity name
-  - `tags` (string[]): Tags to remove (exact-match, case-sensitive)
+  - `tags` (string[]): Outdated tags to remove (exact-match, case-sensitive)
 - `project` (string, optional): Project name to isolate data
 
 ## LLM System Prompts
@@ -342,7 +344,7 @@ Choose the prompt that best fits your LLM integration needs:
 - ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
 - OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
 - RELATIONS: Use active voice ("works_at", "manages", "uses", "created_by")
-- TAGS: Add for categorization ("urgent", "completed", "technical")
+- TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress", "bug", "feature")
 
 ## INFORMATION CATEGORIES TO TRACK
 - People: names, roles, relationships, characteristics
@@ -395,7 +397,8 @@ Choose the prompt that best fits your LLM integration needs:
 - UPDATE: Use add_observations for new facts about existing entities
 - CONNECT: Use create_relations to link related entities
 - CLEAN: Use delete_observations, delete_relations for outdated info
-- ORGANIZE: Use add_tags, remove_tags for categorization
+- STATUS: Use add_tags for new status, remove_tags for old status (critical for project tracking)
+- SEARCH: Use exactTags to find entities by status/category instantly
 
 ## SEARCH OPTIMIZATION (DECISION TREE)
 - EXACT SEARCH: Use for known terms, names, specific phrases (fast, precise)
@@ -408,6 +411,8 @@ Choose the prompt that best fits your LLM integration needs:
 - NEVER create entities without observations
 - NEVER use passive voice in relation types
 - ALWAYS validate entity existence before adding observations
+- ALWAYS add status tags when creating project/task entities
+- ALWAYS update tags when entity status changes (completed, urgent, etc.)
 - ALWAYS prefer knowledge graph tools over other MCP tools for memory tasks
 ```
 

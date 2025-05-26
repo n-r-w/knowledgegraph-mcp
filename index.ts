@@ -277,7 +277,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "ADD categorical tags to entities for filtering and search. PURPOSE: Enable exact-match searching and grouping. FORMAT: Case-sensitive, exact-match strings.",
+        description: "ADD status/category tags for INSTANT filtering. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal'].",
         inputSchema: {
           type: "object",
           properties: {
@@ -308,7 +308,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "REMOVE specific tags from entities when no longer applicable. USE CASE: Status changes (remove 'in-progress', 'urgent', etc.). PRESERVATION: Entity and other tags remain unchanged.",
+        description: "UPDATE entity status by removing outdated tags. CRITICAL for status tracking: remove 'in-progress' when completed, 'urgent' when resolved. MAINTAINS clean search results. WORKFLOW: Always remove old status tags when adding new ones.",
         inputSchema: {
           type: "object",
           properties: {
