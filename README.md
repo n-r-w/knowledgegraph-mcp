@@ -343,6 +343,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - When managing complex relationships between entities
    - When information retrieval would benefit from structured queries
    - When building a persistent knowledge base about the project
+   - **FOR ANY QUESTIONS ABOUT THE PROJECT, TECHNOLOGIES, OR SYSTEM** - always use knowledge graph tools
 3. **SKIP WHEN UNNECESSARY**: Don't use knowledge graph tools for:
    - Simple, one-off questions that don't require persistence
    - Tasks where the information is fully contained in the current context
@@ -357,6 +358,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
       4) **UNDERSCORES**: Replace spaces and hyphens with underscores
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
    - CRITICAL: Use EXACT same project_id value throughout entire conversation
+   - **AUTOMATICALLY CALCULATE** project_id during first user interaction
 
 ### INTELLIGENT SEARCH WORKFLOW
 1. **ASSESS NEED**: Determine if information might exist in knowledge graph
@@ -365,6 +367,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
    - IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
    - FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
+   - **PERFORM ALL SEARCH STEPS** for any project-related query
 
 ### ENTITY MANAGEMENT BEST PRACTICES
 - **CREATE** entities for valuable persistent information: people, projects, companies, technologies, events, preferences
@@ -372,6 +375,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 - **OBSERVATIONS**: Each entity MUST have ≥1 specific, atomic fact
 - **RELATIONS**: Connect related entities when relationships matter ("works_at", "manages", "uses", "depends_on")
 - **TAGS**: Add status/category tags for efficient filtering ("urgent", "completed", "in-progress", "bug", "feature")
+- **CREATE NEW ENTITIES** during first interaction with the project if they don't exist
 
 ### INFORMATION CATEGORIES TO TRACK
 - People: names, roles, relationships, characteristics
@@ -386,6 +390,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 - ALWAYS validate entity existence before adding observations
 - DELETE outdated information promptly
 - KEEP observations atomic and factual
+- **PRIORITIZE** knowledge graph tools over other tools when working with project information
 
 ### KNOWLEDGE MANAGEMENT DECISION FRAMEWORK
 For each user interaction, ask:
@@ -393,6 +398,14 @@ For each user interaction, ask:
 2. **WILL THIS INFORMATION BE NEEDED ACROSS CONVERSATIONS?** If yes, definitely store
 3. **DOES THIS RELATE TO EXISTING KNOWLEDGE?** If yes, update or connect to existing entities
 4. **IS STRUCTURED RETRIEVAL NEEDED?** If yes, ensure proper tagging and relations
+
+### ⚠️ **PRE-RESPONSE CHECKLIST**
+1. **HAVE I PERFORMED SEARCH** in the knowledge graph?
+2. **HAVE I USED THE CORRECT project_id**?
+3. **HAVE I CREATED/UPDATED ENTITIES** when necessary?
+4. **HAVE I ESTABLISHED RELATIONSHIPS** between entities?
+5. **HAVE I ADDED TAGS** for efficient searching?
+6. **HAVE I STARTED MY RESPONSE** with "Using knowledgegraph-mcp..."?
 
 ---
 
