@@ -3,11 +3,14 @@ import { Pool as PgPool } from 'pg';
 import { Entity } from '../../core.js';
 import { SearchConfig } from '../types.js';
 import { BaseSearchStrategy } from './base-strategy.js';
+import { getValidatedSearchLimits } from '../config.js';
 
 /**
  * PostgreSQL search strategy - supports both database-level and client-side fuzzy search
  */
 export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
+  private searchLimits = getValidatedSearchLimits();
+
   constructor(
     config: SearchConfig,
     private pgPool: PgPool,
@@ -20,7 +23,17 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
     return this.config.useDatabaseSearch;
   }
 
-  async searchDatabase(query: string, threshold: number, project?: string): Promise<Entity[]> {
+  async searchDatabase(query: string | string[], threshold: number, project?: string): Promise<Entity[]> {
+    // Handle multiple queries with optimized SQL
+    if (Array.isArray(query)) {
+      return this.searchMultipleDatabaseOptimized(query, threshold, project);
+    }
+
+    // Single query - use existing logic
+    return this.searchSingleDatabase(query, threshold, project);
+  }
+
+  private async searchSingleDatabase(query: string, threshold: number, project?: string): Promise<Entity[]> {
     const client = await this.pgPool.connect();
     try {
       // Use provided project parameter or fall back to constructor project
@@ -41,8 +54,8 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
                OR similarity(e.observations::text, $1) > $2
                OR similarity(e.tags::text, $1) > $2)
         ORDER BY relevance_score DESC
-        LIMIT 100
-      `, [query, threshold, searchProject]);
+        LIMIT $4
+      `, [query, threshold, searchProject, this.searchLimits.maxResults]);
 
       return result.rows.map(row => ({
         name: row.name,
@@ -55,7 +68,17 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
     }
   }
 
-  searchClientSide(entities: Entity[], query: string): Entity[] {
+  searchClientSide(entities: Entity[], query: string | string[]): Entity[] {
+    // Handle multiple queries
+    if (Array.isArray(query)) {
+      return this.searchMultipleClientSide(entities, query);
+    }
+
+    // Single query - use existing logic
+    return this.searchSingleClientSide(entities, query);
+  }
+
+  private searchSingleClientSide(entities: Entity[], query: string): Entity[] {
     const fuseOptions = {
       threshold: this.config.threshold,
       distance: 100,
@@ -68,5 +91,84 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
     const results = fuse.search(query);
 
     return results.map(result => result.item);
+  }
+
+  /**
+   * Optimized multiple query search using single SQL query with OR conditions
+   * This replaces the inefficient sequential query processing from base strategy
+   */
+  private async searchMultipleDatabaseOptimized(queries: string[], threshold: number, project?: string): Promise<Entity[]> {
+    // Handle empty queries array
+    if (queries.length === 0) {
+      return [];
+    }
+
+    // For very large query arrays, use batching to avoid excessive SQL complexity
+    if (queries.length > this.searchLimits.batchSize) {
+      return this.searchMultipleDatabaseBatched(queries, threshold, project, this.searchLimits.batchSize);
+    }
+
+    const client = await this.pgPool.connect();
+    try {
+      const searchProject = project || this.project;
+
+      // Build parameterized query with OR conditions for each search term
+      const conditions = queries.map((_, index) =>
+        `(similarity(e.name, $${index + 1}) > $${queries.length + 1} OR
+          similarity(e.entity_type, $${index + 1}) > $${queries.length + 1} OR
+          similarity(e.observations::text, $${index + 1}) > $${queries.length + 1} OR
+          similarity(e.tags::text, $${index + 1}) > $${queries.length + 1})`
+      ).join(' OR ');
+
+      // Build relevance score calculation for all queries
+      const relevanceCalculations = queries.map((_, index) =>
+        `similarity(e.name, $${index + 1}),
+         similarity(e.entity_type, $${index + 1}),
+         similarity(e.observations::text, $${index + 1}),
+         similarity(e.tags::text, $${index + 1})`
+      ).join(', ');
+
+      const result = await client.query(`
+        SELECT DISTINCT e.*,
+               GREATEST(${relevanceCalculations}) as relevance_score
+        FROM entities e
+        WHERE e.project = $${queries.length + 2}
+          AND (${conditions})
+        ORDER BY relevance_score DESC
+        LIMIT $${queries.length + 3}
+      `, [...queries, threshold, searchProject, this.searchLimits.maxResults]);
+
+      return result.rows.map(row => ({
+        name: row.name,
+        entityType: row.entity_type,
+        observations: row.observations || [],
+        tags: row.tags || []
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Handle very large query arrays by processing them in batches
+   */
+  private async searchMultipleDatabaseBatched(queries: string[], threshold: number, project?: string, batchSize: number = 10): Promise<Entity[]> {
+    let allResults: Entity[] = [];
+    const existingEntityNames = new Set<string>();
+
+    // Process queries in batches
+    for (let i = 0; i < queries.length; i += batchSize) {
+      const batchQueries = queries.slice(i, i + batchSize);
+
+      // Use optimized SQL for this batch
+      const batchResults = await this.searchMultipleDatabaseOptimized(batchQueries, threshold, project);
+
+      // Deduplicate results
+      const newEntities = batchResults.filter(e => !existingEntityNames.has(e.name));
+      allResults.push(...newEntities);
+      newEntities.forEach(e => existingEntityNames.add(e.name));
+    }
+
+    return allResults;
   }
 }

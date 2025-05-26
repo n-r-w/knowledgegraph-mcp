@@ -19,9 +19,23 @@ class MockSearchStrategy implements SearchStrategy {
     return this.canUseDatabaseValue;
   }
 
-  async searchDatabase(query: string, threshold: number, project?: string): Promise<Entity[]> {
+  async searchDatabase(query: string | string[], threshold: number, project?: string): Promise<Entity[]> {
     if (this.shouldThrowDatabaseError) {
       throw new Error('Database search failed');
+    }
+
+    // Handle multiple queries for backward compatibility
+    if (Array.isArray(query)) {
+      // For testing, just return results for the first query
+      const firstQuery = query[0] || 'test';
+      return [
+        {
+          name: 'Database Result',
+          entityType: 'MockType',
+          observations: [`Found via database search for: ${firstQuery}`],
+          tags: ['database', 'mock']
+        }
+      ];
     }
 
     // Mock database search - return entities that contain the query
@@ -35,7 +49,14 @@ class MockSearchStrategy implements SearchStrategy {
     ];
   }
 
-  searchClientSide(entities: Entity[], query: string): Entity[] {
+  searchClientSide(entities: Entity[], query: string | string[]): Entity[] {
+    // Handle multiple queries for backward compatibility
+    if (Array.isArray(query)) {
+      // For testing, just use the first query
+      const firstQuery = query[0] || '';
+      return entities.filter(e => e.name.toLowerCase().includes(firstQuery.toLowerCase()));
+    }
+
     // Mock client-side search - simple name matching
     return entities.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
   }

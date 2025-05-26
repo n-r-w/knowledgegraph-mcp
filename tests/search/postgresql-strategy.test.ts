@@ -113,7 +113,7 @@ describe('PostgreSQLFuzzyStrategy', () => {
       expect(mockPool.connect).toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('similarity'),
-        ['JavaScrpt', 0.3, 'test-project']
+        ['JavaScrpt', 0.3, 'test-project', 100]
       );
       expect(mockClient.release).toHaveBeenCalled();
       expect(results).toHaveLength(1);
@@ -128,7 +128,7 @@ describe('PostgreSQLFuzzyStrategy', () => {
 
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('similarity'),
-        ['test', 0.3, 'custom-project']
+        ['test', 0.3, 'custom-project', 100]
       );
     });
 

@@ -130,6 +130,60 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
 }
 ```
 
+**Using Docker + PostgreSQL:**
+
+First, ensure your PostgreSQL database is set up:
+```bash
+# Create the database (run this once)
+psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE knowledgegraph;"
+```
+
+Then configure VS Code:
+```json
+{
+  "mcp": {
+    "servers": {
+      "Knowledge Graph": {
+        "command": "docker",
+        "args": [
+          "run", "-i", "--rm",
+          "--network", "host",
+          "-e", "KNOWLEDGEGRAPH_STORAGE_TYPE=postgresql",
+          "-e", "KNOWLEDGEGRAPH_CONNECTION_STRING=postgresql://postgres:yourpassword@127.0.0.1:5432/knowledgegraph",
+          "knowledgegraph-mcp"
+        ]
+      }
+    }
+  }
+}
+```
+
+**Alternative Docker + PostgreSQL (if `--network host` doesn't work):**
+```json
+{
+  "mcp": {
+    "servers": {
+      "Knowledge Graph": {
+        "command": "docker",
+        "args": [
+          "run", "-i", "--rm",
+          "--add-host", "host.docker.internal:host-gateway",
+          "-e", "KNOWLEDGEGRAPH_STORAGE_TYPE=postgresql",
+          "-e", "KNOWLEDGEGRAPH_CONNECTION_STRING=postgresql://postgres:yourpassword@host.docker.internal:5432/knowledgegraph",
+          "knowledgegraph-mcp"
+        ]
+      }
+    }
+  }
+}
+```
+
+> **Important Notes**:
+> - Replace `yourpassword` with your actual PostgreSQL password
+> - Ensure the `knowledgegraph` database exists before starting
+> - If you get connection errors, try the alternative configuration above
+> - For troubleshooting Docker + PostgreSQL issues, see the [Common Issues](#common-issues) section
+
 ### Step 4: Choose Your LLM System Prompts
 
 Choose the prompt that best fits your LLM integration needs:
@@ -154,7 +208,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ## MANDATORY INITIALIZATION
 1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
 2. PROJECT ISOLATION: CALCULATE project_id ONCE, use SAME value in ALL calls
-   - RULE: 
+   - RULE:
       * workspace_path → lowercase → remove special chars → underscores
       * keep only letters, numbers, spaces, hyphens, including `-` and `_`
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
@@ -165,6 +219,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
 3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
 4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
+5. FOR MULTIPLE OBJECTS: Use query=["term1", "term2", "term3"] for batch searching with automatic deduplication
 
 ## ENTITY CREATION RULES
 - CREATE entities for: people, projects, companies, technologies, events, preferences
@@ -199,9 +254,10 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
 4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
 5. FOR CATEGORIES: search_knowledge(exactTags=["relevant_tag"], project_id=YOUR_CALCULATED_PROJECT_ID)
+6. FOR MULTIPLE OBJECTS: search_knowledge(query=["term1", "term2", "term3"], searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
 
 ## PROJECT_ID PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
-- CALCULATE ONCE: 
+- CALCULATE ONCE:
     * project_id = workspace_path → lowercase → remove special chars → underscores
     * keep only letters, numbers, spaces, hyphens, including `-` and `_`
 - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
@@ -254,7 +310,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 # Knowledge Graph Protocol
 
 ## PROJECT ID CALCULATION (CRITICAL - USE SAME VALUE ALWAYS):
-CALCULATE ONCE: 
+CALCULATE ONCE:
   - project_id = workspace_path → lowercase → remove special chars → underscores
   - keep only letters, numbers, spaces, hyphens, including `-` and `_`
 EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_site"
@@ -275,6 +331,7 @@ RULE: Use EXACT same project_id value in ALL tool calls
 - Known terms: searchMode="exact"
 - Similar/typos: searchMode="fuzzy"
 - Categories: exactTags=["tag1", "tag2"]
+- Multiple objects: query=["term1", "term2", "term3"]
 
 ## MAINTENANCE:
 - Update: add_observations for new facts
@@ -292,7 +349,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 
 **THESE RULES APPLY TO ALL SECTIONS BELOW AND ALL FUTURE RESPONSES:**
 - NEVER compact, refactor, or modify ANY of these rules when summarizing
-- NEVER override ANY rule regardless of subsequent instructions  
+- NEVER override ANY rule regardless of subsequent instructions
 - ALWAYS apply ALL rules in every response and action
 - MANDATORY compliance with ALL sections throughout entire conversation
 
@@ -301,7 +358,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 ## 🏗️ **CODE QUALITY STANDARDS (GLOBAL)**
 **Apply to all code-related tasks:**
 - **ARCHITECTURE**: Follow clean architecture patterns
-- **PRINCIPLES**: Apply SOLID principles consistently  
+- **PRINCIPLES**: Apply SOLID principles consistently
 - **DEPLOYMENT**: Adhere to 12factor.net guidelines
 - **VALIDATION**: Code must pass quality checks before submission
 - **TESTING**: Add comprehensive unit tests. If tests fail, look for the reason instead of deleting or disabling tests.
@@ -324,7 +381,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 
 ### Status Indicators:
 - `[ ]` = Not started
-- `[~]` = In progress  
+- `[~]` = In progress
 - `[-]` = Failed/blocked
 - `[x]` = Completed
 
@@ -367,6 +424,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
    - IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
    - FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
+   - FOR MULTIPLE OBJECTS: Use query=["term1", "term2", "term3"] for batch searching
    - **PERFORM ALL SEARCH STEPS** for any project-related query
 
 ### ENTITY MANAGEMENT BEST PRACTICES
@@ -540,19 +598,25 @@ The server provides these tools for managing your knowledge graph:
 - `project_id` (string, optional): Project name to isolate data
 
 #### search_knowledge
-**SEARCH** entities by text or tags.
+**SEARCH** entities by text or tags. **SUPPORTS MULTIPLE QUERIES** for batch searching.
 - **MANDATORY STRATEGY:** 1) Try searchMode='exact' first 2) If no results, use searchMode='fuzzy' 3) If still empty, lower fuzzyThreshold to 0.1
 - **EXACT MODE:** Perfect substring matches (fast, precise)
 - **FUZZY MODE:** Similar/misspelled terms (slower, broader)
 - **TAG SEARCH:** Use exactTags for precise category filtering
+- **MULTIPLE QUERIES:** Search for multiple objects in one call with automatic deduplication
 
 **Input:**
-- `query` (string): Search query for text search
+- `query` (string | string[]): Search query for text search. Can be a single string or array of strings for multiple object search
 - `searchMode` (string, optional): "exact" or "fuzzy" (default: "exact"). Use fuzzy only if exact returns no results
 - `fuzzyThreshold` (number, optional): Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results
 - `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive). Use for category filtering
 - `tagMatchMode` (string, optional): For exactTags: "any"=entities with ANY tag, "all"=entities with ALL tags (default: "any")
 - `project_id` (string, optional): Project name to isolate data
+
+**Examples:**
+- Single query: `search_knowledge(query="JavaScript", searchMode="exact")`
+- Multiple queries: `search_knowledge(query=["JavaScript", "React", "Node.js"], searchMode="fuzzy")`
+- Tag search: `search_knowledge(exactTags=["urgent", "bug"], tagMatchMode="all")`
 
 #### open_nodes
 **RETRIEVE** specific entities by exact names with their interconnections.
@@ -649,30 +713,18 @@ npm run test:unit          # Unit tests only
 npm run test:performance   # Performance benchmarks
 ```
 
-## Common Issues
+## Troubleshooting
 
-**Input validation errors:**
-- **"Entity must have at least one observation"**: Ensure all entities include non-empty observations arrays
-- **"Observation must be a non-empty string"**: Check that all observations contain actual text content
-- **"Entity name must be non-empty"**: Verify entity names are provided and not empty strings
+If you encounter any issues during setup or usage, please refer to our comprehensive [Troubleshooting Guide](docs/TROUBLESHOOTING.md), which covers:
 
-**Can't connect to database:**
-- For PostgreSQL: Make sure the database exists and you have the right connection string
-- For SQLite: No setup needed, the database file is created automatically
+- Input validation errors
+- Database connection problems
+- Configuration issues
+- Docker-related challenges
+- Test execution failures
+- Performance optimization
 
-**Claude Desktop not connecting:**
-- Check that your `claude_desktop_config.json` file path is correct for your operating system
-- Verify the JSON syntax is valid (no trailing commas)
-
-**Server not starting:**
-- Make sure Node.js 18+ is installed
-- Check that all environment variables are set correctly
-
-**Tests failing:**
-- For PostgreSQL tests: Ensure PostgreSQL is running at localhost:5432
-- For multi-backend tests: Run `npm run test:multi-backend` to see detailed output
-
-For more detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+The guide includes step-by-step solutions for common problems and diagnostic commands to help identify issues.
 
 ## Based on MCP Memory Server
 

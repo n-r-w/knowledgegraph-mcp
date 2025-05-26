@@ -570,3 +570,71 @@ npm run test:original
 export SKIP_POSTGRESQL_TESTS=true
 npm run test:multi-backend
 ```
+
+## Integration Issues
+
+### Claude Desktop Not Connecting
+
+**Cause**: Configuration issues with Claude Desktop.
+
+**Solutions**:
+- Check that your `claude_desktop_config.json` file path is correct for your operating system
+- Verify the JSON syntax is valid (no trailing commas)
+- Ensure the server command exists and is accessible in your PATH
+
+### Server Not Starting
+
+**Cause**: Missing dependencies or incorrect configuration.
+
+**Solutions**:
+- Make sure Node.js 18+ is installed: `node --version`
+- Check that all environment variables are set correctly
+- Verify all required dependencies are installed: `npm list`
+
+### Docker + PostgreSQL Connection Issues
+
+#### Error: `Received SIGTERM, shutting down gracefully`
+
+**Cause**: Docker container can't connect to PostgreSQL.
+
+**Solutions**:
+- **Note**: Docker image now includes PostgreSQL client libraries (`postgresql-client`, `libpq`)
+- Verify PostgreSQL is running: `pg_isready -h 127.0.0.1 -p 5432`
+- Check if database exists: `psql -h 127.0.0.1 -p 5432 -U postgres -l | grep knowledgegraph`
+- Create database if missing: `psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE knowledgegraph;"`
+- Try the alternative Docker configuration with `host.docker.internal`
+- Test connection manually: `docker run --rm --network host postgres:15 pg_isready -h 127.0.0.1 -p 5432`
+
+#### Network Connectivity Issues
+
+**Solutions**:
+- On macOS/Windows: Use `host.docker.internal` instead of `127.0.0.1`
+- On Linux: `--network host` should work, but you can also try `--add-host host.docker.internal:172.17.0.1`
+- Check Docker network: `docker network ls` and `docker network inspect bridge`
+
+#### Authentication Errors
+
+**Solutions**:
+- Verify PostgreSQL allows connections from Docker containers
+- Check `pg_hba.conf` for host-based authentication settings
+- Ensure password is correct in connection string
+
+### Test Docker Setup
+
+```bash
+# Test Docker + SQLite (should work immediately)
+docker run --rm -e KNOWLEDGEGRAPH_STORAGE_TYPE=sqlite -e KNOWLEDGEGRAPH_CONNECTION_STRING="sqlite://./test.db" knowledgegraph-mcp --help
+
+# Test Docker + PostgreSQL (replace with your password)
+docker run --rm --network host -e KNOWLEDGEGRAPH_STORAGE_TYPE=postgresql -e KNOWLEDGEGRAPH_CONNECTION_STRING="postgresql://postgres:yourpassword@127.0.0.1:5432/knowledgegraph" knowledgegraph-mcp --help
+```
+
+### Debug Docker Container
+
+```bash
+# Run container interactively to debug
+docker run -it --rm --network host --entrypoint /bin/sh knowledgegraph-mcp
+
+# Test PostgreSQL connection from inside container
+pg_isready -h 127.0.0.1 -p 5432
+```

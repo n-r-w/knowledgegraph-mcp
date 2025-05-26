@@ -31,11 +31,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_knowledge",
-        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE: 'I need to find information about X' or 'Does X already exist?'. DECISION TREE: 1) Looking for specific entities? → Use query with searchMode='exact' 2) No exact results? → Retry with searchMode='fuzzy' 3) Still no results? → Lower fuzzyThreshold to 0.1 4) Looking by category? → Use exactTags instead of query. MANDATORY STRATEGY: exact → fuzzy → lower threshold. AVOID: Starting with fuzzy search (slower and less precise).",
+        description: "🔍 START HERE - Always search first to check if entities exist before creating. SUPPORTS MULTIPLE QUERIES: Use single string for one object or array for multiple objects. WHEN TO USE: 'I need to find information about X' or 'Does X already exist?' or 'Find multiple objects: X, Y, Z'. DECISION TREE: 1) Single object? → Use query='term' 2) Multiple objects? → Use query=['term1', 'term2', 'term3'] 3) Looking for specific entities? → Use searchMode='exact' 4) No exact results? → Retry with searchMode='fuzzy' 5) Still no results? → Lower fuzzyThreshold to 0.1 6) Looking by category? → Use exactTags instead of query. MANDATORY STRATEGY: exact → fuzzy → lower threshold. EXAMPLES: query='JavaScript' OR query=['JavaScript', 'React', 'Node.js']. AVOID: Starting with fuzzy search (slower and less precise).",
         inputSchema: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Text to search for across entity names, types, observations, and tags (e.g., 'JavaScript', 'Google employee', 'urgent tasks')" },
+            query: {
+              oneOf: [
+                { type: "string" },
+                { type: "array", items: { type: "string" } }
+              ],
+              description: "Text to search for across entity names, types, observations, and tags. Can be a single string or array of strings for multiple object search (e.g., 'JavaScript' or ['JavaScript', 'React', 'Node.js'])"
+            },
             exactTags: {
               type: "array",
               items: { type: "string" },
@@ -354,34 +360,63 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
   switch (name) {
     case "search_knowledge": {
-      let result;
-      let searchType = "";
+      // Handle multiple queries
+      const queries = Array.isArray(args.query) ? args.query : [args.query as string];
 
-      if (args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0) {
-        // Exact tag search mode
-        const options = {
-          exactTags: args.exactTags as string[],
-          tagMatchMode: (args.tagMatchMode as 'any' | 'all') || 'any'
-        };
-        result = await knowledgeGraphManager.searchNodes(args.query as string, options, project);
-        searchType = `tag search (${args.exactTags.join(', ')})`;
-      } else if (args.searchMode === 'fuzzy') {
-        // Fuzzy search mode
-        const options = {
-          searchMode: 'fuzzy' as const,
-          fuzzyThreshold: args.fuzzyThreshold as number || 0.3
-        };
-        result = await knowledgeGraphManager.searchNodes(args.query as string, options, project);
-        searchType = `fuzzy search "${args.query}"`;
-      } else {
-        // General text search mode (exact)
-        result = await knowledgeGraphManager.searchNodes(args.query as string, project);
-        searchType = `exact search "${args.query}"`;
+      // Validate queries
+      if (queries.length === 0 || queries.some((q: any) => !q || typeof q !== 'string' || q.trim() === '')) {
+        return { content: [{ type: "text", text: "❌ ERROR: Query must be a non-empty string or array of non-empty strings" }] };
       }
 
-      const entityCount = result.entities.length;
-      const relationCount = result.relations.length;
+      let allResults: KnowledgeGraph = { entities: [], relations: [] };
+      let searchType = "";
+      const isMultipleQueries = queries.length > 1;
+
+      // Process each query
+      for (let i = 0; i < queries.length; i++) {
+        const query = queries[i].trim();
+        let result;
+
+        if (args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0) {
+          // Exact tag search mode
+          const options = {
+            exactTags: args.exactTags as string[],
+            tagMatchMode: (args.tagMatchMode as 'any' | 'all') || 'any'
+          };
+          result = await knowledgeGraphManager.searchNodes(query, options, project);
+          searchType = isMultipleQueries ? `tag search (${args.exactTags.join(', ')}) for ${queries.length} queries` : `tag search (${args.exactTags.join(', ')})`;
+        } else if (args.searchMode === 'fuzzy') {
+          // Fuzzy search mode
+          const options = {
+            searchMode: 'fuzzy' as const,
+            fuzzyThreshold: args.fuzzyThreshold as number || 0.3
+          };
+          result = await knowledgeGraphManager.searchNodes(query, options, project);
+          searchType = isMultipleQueries ? `fuzzy search for ${queries.length} queries` : `fuzzy search "${query}"`;
+        } else {
+          // General text search mode (exact)
+          result = await knowledgeGraphManager.searchNodes(query, project);
+          searchType = isMultipleQueries ? `exact search for ${queries.length} queries` : `exact search "${query}"`;
+        }
+
+        // Merge results with deduplication
+        const existingEntityNames = new Set(allResults.entities.map(e => e.name));
+        const newEntities = result.entities.filter(e => !existingEntityNames.has(e.name));
+        allResults.entities.push(...newEntities);
+
+        // Merge relations with deduplication
+        const existingRelations = new Set(allResults.relations.map(r => `${r.from}-${r.relationType}-${r.to}`));
+        const newRelations = result.relations.filter(r => !existingRelations.has(`${r.from}-${r.relationType}-${r.to}`));
+        allResults.relations.push(...newRelations);
+      }
+
+      const entityCount = allResults.entities.length;
+      const relationCount = allResults.relations.length;
       let successMsg = `� SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
+
+      if (isMultipleQueries) {
+        successMsg += `\n📋 QUERIES: [${queries.map((q: string) => `"${q}"`).join(', ')}]`;
+      }
 
       if (entityCount === 0) {
         successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_knowledge(searchMode='fuzzy')";
@@ -389,7 +424,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
         successMsg += "\n⚠️ MANY RESULTS: Consider adding tags for filtering. Use exactTags=['category']";
       }
 
-      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(allResults, null, 2)}` }] };
     }
     case "create_entities": {
       const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);

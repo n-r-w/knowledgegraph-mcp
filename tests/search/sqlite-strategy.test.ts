@@ -190,14 +190,13 @@ describe('SQLiteFuzzyStrategy', () => {
       expect(mockStatement.all).toHaveBeenCalledWith('custom-project');
     });
 
-    test('should handle database errors gracefully', async () => {
+    test('should handle database errors by throwing', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockStatement.all.mockImplementation(() => {
         throw new Error('Database error');
       });
 
-      const results = await strategy.getAllEntities();
-      expect(results).toHaveLength(0);
+      await expect(strategy.getAllEntities()).rejects.toThrow('Database error');
 
       consoleSpy.mockRestore();
     });
@@ -244,7 +243,8 @@ describe('SQLiteFuzzyStrategy', () => {
         '%script%',
         '%script%',
         '%script%',
-        '%script%'
+        '%script%',
+        100
       );
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('JavaScript');
@@ -260,18 +260,18 @@ describe('SQLiteFuzzyStrategy', () => {
         '%test%',
         '%test%',
         '%test%',
-        '%test%'
+        '%test%',
+        100
       );
     });
 
-    test('should handle database errors gracefully', async () => {
+    test('should handle database errors by throwing', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockStatement.all.mockImplementation(() => {
         throw new Error('Database error');
       });
 
-      const results = await strategy.searchExact('test');
-      expect(results).toHaveLength(0);
+      await expect(strategy.searchExact('test')).rejects.toThrow('Database error');
 
       consoleSpy.mockRestore();
     });
@@ -286,7 +286,8 @@ describe('SQLiteFuzzyStrategy', () => {
         '%%',
         '%%',
         '%%',
-        '%%'
+        '%%',
+        100
       );
       expect(results).toHaveLength(0);
     });

@@ -6,7 +6,8 @@ RUN apk update && apk upgrade && apk add --no-cache \
     python3 \
     make \
     g++ \
-    sqlite
+    sqlite \
+    postgresql-dev
 
 WORKDIR /app
 
@@ -25,10 +26,11 @@ RUN npm run build
 
 FROM node:22-alpine3.21 AS release
 
-# Update packages and install security updates, add runtime dependencies for SQLite and build tools
+# Update packages and install security updates, add runtime dependencies for SQLite, PostgreSQL and build tools
 RUN apk update && apk upgrade && apk add --no-cache \
     dumb-init \
-    sqlite \
+    postgresql-client \
+    libpq \
     python3 \
     make \
     g++
@@ -49,7 +51,7 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.npm npm ci --only=production --ignore-scripts
 
 # Rebuild native modules for the target architecture
-RUN npm rebuild better-sqlite3
+RUN npm rebuild better-sqlite3 pg
 
 # Change ownership to non-root user
 RUN chown -R nextjs:nodejs /app

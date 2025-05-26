@@ -2,8 +2,8 @@ import { Entity } from '../core.js';
 
 export interface SearchStrategy {
   canUseDatabase(): boolean;
-  searchDatabase(query: string, threshold: number, project?: string): Promise<Entity[]>;
-  searchClientSide(entities: Entity[], query: string): Entity[];
+  searchDatabase(query: string | string[], threshold: number, project?: string): Promise<Entity[]>;
+  searchClientSide(entities: Entity[], query: string | string[]): Entity[];
 }
 
 export interface SearchConfig {

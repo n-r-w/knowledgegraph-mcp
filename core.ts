@@ -226,13 +226,21 @@ export class KnowledgeGraphManager {
 
   // Enhanced search function that includes tags and supports exact tag matching and fuzzy search
   async searchNodes(
-    query: string,
+    query: string | string[],
     optionsOrProject?: SearchOptions | {
       exactTags?: string[];
       tagMatchMode?: 'any' | 'all';
     } | string,
     project?: string
   ): Promise<KnowledgeGraph> {
+    // Handle multiple queries
+    const queries = Array.isArray(query) ? query : [query];
+
+    // Handle empty queries (but allow empty strings for tag-based searches)
+    if (queries.length === 0 || queries.some(q => q === null || q === undefined || typeof q !== 'string')) {
+      return { entities: [], relations: [] };
+    }
+
     // Handle backward compatibility: if second param is string, it's the project
     let options: SearchOptions | { exactTags?: string[]; tagMatchMode?: 'any' | 'all' } | undefined;
     let resolvedProject: string;
@@ -246,6 +254,39 @@ export class KnowledgeGraphManager {
     }
 
     const graph = await this.loadGraph(resolvedProject);
+
+    // If multiple queries, process each and merge results
+    if (queries.length > 1) {
+      let allResults: KnowledgeGraph = { entities: [], relations: [] };
+
+      for (const singleQuery of queries) {
+        const result = await this.searchSingleQuery(singleQuery, options, resolvedProject, graph);
+
+        // Merge results with deduplication
+        const existingEntityNames = new Set(allResults.entities.map(e => e.name));
+        const newEntities = result.entities.filter(e => !existingEntityNames.has(e.name));
+        allResults.entities.push(...newEntities);
+
+        // Merge relations with deduplication
+        const existingRelations = new Set(allResults.relations.map(r => `${r.from}-${r.relationType}-${r.to}`));
+        const newRelations = result.relations.filter(r => !existingRelations.has(`${r.from}-${r.relationType}-${r.to}`));
+        allResults.relations.push(...newRelations);
+      }
+
+      return allResults;
+    }
+
+    // Single query - use existing logic
+    return this.searchSingleQuery(queries[0], options, resolvedProject, graph);
+  }
+
+  // Helper method for single query search
+  private async searchSingleQuery(
+    query: string,
+    options: SearchOptions | { exactTags?: string[]; tagMatchMode?: 'any' | 'all' } | undefined,
+    resolvedProject: string,
+    graph: KnowledgeGraph
+  ): Promise<KnowledgeGraph> {
 
     // If exact tags are specified, use exact tag matching
     if (options?.exactTags && options.exactTags.length > 0) {
@@ -272,6 +313,11 @@ export class KnowledgeGraphManager {
         console.warn('Fuzzy search failed, falling back to exact search:', error);
         // Fall through to exact search
       }
+    }
+
+    // Handle empty query string - return all entities if no specific search criteria
+    if (!query || query.trim() === '') {
+      return this.buildFilteredGraph(graph.entities, graph);
     }
 
     // Default behavior: general text search across all fields including tags
