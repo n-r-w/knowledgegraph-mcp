@@ -357,19 +357,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);
       const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
       const nextSteps = result.length > 0 ? "\n🔗 NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "create_relations": {
       const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
       const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
       const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_nodes to explore connected entities" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "add_observations": {
       const result = await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project);
       const totalAdded = result.reduce((sum, r) => sum + r.addedObservations.length, 0);
       const successMsg = `✅ SUCCESS: Added ${totalAdded} observations to ${result.length} entities`;
-      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}` }] };
     }
     case "delete_entities": {
       const entityNames = args.entityNames as string[];
@@ -444,13 +444,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const totalAdded = result.reduce((sum, r) => sum + r.addedTags.length, 0);
       const successMsg = `🏷️ SUCCESS: Added ${totalAdded} tags to ${result.length} entities`;
       const nextSteps = totalAdded > 0 ? "\n🔍 NEXT STEPS: Use search_nodes(exactTags=['tag']) to find tagged entities" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "remove_tags": {
       const result = await knowledgeGraphManager.removeTags(args.updates as { entityName: string; tags: string[] }[], project);
       const totalRemoved = result.reduce((sum, r) => sum + r.removedTags.length, 0);
       const successMsg = `🏷️ SUCCESS: Removed ${totalRemoved} tags from ${result.length} entities`;
-      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+      return { content: [{ type: "text", text: `${successMsg}` }] };
     }
 
     default:
