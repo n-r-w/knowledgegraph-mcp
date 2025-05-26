@@ -68,7 +68,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "CONNECT entities with directional relationships. REQUIREMENT: Both entities must already exist. FORMAT: Use active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on').",
+        description: "CONNECT entities to enable powerful queries and discovery. IMMEDIATE BENEFITS: Find all people at a company, all projects using a technology, all dependencies. CRITICAL for: team structures, project dependencies, technology stacks. EXAMPLES: 'John works_at Google', 'React depends_on JavaScript', 'Project_Alpha managed_by Sarah'.",
         inputSchema: {
           type: "object",
           properties: {
@@ -178,7 +178,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "REMOVE specific relationships while keeping entities intact. USE CASE: Relationships change or were incorrectly established. PRESERVATION: Entities remain unaffected.",
+        description: "UPDATE relationship structure when connections change. CRITICAL for: job changes (remove old 'works_at'), project completion (remove 'assigned_to'), technology migration (remove old 'uses'). MAINTAINS accurate network structure. WORKFLOW: Always remove outdated relations to prevent confusion.",
         inputSchema: {
           type: "object",
           properties: {

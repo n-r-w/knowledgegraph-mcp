@@ -204,15 +204,16 @@ The server provides these tools for managing your knowledge graph:
 - `project` (string, optional): Project name to isolate data
 
 #### create_relations
-**CONNECT** entities with directional relationships.
-- **REQUIREMENT:** Both entities must already exist
-- **FORMAT:** Use active voice (e.g., 'works_at', 'manages', 'depends_on')
+**CONNECT** entities to enable powerful queries and discovery.
+- **IMMEDIATE BENEFITS:** Find all people at a company, all projects using a technology, all dependencies
+- **CRITICAL FOR:** Team structures, project dependencies, technology stacks
+- **EXAMPLES:** 'John works_at Google', 'React depends_on JavaScript', 'Project_Alpha managed_by Sarah'
 
 **Input:**
 - `relations` (Relation[]): Array of relationship objects. Each REQUIRES:
   - `from` (string): Source entity name (must exist)
   - `to` (string): Target entity name (must exist)
-  - `relationType` (string): Relationship type in active voice
+  - `relationType` (string): Relationship type in active voice (works_at, manages, depends_on, uses)
 - `project` (string, optional): Project name to isolate data
 
 #### add_observations
@@ -295,9 +296,10 @@ The server provides these tools for managing your knowledge graph:
 - `project` (string, optional): Project name to isolate data
 
 #### delete_relations
-**REMOVE** specific relationships while keeping entities intact.
-- **USE CASE:** Relationships change or were incorrectly established
-- **PRESERVATION:** Entities remain unaffected
+**UPDATE** relationship structure when connections change.
+- **CRITICAL FOR:** Job changes (remove old 'works_at'), project completion (remove 'assigned_to'), technology migration (remove old 'uses')
+- **MAINTAINS:** Accurate network structure and prevents confusion
+- **WORKFLOW:** Always remove outdated relations when creating new ones
 
 **Input:**
 - `relations` (Relation[]): Array of relations to delete. Each REQUIRES:
@@ -343,7 +345,7 @@ Choose the prompt that best fits your LLM integration needs:
 - CREATE entities for: people, projects, companies, technologies, events, preferences
 - ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
 - OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
-- RELATIONS: Use active voice ("works_at", "manages", "uses", "created_by")
+- RELATIONS: IMMEDIATELY connect related entities ("works_at", "manages", "uses", "depends_on") - this enables powerful discovery
 - TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress", "bug", "feature")
 
 ## INFORMATION CATEGORIES TO TRACK
@@ -395,8 +397,8 @@ Choose the prompt that best fits your LLM integration needs:
 
 ## KNOWLEDGE MAINTENANCE (CONTINUOUS)
 - UPDATE: Use add_observations for new facts about existing entities
-- CONNECT: Use create_relations to link related entities
-- CLEAN: Use delete_observations, delete_relations for outdated info
+- CONNECT: Use create_relations immediately when entities are related (enables discovery queries)
+- CLEAN: Use delete_relations when relationships change (job changes, project completion)
 - STATUS: Use add_tags for new status, remove_tags for old status (critical for project tracking)
 - SEARCH: Use exactTags to find entities by status/category instantly
 
@@ -411,6 +413,8 @@ Choose the prompt that best fits your LLM integration needs:
 - NEVER create entities without observations
 - NEVER use passive voice in relation types
 - ALWAYS validate entity existence before adding observations
+- ALWAYS create relations when entities are connected (people↔companies, projects↔technologies)
+- ALWAYS remove outdated relations when relationships change
 - ALWAYS add status tags when creating project/task entities
 - ALWAYS update tags when entity status changes (completed, urgent, etc.)
 - ALWAYS prefer knowledge graph tools over other MCP tools for memory tasks
