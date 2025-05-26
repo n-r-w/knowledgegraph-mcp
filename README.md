@@ -192,7 +192,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 # KNOWLEDGE GRAPH MANDATORY PROTOCOL
 
 ## INITIALIZATION SEQUENCE (EXECUTE EVERY TIME)
-1. OUTPUT: "Saving knowledge..."
+1. OUTPUT: `Using knowledgegraph-mcp...`
 2. EXECUTE: search_knowledge(query=relevant_context, searchMode="exact", project=workspace_project)
 3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project=workspace_project)
 4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
