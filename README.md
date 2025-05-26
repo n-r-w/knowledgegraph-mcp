@@ -336,10 +336,21 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 
 ## 🧠 **KNOWLEDGE GRAPH (knowledgegraph-mcp) INTEGRATION PROTOCOL (GLOBAL)**
 
-### MANDATORY INITIALIZATION
-1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
-2. PROJECT ISOLATION: CALCULATE project_id ONCE, use SAME value in ALL calls
-   - **STEP-BY-STEP ALGORITHM**:
+### CONTEXTUAL USAGE STRATEGY
+1. **ANALYZE FIRST**: Evaluate each user message to determine if knowledge graph tools would be beneficial
+2. **USE WHEN VALUABLE**: Apply knowledge graph tools only when they provide clear value:
+   - When tracking project information that should persist across conversations
+   - When managing complex relationships between entities
+   - When information retrieval would benefit from structured queries
+   - When building a persistent knowledge base about the project
+3. **SKIP WHEN UNNECESSARY**: Don't use knowledge graph tools for:
+   - Simple, one-off questions that don't require persistence
+   - Tasks where the information is fully contained in the current context
+   - When the overhead of knowledge management exceeds the benefit
+
+### PROJECT ISOLATION
+1. **CALCULATE project ID ONCE**, use SAME value in ALL calls
+   - **STEP-BY-STEP PROJECT ID CALCULATE ALGORITHM**:
       1) **EXTRACT**: Take ONLY the last directory name from workspace path
       2) **LOWERCASE**: Convert all to lowercase
       3) **CLEAN**: Keep only letters, numbers, spaces, hyphens, including `-` and `_`
@@ -347,18 +358,20 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
    - CRITICAL: Use EXACT same project_id value throughout entire conversation
 
-### SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_knowledge(query="...", searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
-2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
-3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
-4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
+### INTELLIGENT SEARCH WORKFLOW
+1. **ASSESS NEED**: Determine if information might exist in knowledge graph
+2. **SEARCH STRATEGICALLY**: Follow this sequence when searching is valuable:
+   - START with: search_knowledge(query="...", searchMode="exact")
+   - IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
+   - IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+   - FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
-### ENTITY CREATION RULES
-- CREATE entities for: people, projects, companies, technologies, events, preferences
-- ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
-- OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
-- RELATIONS: IMMEDIATELY connect related entities ("works_at", "manages", "uses", "depends_on") - this enables powerful discovery
-- TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress", "bug", "feature")
+### ENTITY MANAGEMENT BEST PRACTICES
+- **CREATE** entities for valuable persistent information: people, projects, companies, technologies, events, preferences
+- **ENTITY TYPES**: Use "person", "company", "project", "technology", "event", "preference"
+- **OBSERVATIONS**: Each entity MUST have ≥1 specific, atomic fact
+- **RELATIONS**: Connect related entities when relationships matter ("works_at", "manages", "uses", "depends_on")
+- **TAGS**: Add status/category tags for efficient filtering ("urgent", "completed", "in-progress", "bug", "feature")
 
 ### INFORMATION CATEGORIES TO TRACK
 - People: names, roles, relationships, characteristics
@@ -373,6 +386,13 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 - ALWAYS validate entity existence before adding observations
 - DELETE outdated information promptly
 - KEEP observations atomic and factual
+
+### KNOWLEDGE MANAGEMENT DECISION FRAMEWORK
+For each user interaction, ask:
+1. **IS THIS INFORMATION VALUABLE LONG-TERM?** If yes, consider storing in knowledge graph
+2. **WILL THIS INFORMATION BE NEEDED ACROSS CONVERSATIONS?** If yes, definitely store
+3. **DOES THIS RELATE TO EXISTING KNOWLEDGE?** If yes, update or connect to existing entities
+4. **IS STRUCTURED RETRIEVAL NEEDED?** If yes, ensure proper tagging and relations
 
 ---
 
