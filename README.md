@@ -205,9 +205,15 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 # Knowledge Graph Integration Protocol
 
-## MANDATORY INITIALIZATION
-1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
-2. PROJECT ISOLATION: CALCULATE project_id ONCE, use SAME value in ALL calls
+## CONTEXTUAL USAGE STRATEGY
+1. EVALUATE EACH REQUEST: Determine if knowledge graph tools would be beneficial
+   - USE WHEN: The information should persist across conversations
+   - USE WHEN: Managing complex relationships between entities
+   - USE WHEN: Tracking project information or user preferences
+   - SKIP WHEN: Simple, one-off questions that don't require persistence
+   - SKIP WHEN: Tasks where information is fully contained in current context
+
+2. PROJECT ISOLATION: When using knowledge graph, CALCULATE project_id ONCE, use SAME value in ALL calls
    - RULE:
       * workspace_path → lowercase → remove special chars → underscores
       * keep only letters, numbers, spaces, hyphens, including `-` and `_`
@@ -282,10 +288,24 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 # KNOWLEDGE GRAPH MANDATORY PROTOCOL
 
-## COMPREHENSIVE TOOL DECISION FRAMEWORK
+## ADAPTIVE KNOWLEDGE MANAGEMENT FRAMEWORK
 
-### 1. search_knowledge - MANDATORY FIRST ACTION
-   - USAGE: START EVERY INTERACTION with knowledge search
+### WHEN TO USE KNOWLEDGE GRAPH TOOLS
+- When information should persist across multiple conversations
+- When tracking complex relationships between entities
+- When building a structured knowledge base about the project
+- When information retrieval would benefit from structured queries
+- When user preferences or project details need long-term storage
+
+### WHEN TO SKIP KNOWLEDGE GRAPH TOOLS
+- For simple, one-off questions not requiring persistence
+- When all needed information is contained in the current context
+- When overhead of knowledge management exceeds the benefit
+- For basic code operations not tied to project structure
+
+### TOOL SELECTION GUIDE
+
+#### 1. search_knowledge - WHEN RETRIEVING INFORMATION
    - MULTI-QUERY SUPPORT: search_knowledge(query=["term1", "term2", "term3"])
    - EXACT MATCH PATH: search_knowledge(query="precise_term", searchMode="exact")
    - FUZZY MATCH PATH: search_knowledge(query="approximate_term", searchMode="fuzzy")
@@ -371,7 +391,20 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 # Knowledge Graph Protocol
 
-## PROJECT ID CALCULATION (CRITICAL - USE SAME VALUE ALWAYS):
+## ADAPTIVE USAGE GUIDELINES:
+
+### WHEN TO USE KNOWLEDGE GRAPH:
+- For information that should persist across conversations
+- For tracking relationships between entities
+- For creating structured, queryable information
+- For managing project data, preferences, or configurations
+
+### WHEN TO SKIP KNOWLEDGE GRAPH:
+- For simple questions not requiring persistence
+- When information exists only in current context
+- For basic code operations or explanations
+
+## PROJECT ID CALCULATION (WHEN USING KNOWLEDGE GRAPH):
 CALCULATE ONCE:
   - project_id = workspace_path → lowercase → remove special chars → underscores
   - keep only letters, numbers, spaces, hyphens, including `-` and `_`
@@ -380,7 +413,7 @@ RULE: Use EXACT same project_id value in ALL tool calls
 
 ## TOOL SELECTION GUIDE:
 
-1. ALWAYS START WITH: search_knowledge
+1. search_knowledge - FOR RETRIEVING INFORMATION
    - Find information: search_knowledge(query="term")
    - Find multiple items: search_knowledge(query=["term1", "term2"])
    - Filter by category: search_knowledge(exactTags=["urgent"])
@@ -476,11 +509,25 @@ This prompt contains rules to prevent LLMs from compressing user instructions an
 3. **FINAL UPDATE**: Mark all completed items when plan is finished
 4. **NEVER SKIP**: Status updates are mandatory, not optional
 
-## 🧠 **KNOWLEDGE GRAPH TOOL SELECTION FRAMEWORK (GLOBAL)**
+## 🧠 **KNOWLEDGE GRAPH CONTEXTUAL USAGE FRAMEWORK (GLOBAL)**
+
+### CONTEXTUAL USAGE STRATEGY
+1. **ANALYZE EACH USER REQUEST**: Evaluate if knowledge graph tools would be beneficial:
+   - USE WHEN: Information should persist across conversations
+   - USE WHEN: Managing complex relationships between entities
+   - USE WHEN: Information retrieval would benefit from structured queries
+   - USE WHEN: Building a persistent knowledge base about the project
+   - USE WHEN: Tracking project information, technologies, or user preferences
+
+2. **SKIP WHEN UNNECESSARY**: Don't use knowledge graph tools for:
+   - Simple, one-off questions that don't require persistence
+   - Tasks where information is fully contained in current context
+   - Basic code operations not tied to project structure
+   - When the overhead of knowledge management exceeds the benefit
 
 ### WHEN TO USE EACH TOOL (DECISION TREE)
 
-1. **search_knowledge**: ALWAYS START HERE
+1. **search_knowledge**: WHEN RETRIEVING INFORMATION
    - EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
    - INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
    - MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
