@@ -260,8 +260,8 @@ describe('Tag System', () => {
         { entityName: 'NonExistent', tags: ['test'] }
       ];
 
-      await expect(manager.addTags(updates, project)).rejects.toThrow('Entity with name NonExistent not found');
-      await expect(manager.removeTags(updates, project)).rejects.toThrow('Entity with name NonExistent not found');
+      await expect(manager.addTags(updates, project)).rejects.toThrow('ENTITY ERROR: \'NonExistent\' not found. ACTION: Create entity first with create_entities');
+      await expect(manager.removeTags(updates, project)).rejects.toThrow('ENTITY ERROR: \'NonExistent\' not found. ACTION: Create entity first with create_entities');
     });
   });
 

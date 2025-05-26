@@ -26,17 +26,17 @@ describe('Input Validation Tests', () => {
   describe('Entity Creation Validation', () => {
     it('should reject empty entities array', async () => {
       await expect(manager.createEntities([], testProject))
-        .rejects.toThrow('At least one entity must be provided');
+        .rejects.toThrow('ENTITIES ERROR: Empty array provided. REQUIRED: At least 1 entity object');
     });
 
     it('should reject null entities array', async () => {
       await expect(manager.createEntities(null as any, testProject))
-        .rejects.toThrow('Entities must be a non-empty array');
+        .rejects.toThrow('ENTITIES ERROR: Must be array of entity objects. REQUIRED: [{name, entityType, observations}]');
     });
 
     it('should reject undefined entities array', async () => {
       await expect(manager.createEntities(undefined as any, testProject))
-        .rejects.toThrow('Entities must be a non-empty array');
+        .rejects.toThrow('ENTITIES ERROR: Must be array of entity objects. REQUIRED: [{name, entityType, observations}]');
     });
 
     it('should reject entity with empty name', async () => {
@@ -47,7 +47,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity at index 0 must have a non-empty name');
+        .rejects.toThrow('ENTITY ERROR: Entity #0 missing name. REQUIRED: Non-empty string (e.g., \'John_Smith\', \'Project_Alpha\')');
     });
 
     it('should reject entity with empty entityType', async () => {
@@ -58,7 +58,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity at index 0 must have a non-empty entityType');
+        .rejects.toThrow('ENTITY ERROR: Entity #0 missing entityType. REQUIRED: Non-empty string (e.g., \'person\', \'project\', \'company\')');
     });
 
     it('should reject entity with non-array observations', async () => {
@@ -69,7 +69,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity "TestEntity" observations must be an array');
+        .rejects.toThrow('ENTITY ERROR: "TestEntity" observations must be array. REQUIRED: [\'fact1\', \'fact2\']');
     });
 
     it('should reject entity with non-string observation', async () => {
@@ -80,7 +80,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity "TestEntity" observation at index 1 must be a string');
+        .rejects.toThrow('ENTITY ERROR: "TestEntity" observation #1 must be string. REQUIRED: Non-empty text fact');
     });
 
     it('should reject entity with non-array tags', async () => {
@@ -92,7 +92,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity "TestEntity" tags must be an array');
+        .rejects.toThrow('ENTITY ERROR: "TestEntity" tags must be array. REQUIRED: [\'urgent\', \'completed\'] or []');
     });
 
     it('should reject entity with non-string tag', async () => {
@@ -104,7 +104,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.createEntities(entities, testProject))
-        .rejects.toThrow('Entity "TestEntity" tag at index 1 must be a string');
+        .rejects.toThrow('ENTITY ERROR: "TestEntity" tag #1 must be string. EXAMPLE: \'urgent\', \'completed\', \'technical\'');
     });
 
     it('should accept valid entity with undefined observations (will be defaulted)', async () => {
@@ -157,12 +157,12 @@ describe('Input Validation Tests', () => {
 
     it('should reject empty observations array', async () => {
       await expect(manager.addObservations([], testProject))
-        .rejects.toThrow('At least one observation update must be provided');
+        .rejects.toThrow('OBSERVATIONS ERROR: Empty array provided. REQUIRED: At least 1 observation update');
     });
 
     it('should reject null observations array', async () => {
       await expect(manager.addObservations(null as any, testProject))
-        .rejects.toThrow('Observations must be a non-empty array');
+        .rejects.toThrow('OBSERVATIONS ERROR: Must be array of update objects. REQUIRED: [{entityName, observations}]');
     });
 
     it('should reject observation update with empty entityName', async () => {
@@ -172,7 +172,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.addObservations(updates, testProject))
-        .rejects.toThrow('Observation update at index 0 must have a non-empty entityName');
+        .rejects.toThrow('OBSERVATION ERROR: Update #0 missing entityName. REQUIRED: Existing entity name (e.g., \'John_Smith\')');
     });
 
     it('should reject observation update with empty observations array', async () => {
@@ -182,7 +182,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.addObservations(updates, testProject))
-        .rejects.toThrow('Observation update for entity "TestEntity" must contain at least one observation');
+        .rejects.toThrow('OBSERVATION ERROR: "TestEntity" needs observations. REQUIRED: At least 1 fact (e.g., [\'Promoted to senior\', \'Moved to NYC\'])');
     });
 
     it('should reject observation update with non-array observations', async () => {
@@ -192,7 +192,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.addObservations(updates, testProject))
-        .rejects.toThrow('Observation update for entity "TestEntity" must have a non-empty observations array');
+        .rejects.toThrow('OBSERVATION ERROR: "TestEntity" observations must be array. REQUIRED: [\'fact1\', \'fact2\']');
     });
 
     it('should reject observation update with empty string observation', async () => {
@@ -202,7 +202,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.addObservations(updates, testProject))
-        .rejects.toThrow('Observation at index 1 for entity "TestEntity" must be a non-empty string');
+        .rejects.toThrow('OBSERVATION ERROR: "TestEntity" observation #1 must be non-empty string. EXAMPLE: \'Works at Google\'');
     });
 
     it('should reject observation update with non-string observation', async () => {
@@ -212,7 +212,7 @@ describe('Input Validation Tests', () => {
       }];
 
       await expect(manager.addObservations(updates, testProject))
-        .rejects.toThrow('Observation at index 1 for entity "TestEntity" must be a non-empty string');
+        .rejects.toThrow('OBSERVATION ERROR: "TestEntity" observation #1 must be non-empty string. EXAMPLE: \'Works at Google\'');
     });
 
     it('should accept valid observation update', async () => {
