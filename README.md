@@ -213,12 +213,19 @@ All LLMs behave differently. For some, general instructions are enough, while ot
    - SKIP WHEN: Simple, one-off questions that don't require persistence
    - SKIP WHEN: Tasks where information is fully contained in current context
 
-2. PROJECT ISOLATION: When using knowledge graph, CALCULATE project_id ONCE, use SAME value in ALL calls
-   - RULE:
-      * workspace_path → lowercase → remove special chars → underscores
-      * keep only letters, numbers, spaces, hyphens, including `-` and `_`
-   - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-   - CRITICAL: Use EXACT same project_id value throughout entire conversation
+2. **PROJECT ID CALCULATION AND USAGE (CRITICAL FOR DATA INTEGRITY)**
+   - **CALCULATE ONCE at first knowledge graph usage:**
+      1. **EXTRACT**: Take ONLY the last directory name from workspace path
+      2. **LOWERCASE**: Convert all to lowercase
+      3. **CLEAN**: Keep only letters, numbers, spaces, hyphens, including `-` and `_`
+      4. **NORMALIZE**: Replace spaces and hyphens with underscores
+   - **EXAMPLES**: 
+      * "/Users/john/dev/My-App" → extract "My-App" → lowercase "my-app" → normalize to "my_app"
+      * "C:\Projects\Web Site" → extract "Web Site" → lowercase "web site" → normalize to "web_site"
+   - **⚠️ CRITICAL WARNINGS**:
+      * **ALWAYS** include project_id in EVERY knowledge graph tool call
+      * **NEVER** use different project_id values in the same conversation
+      * **NEVER** recalculate mid-conversation - this WILL cause data fragmentation
 
 ## TOOL SELECTION DECISION TREE
 1. **search_knowledge**: ALWAYS START HERE
@@ -347,13 +354,31 @@ All LLMs behave differently. For some, general instructions are enough, while ot
    - SELECTIVE: delete_observations removes specific facts only
    - RELATIONSHIP: delete_relations updates connection structure
 
-## PROJECT_ID PARAMETER (CRITICAL FOR DATA INTEGRITY)
-- CALCULATE ONCE:
-    * project_id = workspace_path → lowercase → remove special chars → underscores
-    * keep only letters, numbers, spaces, hyphens, including `-` and `_`
-- EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-- RULE: Use EXACT same project_id value in ALL knowledge graph tool calls
-- WARNING: Different project_id values = data fragmentation and loss
+## ⚠️ PROJECT_ID CALCULATION AND USAGE (CRITICAL FOR DATA INTEGRITY)
+
+### STEP-BY-STEP ALGORITHM (EXECUTE EXACTLY AS FOLLOWS):
+1. **EXTRACT LAST DIRECTORY SEGMENT** from workspace path:
+   - Example: From "/Users/john/dev/My-Project" extract "My-Project"
+2. **CONVERT TO LOWERCASE**:
+   - Example: "My-Project" becomes "my-project"
+3. **CLEAN AND NORMALIZE**:
+   - Keep only: letters, numbers, spaces, hyphens, underscores
+   - Remove all other special characters
+4. **REPLACE SPACES AND HYPHENS WITH UNDERSCORES**:
+   - Example: "my-project" becomes "my_project"
+
+### CRITICAL USAGE RULES:
+- **CALCULATE ONCE**: At the first decision to use ANY knowledge graph tool
+- **STORE VALUE**: Save the calculated project_id for reuse
+- **INCLUDE IN ALL CALLS**: EVERY knowledge graph tool call MUST include project_id
+- **CONSISTENCY**: Use EXACT SAME project_id value in ALL tool calls
+- **NEVER RECALCULATE**: This would cause catastrophic data fragmentation
+
+### WARNING: Failure to follow these rules precisely will result in:
+- Data fragmentation across multiple isolated graphs
+- Inability to retrieve previously stored information
+- Corrupted knowledge relationships
+- Potential data loss
 
 ## WORKFLOW SEQUENCES (MANDATORY)
 
@@ -404,12 +429,28 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 - When information exists only in current context
 - For basic code operations or explanations
 
-## PROJECT ID CALCULATION (WHEN USING KNOWLEDGE GRAPH):
-CALCULATE ONCE:
-  - project_id = workspace_path → lowercase → remove special chars → underscores
-  - keep only letters, numbers, spaces, hyphens, including `-` and `_`
-EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_site"
-RULE: Use EXACT same project_id value in ALL tool calls
+## ⚠️ PROJECT ID CALCULATION (CRITICAL FOR DATA INTEGRITY):
+
+### PRECISE CALCULATION ALGORITHM:
+1. **EXTRACT**: Take ONLY the last directory name from workspace path
+   - From: "/Users/john/dev/My-App" extract "My-App"
+2. **LOWERCASE**: Convert all characters to lowercase
+   - "My-App" becomes "my-app"
+3. **CLEAN**: Keep only letters, numbers, spaces, hyphens, underscores
+   - Remove all other special characters
+4. **NORMALIZE**: Replace spaces and hyphens with underscores
+   - "my-app" becomes "my_app"
+
+### EXAMPLES OF CORRECT CALCULATION:
+- "/Users/john/dev/My-App" → "my_app"
+- "C:\Code\Web Site" → "web_site"
+- "/home/user/knowledge-graph-mcp" → "knowledge_graph_mcp"
+
+### CRITICAL USAGE RULES:
+- **CALCULATE ONCE**: When first deciding to use knowledge graph
+- **REUSE EXACTLY**: Use IDENTICAL project_id in ALL tool calls
+- **NEVER OMIT**: ALWAYS include project_id parameter
+- **NEVER RECALCULATE**: Would cause permanent data fragmentation
 
 ## TOOL SELECTION GUIDE:
 
@@ -460,7 +501,7 @@ search_knowledge → remove_tags → add_tags
 
 #### Prompt 4: Documents and task management with Knowledge Graph integration
 
-This prompt contains rules to prevent LLMs from compressing user instructions and provides comprehensive guidance for using the knowledge graph effectively.
+This prompt provides comprehensive guidance on both code quality and knowledge graph usage, with protection against rule compression.
 
 ```
 # GLOBAL MANDATORY RULES - APPLY TO ENTIRE CONVERSATION
@@ -479,7 +520,7 @@ This prompt contains rules to prevent LLMs from compressing user instructions an
 - **PRINCIPLES**: Apply SOLID principles consistently
 - **DEPLOYMENT**: Adhere to 12factor.net guidelines
 - **VALIDATION**: Code must pass quality checks before submission
-- **TESTING**: Add comprehensive unit tests. If tests fail, look for the reason instead of deleting or disabling tests.
+- **TESTING**: Add comprehensive unit tests. If tests fail, look for the reason instead of deleting or disabling tests
 
 ## 🔄 **SAFE REFACTORING PROTOCOL (GLOBAL)**
 **Apply to all file operations:**
@@ -509,29 +550,97 @@ This prompt contains rules to prevent LLMs from compressing user instructions an
 3. **FINAL UPDATE**: Mark all completed items when plan is finished
 4. **NEVER SKIP**: Status updates are mandatory, not optional
 
-## 🧠 **KNOWLEDGE GRAPH CONTEXTUAL USAGE FRAMEWORK (GLOBAL)**
+---
 
-### CONTEXTUAL USAGE STRATEGY
-1. **ANALYZE EACH USER REQUEST**: Evaluate if knowledge graph tools would be beneficial:
-   - USE WHEN: Information should persist across conversations
-   - USE WHEN: Managing complex relationships between entities
-   - USE WHEN: Information retrieval would benefit from structured queries
-   - USE WHEN: Building a persistent knowledge base about the project
-   - USE WHEN: Tracking project information, technologies, or user preferences
+## 🧠 **KNOWLEDGE GRAPH CONTEXTUAL USAGE FRAMEWORK**
 
-2. **SKIP WHEN UNNECESSARY**: Don't use knowledge graph tools for:
-   - Simple, one-off questions that don't require persistence
-   - Tasks where information is fully contained in current context
-   - Basic code operations not tied to project structure
-   - When the overhead of knowledge management exceeds the benefit
+### WHEN TO USE KNOWLEDGE GRAPH TOOLS
+Use knowledge graph tools when ANY of these conditions are met:
 
-### WHEN TO USE EACH TOOL (DECISION TREE)
+**1. EXPLICIT USER REQUEST FOR PERSISTENCE:**
+- User asks to remember information for future use
+- User references needing information across conversations
+- User wants to track or monitor something over time
+
+**2. IMPLICIT INFORMATION VALUE:**
+- Technical details that will likely be referenced again
+- Project structure or requirements information
+- User preferences that affect multiple interactions
+- Relationships between components/systems/people
+
+**3. INFORMATION MODIFICATION TRIGGERS:**
+- **CREATE (create_entities)**: When discovering NEW important information not in the graph
+- **UPDATE (add_observations)**: When learning ADDITIONAL facts about existing entities
+- **CONNECT (create_relations)**: When seeing relationships between known entities
+- **CATEGORIZE (add_tags)**: When status changes or classification is needed
+- **CLEAN (delete_*)**: When information becomes outdated or incorrect
+
+**4. CONVERSATIONAL CONTEXT TRIGGERS:**
+- User mentions the same entity multiple times
+- Discussion involves complex systems with many components
+- Multiple concepts with clear relationships are discussed
+- Project status or requirements are mentioned
+- Future work or dependencies are discussed
+
+### WHEN TO SKIP KNOWLEDGE GRAPH TOOLS
+Do NOT use knowledge graph tools when:
+- ONE-TIME QUERY: Simple question with no future reference needed
+- CONTAINED CONTEXT: All information exists in current conversation
+- CODE OPERATIONS: Basic code tasks unrelated to project structure
+- EXCESSIVE OVERHEAD: Benefits don't justify the complexity
+- TRIVIAL INFORMATION: Data has little long-term value
+
+### PROACTIVE OPERATIONS EXAMPLES
+
+✅ **SEARCH (search_knowledge)**:
+- When user refers to something potentially mentioned before
+- Before creating a new entity to avoid duplication
+- When needing context about project components
+
+✅ **CREATE (create_entities)**:
+- When user mentions a new technology being used
+- When user expresses a preference worth remembering
+- When important project requirements are discussed
+- When new team members or stakeholders are mentioned
+
+✅ **UPDATE (add_observations)**:
+- When user provides more details about an existing entity
+- When discovering new characteristics of known technologies
+- When learning additional user preferences
+- When project requirements evolve
+
+✅ **CONNECT (create_relations)**:
+- When user mentions how components interact
+- When dependencies between technologies are described
+- When organizational structure is discussed
+- When task assignments are mentioned
+
+✅ **CATEGORIZE (add_tags/remove_tags)**:
+- When task status changes (in-progress, completed)
+- When priority levels are mentioned
+- When categorizing entities by type or domain
+- When user expresses urgency about something
+
+✅ **CLEAN (delete_* tools)**:
+- When information is explicitly corrected by user
+- When project scope changes, making old requirements irrelevant
+- When technologies are no longer used
+- When relationships between entities change
+
+❌ **SKIP KNOWLEDGE GRAPH FOR**:
+- "What's the syntax for Python list comprehension?"
+- "Help me debug this function"
+- "Explain how Docker works"
+- "Format this JSON data correctly"
+
+### TOOL SELECTION GUIDE
 
 1. **search_knowledge**: WHEN RETRIEVING INFORMATION
    - EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
    - INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
    - MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
    - CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"])
+   - SEARCH PROGRESSION: exact → fuzzy → lower threshold (0.1)
 
 2. **create_entities**: ONLY AFTER search_knowledge confirms non-existence
    - NEW INFORMATION: "Remember X for future conversations"
@@ -563,85 +672,113 @@ This prompt contains rules to prevent LLMs from compressing user instructions an
    - CLEANUP: For removing outdated information
    - PREREQUISITE: Verify existence first
 
-### COMMON WORKFLOW SEQUENCES
+## ⚠️ **CRITICAL: PROJECT ID CALCULATION AND USAGE**
 
-#### NEW INFORMATION FLOW:
-1. search_knowledge → Check if exists
-2. IF NOT EXISTS:
-   - create_entities → Create new entity
-   - create_relations → Connect to related entities
-   - add_tags → Categorize for retrieval
-3. IF EXISTS:
-   - add_observations → Add new facts
-   - create_relations → Add new connections
-   - update tags → add_tags/remove_tags
+### PROJECT ID IS MANDATORY FOR ALL KNOWLEDGE GRAPH OPERATIONS
 
-#### STATUS UPDATE FLOW:
-1. search_knowledge → Find entity
-2. remove_tags → Remove old status
-3. add_tags → Add new status
+**CALCULATE PROJECT ID ONCE AND REUSE:**
+1. **IMMEDIATELY** calculate project_id at the FIRST determination to use ANY knowledge graph tool
+2. **STORE** this value and REUSE the EXACT SAME project_id for ALL subsequent knowledge graph tool calls
+3. **NEVER** recalculate project_id mid-conversation - this will cause data fragmentation
 
-#### CLEANUP FLOW:
-1. search_knowledge → Find outdated entity
-2. delete_observations → Remove wrong facts OR
-   delete_relations → Remove outdated connections OR
-   delete_entities → Remove completely (last resort)
+### STEP-BY-STEP PROJECT ID CALCULATION ALGORITHM
 
-### PROJECT ISOLATION
-1. **CALCULATE project ID ONCE**, use SAME value in ALL calls
-   - **STEP-BY-STEP PROJECT ID CALCULATE ALGORITHM**:
-      1) **EXTRACT**: Take ONLY the last directory name from workspace path
-      2) **LOWERCASE**: Convert all to lowercase
-      3) **CLEAN**: Keep only letters, numbers, spaces, hyphens, including `-` and `_`
-      4) **UNDERSCORES**: Replace spaces and hyphens with underscores
-   - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
-   - CRITICAL: Use EXACT same project_id value throughout entire conversation
-   - **AUTOMATICALLY CALCULATE** project_id during first user interaction
+1. **EXTRACT LAST DIRECTORY SEGMENT** from the workspace path:
+   - From: "/Users/john/dev/My-Project-123"
+   - Extract: "My-Project-123"
 
-### SEARCH STRATEGY FLOWCHART
-1. EXACT SEARCH (FASTEST): search_knowledge(query="term", searchMode="exact")
-2. MULTIPLE TERMS: search_knowledge(query=["term1", "term2", "term3"]) for batch search
-3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
-4. BROADER SEARCH (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
-5. CATEGORY SEARCH: search_knowledge(exactTags=["urgent", "completed"])
+2. **CONVERT TO LOWERCASE**:
+   - From: "My-Project-123"
+   - To: "my-project-123"
 
-### ENTITY MANAGEMENT BEST PRACTICES
-- **CREATE** entities for valuable persistent information: people, projects, companies, technologies, events, preferences
-- **ENTITY TYPES**: Use "person", "company", "project", "technology", "event", "preference"
-- **OBSERVATIONS**: Each entity MUST have ≥1 specific, atomic fact
-- **RELATIONS**: Connect related entities when relationships matter ("works_at", "manages", "uses", "depends_on")
-- **TAGS**: Add status/category tags for efficient filtering ("urgent", "completed", "in-progress", "bug", "feature")
-- **CREATE NEW ENTITIES** during first interaction with the project if they don't exist
+3. **CLEAN & NORMALIZE**:
+   - Keep only: letters, numbers, spaces, hyphens, underscores
+   - Remove all other special characters
 
-### INFORMATION CATEGORIES TO TRACK
-- People: names, roles, relationships, characteristics
-- Organizations: companies, teams, departments
-- Projects: goals, status, deadlines, requirements
-- Technologies: tools, frameworks, languages
-- Events: meetings, milestones, deadlines
-- Preferences: user choices, workflows, communication style
+4. **REPLACE SPACES AND HYPHENS WITH UNDERSCORES**:
+   - From: "my-project-123"
+   - To: "my_project_123"
 
-### CRITICAL CONSTRAINTS
-- NEVER omit project_id parameter
-- ALWAYS validate entity existence before adding observations
-- DELETE outdated information promptly
-- KEEP observations atomic and factual
-- **PRIORITIZE** knowledge graph tools over other tools when working with project information
+### EXAMPLES OF CORRECT PROJECT ID CALCULATION
 
-### KNOWLEDGE MANAGEMENT DECISION FRAMEWORK
-For each user interaction, ask:
-1. **IS THIS INFORMATION VALUABLE LONG-TERM?** If yes, consider storing in knowledge graph
-2. **WILL THIS INFORMATION BE NEEDED ACROSS CONVERSATIONS?** If yes, definitely store
-3. **DOES THIS RELATE TO EXISTING KNOWLEDGE?** If yes, update or connect to existing entities
-4. **IS STRUCTURED RETRIEVAL NEEDED?** If yes, ensure proper tagging and relations
+| Original Workspace Path | Extracted Last Segment | Lowercase | Replace Spaces/Hyphens | Final project_id |
+|-------------------------|------------------------|-----------|------------------------|------------------|
+| /Users/john/dev/My-App | My-App | my-app | my_app | my_app |
+| C:\Projects\Web Site 2.0 | Web Site 2.0 | web site 2.0 | web_site_2.0 | web_site_2_0 |
+| /home/user/knowledge-graph-mcp | knowledge-graph-mcp | knowledge-graph-mcp | knowledge_graph_mcp | knowledge_graph_mcp |
 
-### ⚠️ **PRE-RESPONSE CHECKLIST**
-1. **HAVE I PERFORMED SEARCH** in the knowledge graph?
-2. **HAVE I USED THE CORRECT project_id**?
-3. **HAVE I CREATED/UPDATED ENTITIES** when necessary?
-4. **HAVE I ESTABLISHED RELATIONSHIPS** between entities?
-5. **HAVE I ADDED TAGS** for efficient searching?
-6. **HAVE I STARTED MY RESPONSE** with "Using knowledgegraph-mcp..."?
+### CRITICAL WARNINGS
+
+- **ALWAYS** include project_id in EVERY knowledge graph tool call
+- **NEVER** use different project_id values in the same conversation
+- **NEVER** guess or make up a project_id value
+- If unsure about correct calculation, err on the side of using the last path segment with spaces and hyphens replaced by underscores
+
+### HOW TO USE PROJECT ID
+
+In ALL knowledge graph tool calls:
+```
+search_knowledge(query="term", project_id="your_calculated_project_id")
+create_entities(entities=[...], project_id="your_calculated_project_id")
+// ALL other knowledge graph tools follow the same pattern
+```
+
+### ENTITY GUIDELINES
+
+**TYPES**: Choose appropriate category:
+- person: People, roles, contacts
+- company: Organizations, teams
+- project: Initiatives, goals, milestones
+- technology: Tools, languages, frameworks
+- event: Meetings, deadlines
+- preference: User choices, settings
+
+**NAMING**: Be specific and unique
+- GOOD: "React_v18", "John_Smith_Engineer"
+- POOR: "React", "John"
+
+**OBSERVATIONS**: Atomic, factual statements
+- GOOD: "Released March 2022", "Prefers dark mode"
+- POOR: "Very good", "Used in project"
+
+**RELATIONS**: Connect entities with active voice verbs
+- GOOD: "person works_at company", "project uses technology"
+- POOR: "company employs person", "technology used_by project"
+
+**TAGS**: Add for filtering and status
+- STATUS: "urgent", "in-progress", "completed", "blocked"
+- TYPE: "bug", "feature", "enhancement", "documentation"
+- PRIORITY: "high", "medium", "low"
+
+### COMMON WORKFLOWS
+
+**ADDING NEW INFORMATION**:
+1. search_knowledge to check existence
+2. If not found:
+   - create_entities with observations
+   - create_relations to connect to existing entities
+   - add_tags for categorization
+3. If found:
+   - add_observations to update
+   - create_relations for new connections
+
+**UPDATING STATUS**:
+1. search_knowledge to find entity
+2. remove_tags to clear old status
+3. add_tags to set new status
+
+**CLEANUP**:
+1. search_knowledge to find target
+2. For minor corrections: delete_observations
+3. For relationship changes: delete_relations
+4. For complete removal: delete_entities (use sparingly)
+
+### PRIORITY RULES
+
+1. **USER REQUESTS OVERRIDE DEFAULTS**: Always prioritize explicit user instructions
+2. **CONTEXT DETERMINES TOOL USAGE**: Don't use knowledge graph tools when unnecessary
+3. **CODE CORRECTNESS OVER DOCUMENTATION**: Working code first, then document in knowledge graph
+4. **MINIMAL EFFECTIVE PERSISTENCE**: Store only what will be valuable in future
 
 ---
 

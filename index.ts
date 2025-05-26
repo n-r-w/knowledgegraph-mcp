@@ -65,7 +65,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -102,7 +102,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -133,7 +133,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -161,7 +161,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -181,7 +181,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -212,7 +212,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -240,7 +240,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -255,7 +255,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -274,7 +274,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -305,7 +305,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -336,7 +336,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
