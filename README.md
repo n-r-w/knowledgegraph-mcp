@@ -361,7 +361,7 @@ Choose the prompt that best fits your LLM integration needs:
 # Knowledge Graph Integration Protocol
 
 ## MANDATORY INITIALIZATION
-1. START every conversation: Say "Saving knowledge..." then SEARCH knowledge graph
+1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
 2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
    - RULE: workspace_path → lowercase → remove special chars → underscores
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
@@ -539,7 +539,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 ## 🧠 **KNOWLEDGE GRAPH (knowledgegraph-mcp) INTEGRATION PROTOCOL (GLOBAL)**
 
 ### MANDATORY INITIALIZATION
-1. START every conversation: SEARCH knowledge graph
+1. START every conversation: Say `Using knowledgegraph-mcp...` then SEARCH knowledge graph
 2. PROJECT ISOLATION: CALCULATE project ID ONCE, use SAME value in ALL calls
    - RULE: workspace_path → lowercase → remove special chars → underscores
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"

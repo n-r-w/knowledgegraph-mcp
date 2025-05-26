@@ -30,8 +30,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
+        name: "search_nodes",
+        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE: 'I need to find information about X' or 'Does X already exist?'. DECISION TREE: 1) Looking for specific entities? → Use query with searchMode='exact' 2) No exact results? → Retry with searchMode='fuzzy' 3) Still no results? → Lower fuzzyThreshold to 0.1 4) Looking by category? → Use exactTags instead of query. MANDATORY STRATEGY: exact → fuzzy → lower threshold. AVOID: Starting with fuzzy search (slower and less precise).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Text to search for across entity names, types, observations, and tags (e.g., 'JavaScript', 'Google employee', 'urgent tasks')" },
+            exactTags: {
+              type: "array",
+              items: { type: "string" },
+              description: "Tags for exact-match searching (case-sensitive). When provided, general query is ignored. Use for category filtering."
+            },
+            tagMatchMode: {
+              type: "string",
+              enum: ["any", "all"],
+              description: "For exactTags: 'any'=entities with ANY tag, 'all'=entities with ALL tags (default: any)"
+            },
+            searchMode: {
+              type: "string",
+              enum: ["exact", "fuzzy"],
+              description: "EXACT: substring matching (fast, precise). FUZZY: similarity matching (slower, broader). DEFAULT: exact. Use fuzzy only if exact returns no results."
+            },
+            fuzzyThreshold: {
+              type: "number",
+              minimum: 0.0,
+              maximum: 1.0,
+              description: "Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results."
+            },
+            project: {
+              type: "string",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              pattern: "^[a-zA-Z0-9_-]+$"
+            }
+          },
+          required: ["query"],
+        },
+      },
+      {
         name: "create_entities",
-        description: "CREATE new entities (people, concepts, objects) in knowledge graph. Use for entities that don't exist yet. CONSTRAINT: Each entity MUST have ≥1 non-empty observation. BEHAVIOR: Ignores entities with existing names (use add_observations to update).",
+        description: "🆕 CREATE new entities ONLY after search_nodes confirms they don't exist. WHEN TO USE: search_nodes returned empty results for new entities you need. VALIDATION CHECKLIST: ✓ Each entity has ≥1 non-empty observation ✓ Entity names are unique and descriptive ✓ EntityType is one of: person, technology, project, company, concept, event, preference ✓ Project parameter matches workspace (calculate once, reuse everywhere). IMMEDIATE NEXT STEPS: Add relations and tags to new entities. AVOID: Creating entities that already exist (will be ignored).",
         inputSchema: {
           type: "object",
           properties: {
@@ -41,8 +78,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Unique identifier, non-empty (e.g., 'John Smith', 'React.js', 'Project Alpha')" },
-                  entityType: { type: "string", description: "Category, non-empty (e.g., 'person', 'technology', 'project', 'company', 'concept')" },
+                  name: { type: "string", description: "Unique identifier, non-empty. BEST PRACTICE: Use descriptive, unique identifiers. GOOD: 'John_Smith_Engineer', 'React_v18', 'Sprint_Planning_Q1'. AVOID: 'John', 'React', 'Meeting' (too generic)" },
+                  entityType: { type: "string", description: "Category, non-empty. MUST BE ONE OF: 'person', 'technology', 'project', 'company', 'concept', 'event', 'preference'" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
@@ -59,7 +96,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -67,36 +104,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "create_relations",
-        description: "CONNECT entities to enable powerful queries and discovery. IMMEDIATE BENEFITS: Find all people at a company, all projects using a technology, all dependencies. CRITICAL for: team structures, project dependencies, technology stacks. EXAMPLES: 'John works_at Google', 'React depends_on JavaScript', 'Project_Alpha managed_by Sarah'.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            relations: {
-              type: "array",
-              description: "Array of relationship objects to create between entities",
-              items: {
-                type: "object",
-                properties: {
-                  from: { type: "string", description: "Source entity name (must exist)" },
-                  to: { type: "string", description: "Target entity name (must exist)" },
-                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on')" },
-                },
-                required: ["from", "to", "relationType"],
-              },
-            },
-            project: {
-              type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
-              pattern: "^[a-zA-Z0-9_-]+$"
-            }
-          },
-          required: ["relations"],
-        },
-      },
-      {
         name: "add_observations",
-        description: "ADD factual observations to existing entities. REQUIREMENT: Target entity must exist, ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific.",
+        description: "📝 ADD factual observations to existing entities. WHEN TO USE: search_nodes found the entity and you have new information to add. PREREQUISITE: Target entity must exist (verify with search_nodes first). REQUIREMENT: ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific. AVOID: Adding observations to non-existent entities (will fail).",
         inputSchema: {
           type: "object",
           properties: {
@@ -118,7 +127,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -126,8 +135,36 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "create_relations",
+        description: "🔗 CONNECT entities that already exist in the graph. WHEN TO USE: You have two existing entities that should be connected. PREREQUISITE VALIDATION: ✓ Both entities exist (verify with search_nodes first) ✓ Relationship type uses active voice (e.g., 'manages' not 'managed_by') ✓ Relationship makes logical sense (person works_at company, not reverse). COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to. AVOID: Creating relations before entities exist (will fail), passive voice relations.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            relations: {
+              type: "array",
+              description: "Array of relationship objects to create between entities",
+              items: {
+                type: "object",
+                properties: {
+                  from: { type: "string", description: "Source entity name (must exist)" },
+                  to: { type: "string", description: "Target entity name (must exist)" },
+                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on')" },
+                },
+                required: ["from", "to", "relationType"],
+              },
+            },
+            project: {
+              type: "string",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
+              pattern: "^[a-zA-Z0-9_-]+$"
+            }
+          },
+          required: ["relations"],
+        },
+      },
+      {
         name: "delete_entities",
-        description: "PERMANENTLY DELETE entities and all their relationships. WARNING: Cannot be undone, cascades to remove all connections. USE CASE: Entities no longer relevant or created in error.",
+        description: "🗑️ PERMANENTLY DELETE entities and all their relationships. WARNING: Cannot be undone, cascades to remove all connections. WHEN TO USE: Entities no longer relevant or created in error. CRITICAL: This is destructive and irreversible. PREREQUISITE: Confirm entities exist and should be deleted. USE CASE: Cleanup, error correction.",
         inputSchema: {
           type: "object",
           properties: {
@@ -138,7 +175,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -147,7 +184,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_observations",
-        description: "REMOVE specific observations from entities while keeping entities intact. USE CASE: Correct misinformation or remove obsolete details. PRESERVATION: Entity and other observations remain unchanged.",
+        description: "🗑️ REMOVE specific observations from entities while keeping entities intact. WHEN TO USE: Correct misinformation or remove obsolete details. PRESERVATION: Entity and other observations remain unchanged. USE CASE: Data correction, removing outdated information. SAFE: Less destructive than delete_entities.",
         inputSchema: {
           type: "object",
           properties: {
@@ -169,7 +206,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -178,7 +215,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "UPDATE relationship structure when connections change. CRITICAL for: job changes (remove old 'works_at'), project completion (remove 'assigned_to'), technology migration (remove old 'uses'). MAINTAINS accurate network structure. WORKFLOW: Always remove outdated relations to prevent confusion.",
+        description: "🗑️ UPDATE relationship structure when connections change. WHEN TO USE: Relationships become outdated or incorrect. CRITICAL for: job changes (remove old 'works_at'), project completion (remove 'assigned_to'), technology migration (remove old 'uses'). MAINTAINS accurate network structure. WORKFLOW: Always remove outdated relations to prevent confusion. SAFE: Entities remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
@@ -197,7 +234,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -206,13 +243,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "read_graph",
-        description: "RETRIEVE complete knowledge graph with all entities and relationships. USE CASE: Full overview, understanding current state, seeing all connections. SCOPE: Returns everything in specified project.",
+        description: "📊 RETRIEVE complete knowledge graph with all entities and relationships. WHEN TO USE: Need full overview, understanding current state, seeing all connections. SCOPE: Returns everything in specified project. WARNING: Can be large for big graphs. USE CASE: Initial exploration, debugging, comprehensive analysis.",
         inputSchema: {
           type: "object",
           properties: {
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -257,7 +294,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "open_nodes",
-        description: "RETRIEVE specific entities by exact names with their interconnections. RETURNS: Requested entities plus relationships between them. USE CASE: When you know exact entity names and want detailed info.",
+        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE: You know exact entity names and want detailed info about them and their connections. RETURNS: Requested entities plus relationships between them. PREREQUISITE: Entity names must be exact matches. USE CASE: Deep dive into specific entities after finding them with search_nodes.",
         inputSchema: {
           type: "object",
           properties: {
@@ -268,7 +305,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -277,7 +314,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "ADD status/category tags for INSTANT filtering. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal'].",
+        description: "🏷️ ADD status/category tags for INSTANT filtering. WHEN TO USE: After creating entities to categorize them for easy retrieval. IMMEDIATE BENEFIT: Find entities by status (urgent, completed, in-progress) or type (technical, personal). PREREQUISITE: Target entities must exist. REQUIRED for efficient project management and quick retrieval. EXAMPLES: ['urgent', 'completed', 'bug', 'feature', 'personal']. NEXT STEP: Use search_nodes(exactTags=['tag']) to find tagged entities.",
         inputSchema: {
           type: "object",
           properties: {
@@ -299,7 +336,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -308,7 +345,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "UPDATE entity status by removing outdated tags. CRITICAL for status tracking: remove 'in-progress' when completed, 'urgent' when resolved. MAINTAINS clean search results. WORKFLOW: Always remove old status tags when adding new ones.",
+        description: "🏷️ UPDATE entity status by removing outdated tags. WHEN TO USE: Status changes require tag cleanup (e.g., remove 'in-progress' when completed, 'urgent' when resolved). CRITICAL for status tracking and clean search results. WORKFLOW: Always remove old status tags when adding new ones. MAINTAINS accurate categorization.",
         inputSchema: {
           type: "object",
           properties: {
@@ -330,7 +367,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project: {
               type: "string",
-              description: "Project identifier for data isolation. Use normalized workspace name (e.g., 'my_app')",
+              description: "Project identifier for data isolation. CALCULATION RULE: workspace_path → lowercase → remove special chars → underscores. EXAMPLES: '/Users/john/my-app' → 'my_app', 'C:\\Projects\\Web Site' → 'web_site'. CRITICAL: Use SAME project value throughout entire conversation.",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -353,47 +390,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
   const project = args.project as string | undefined;
 
   switch (name) {
-    case "create_entities": {
-      const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);
-      const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
-      const nextSteps = result.length > 0 ? "\n🔗 NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
-    }
-    case "create_relations": {
-      const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
-      const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
-      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_nodes to explore connected entities" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
-    }
-    case "add_observations": {
-      const result = await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project);
-      const totalAdded = result.reduce((sum, r) => sum + r.addedObservations.length, 0);
-      const successMsg = `✅ SUCCESS: Added ${totalAdded} observations to ${result.length} entities`;
-      return { content: [{ type: "text", text: `${successMsg}` }] };
-    }
-    case "delete_entities": {
-      const entityNames = args.entityNames as string[];
-      await knowledgeGraphManager.deleteEntities(entityNames, project);
-      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${entityNames.length} entities and all their relations\n⚠️ WARNING: This action cannot be undone` }] };
-    }
-    case "delete_observations": {
-      const deletions = args.deletions as { entityName: string; observations: string[] }[];
-      await knowledgeGraphManager.deleteObservations(deletions, project);
-      const totalDeleted = deletions.reduce((sum, d) => sum + d.observations.length, 0);
-      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${totalDeleted} observations from ${deletions.length} entities` }] };
-    }
-    case "delete_relations": {
-      const relations = args.relations as Relation[];
-      await knowledgeGraphManager.deleteRelations(relations, project);
-      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${relations.length} relations\n🔗 NOTE: Entities remain unchanged` }] };
-    }
-    case "read_graph": {
-      const result = await knowledgeGraphManager.readGraph(project);
-      const entityCount = result.entities.length;
-      const relationCount = result.relations.length;
-      const successMsg = `📊 GRAPH OVERVIEW: ${entityCount} entities, ${relationCount} relations`;
-      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
-    }
     case "search_nodes": {
       let result;
       let searchType = "";
@@ -422,7 +418,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
       const entityCount = result.entities.length;
       const relationCount = result.relations.length;
-      let successMsg = `🔍 SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
+      let successMsg = `� SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
 
       if (entityCount === 0) {
         successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_nodes(searchMode='fuzzy')";
@@ -432,6 +428,48 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
       return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
     }
+    case "create_entities": {
+      const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);
+      const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
+      const nextSteps = result.length > 0 ? "\n� NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
+    }
+    case "add_observations": {
+      const result = await knowledgeGraphManager.addObservations(args.observations as { entityName: string; observations: string[] }[], project);
+      const totalAdded = result.reduce((sum, r) => sum + r.addedObservations.length, 0);
+      const successMsg = `✅ SUCCESS: Added ${totalAdded} observations to ${result.length} entities`;
+      return { content: [{ type: "text", text: `${successMsg}` }] };
+    }
+    case "create_relations": {
+      const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
+      const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
+      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_nodes to explore connected entities" : "";
+      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
+    }
+    case "delete_entities": {
+      const entityNames = args.entityNames as string[];
+      await knowledgeGraphManager.deleteEntities(entityNames, project);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${entityNames.length} entities and all their relations\n⚠️ WARNING: This action cannot be undone` }] };
+    }
+    case "delete_observations": {
+      const deletions = args.deletions as { entityName: string; observations: string[] }[];
+      await knowledgeGraphManager.deleteObservations(deletions, project);
+      const totalDeleted = deletions.reduce((sum, d) => sum + d.observations.length, 0);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${totalDeleted} observations from ${deletions.length} entities` }] };
+    }
+    case "delete_relations": {
+      const relations = args.relations as Relation[];
+      await knowledgeGraphManager.deleteRelations(relations, project);
+      return { content: [{ type: "text", text: `✅ SUCCESS: Deleted ${relations.length} relations\n🔗 NOTE: Entities remain unchanged` }] };
+    }
+    case "read_graph": {
+      const result = await knowledgeGraphManager.readGraph(project);
+      const entityCount = result.entities.length;
+      const relationCount = result.relations.length;
+      const successMsg = `📊 GRAPH OVERVIEW: ${entityCount} entities, ${relationCount} relations`;
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
+    }
+
     case "open_nodes": {
       const result = await knowledgeGraphManager.openNodes(args.names as string[], project);
       const entityCount = result.entities.length;
