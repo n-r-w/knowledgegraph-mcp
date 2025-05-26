@@ -31,27 +31,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "create_entities",
-        description: "Create new entities (people, concepts, objects) in the knowledge graph. Use this when you encounter new information about entities that don't exist yet. Entities with existing names will be ignored (use add_observations to update existing entities). IMPORTANT: All entities must have at least one observation - empty observations arrays are not allowed.",
+        description: "CREATE new entities (people, concepts, objects) in knowledge graph. Use for entities that don't exist yet. CONSTRAINT: Each entity MUST have ≥1 non-empty observation. BEHAVIOR: Ignores entities with existing names (use add_observations to update).",
         inputSchema: {
           type: "object",
           properties: {
             entities: {
               type: "array",
-              description: "An array of entities to create in the knowledge graph. Each entity must have at least one observation.",
+              description: "Array of entity objects. Each entity must have at least one observation.",
               items: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Unique identifier for the entity (e.g., 'John Smith', 'React.js', 'Project Alpha'). Must be non-empty." },
-                  entityType: { type: "string", description: "Category of the entity (e.g., 'person', 'technology', 'project', 'company', 'concept'). Must be non-empty." },
+                  name: { type: "string", description: "Unique identifier, non-empty (e.g., 'John Smith', 'React.js', 'Project Alpha')" },
+                  entityType: { type: "string", description: "Category, non-empty (e.g., 'person', 'technology', 'project', 'company', 'concept')" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Array of factual statements about this entity. REQUIRED: Must contain at least one non-empty observation (e.g., ['Software engineer at Google', 'Lives in San Francisco']). Empty arrays are not allowed."
+                    description: "Facts about entity. REQUIRED: Must contain ≥1 non-empty string (e.g., ['Software engineer at Google', 'Lives in San Francisco'])"
                   },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Optional categorical labels for filtering and organization (e.g., ['urgent', 'technical', 'completed']). Can be empty array or omitted."
+                    description: "Optional exact-match labels for filtering (e.g., ['urgent', 'technical', 'completed'])"
                   },
                 },
                 required: ["name", "entityType", "observations"],
@@ -68,19 +68,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "Create relationships between existing entities (e.g., 'John works_at Google', 'React uses JavaScript'). Use this to connect entities with meaningful relationships. Both entities must exist first. Use active voice for relation types (e.g., 'manages', 'created_by', 'depends_on').",
+        description: "CONNECT entities with directional relationships. REQUIREMENT: Both entities must already exist. FORMAT: Use active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on').",
         inputSchema: {
           type: "object",
           properties: {
             relations: {
               type: "array",
-              description: "An array of relations to create between entities in the knowledge graph",
+              description: "Array of relationship objects to create between entities",
               items: {
                 type: "object",
                 properties: {
-                  from: { type: "string", description: "Name of the source entity (must exist in the knowledge graph)" },
-                  to: { type: "string", description: "Name of the target entity (must exist in the knowledge graph)" },
-                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on', 'located_in')" },
+                  from: { type: "string", description: "Source entity name (must exist)" },
+                  to: { type: "string", description: "Target entity name (must exist)" },
+                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on')" },
                 },
                 required: ["from", "to", "relationType"],
               },
@@ -96,21 +96,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "Add new factual information to existing entities. Use this to record specific facts, details, or updates about entities you've already created. Each observation should be a single, atomic fact. Don't duplicate existing observations. IMPORTANT: Each update must contain at least one non-empty observation.",
+        description: "ADD factual observations to existing entities. REQUIREMENT: Target entity must exist, ≥1 non-empty observation per update. BEST PRACTICE: Keep observations atomic and specific.",
         inputSchema: {
           type: "object",
           properties: {
             observations: {
               type: "array",
-              description: "An array of observation updates to add to existing entities. Each update must contain at least one observation.",
+              description: "Array of observation updates to add to existing entities. Each update must contain at least one observation.",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "The name of the entity to add the observations to. Must be non-empty and entity must exist." },
+                  entityName: { type: "string", description: "Target entity name (must exist)" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of observations to add. REQUIRED: Must contain at least one non-empty observation string. Empty arrays are not allowed."
+                    description: "New facts to add. REQUIRED: Must contain ≥1 non-empty string"
                   },
                 },
                 required: ["entityName", "observations"],
@@ -127,14 +127,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_entities",
-        description: "Permanently remove entities and all their relationships from the knowledge graph. Use this when entities are no longer relevant or were created in error. This cascades to delete all relations involving these entities. Use with caution - this cannot be undone.",
+        description: "PERMANENTLY DELETE entities and all their relationships. WARNING: Cannot be undone, cascades to remove all connections. USE CASE: Entities no longer relevant or created in error.",
         inputSchema: {
           type: "object",
           properties: {
             entityNames: {
               type: "array",
               items: { type: "string" },
-              description: "An array of entity names to delete"
+              description: "Array of entity names to delete"
             },
             project: {
               type: "string",
@@ -147,21 +147,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_observations",
-        description: "Remove specific outdated or incorrect facts from entities while keeping the entities themselves. Use this to correct misinformation or remove obsolete details. The entity remains with its other observations and relationships intact.",
+        description: "REMOVE specific observations from entities while keeping entities intact. USE CASE: Correct misinformation or remove obsolete details. PRESERVATION: Entity and other observations remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
             deletions: {
               type: "array",
-              description: "An array of observation deletion requests specifying which observations to remove from entities",
+              description: "Array of observation deletion requests specifying which observations to remove from entities",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "The name of the entity containing the observations" },
+                  entityName: { type: "string", description: "Target entity name" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of observations to delete"
+                    description: "Specific observations to remove"
                   },
                 },
                 required: ["entityName", "observations"],
@@ -178,7 +178,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "Remove specific relationships between entities while keeping the entities themselves. Use this when relationships change or were incorrectly established (e.g., someone changes jobs, a project ends). Entities remain unaffected.",
+        description: "REMOVE specific relationships while keeping entities intact. USE CASE: Relationships change or were incorrectly established. PRESERVATION: Entities remain unaffected.",
         inputSchema: {
           type: "object",
           properties: {
@@ -187,13 +187,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  from: { type: "string", description: "The name of the entity where the relation starts" },
-                  to: { type: "string", description: "The name of the entity where the relation ends" },
-                  relationType: { type: "string", description: "The type of the relation" },
+                  from: { type: "string", description: "Source entity name" },
+                  to: { type: "string", description: "Target entity name" },
+                  relationType: { type: "string", description: "Exact relationship type to remove" },
                 },
                 required: ["from", "to", "relationType"],
               },
-              description: "An array of relations to delete"
+              description: "Array of relations to delete"
             },
             project: {
               type: "string",
@@ -206,7 +206,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "read_graph",
-        description: "Retrieve the complete knowledge graph with all entities and relationships. Use this to get a full overview of stored knowledge, understand the current state, or when you need to see all connections. Returns everything in the specified project.",
+        description: "RETRIEVE complete knowledge graph with all entities and relationships. USE CASE: Full overview, understanding current state, seeing all connections. SCOPE: Returns everything in specified project.",
         inputSchema: {
           type: "object",
           properties: {
@@ -220,7 +220,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "search_nodes",
-        description: "Find entities by text search or tags. Use this to locate specific information before reading, updating, or connecting entities. Searches across entity names, types, observations, and tags. Use exact search for precise matches or fuzzy search for similar terms.",
+        description: "SEARCH entities by text or tags. MANDATORY STRATEGY: 1) Try searchMode='exact' first 2) If no results, use searchMode='fuzzy' 3) If still empty, lower fuzzyThreshold to 0.1. EXACT MODE: Perfect substring matches. FUZZY MODE: Similar/misspelled terms. TAG SEARCH: Use exactTags for precise category filtering.",
         inputSchema: {
           type: "object",
           properties: {
@@ -228,23 +228,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             exactTags: {
               type: "array",
               items: { type: "string" },
-              description: "Tags for exact-match searching (case-sensitive). When provided, general query is ignored."
+              description: "Tags for exact-match searching (case-sensitive). When provided, general query is ignored. Use for category filtering."
             },
             tagMatchMode: {
               type: "string",
               enum: ["any", "all"],
-              description: "For exact tag search: 'any' finds entities with ANY of the tags, 'all' finds entities with ALL tags (default: any)"
+              description: "For exactTags: 'any'=entities with ANY tag, 'all'=entities with ALL tags (default: any)"
             },
             searchMode: {
               type: "string",
               enum: ["exact", "fuzzy"],
-              description: "Search mode: 'exact' for traditional exact matching, 'fuzzy' for fuzzy search (default: exact)"
+              description: "EXACT: substring matching (fast, precise). FUZZY: similarity matching (slower, broader). DEFAULT: exact. Use fuzzy only if exact returns no results."
             },
             fuzzyThreshold: {
               type: "number",
               minimum: 0.0,
               maximum: 1.0,
-              description: "Fuzzy search threshold (0.0 to 1.0, lower is more strict, default: 0.3)"
+              description: "Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results."
             },
             project: {
               type: "string",
@@ -257,14 +257,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "open_nodes",
-        description: "Retrieve specific entities by their exact names along with their relationships to other requested entities. Use this when you know the exact entity names and want detailed information about them and how they connect to each other.",
+        description: "RETRIEVE specific entities by exact names with their interconnections. RETURNS: Requested entities plus relationships between them. USE CASE: When you know exact entity names and want detailed info.",
         inputSchema: {
           type: "object",
           properties: {
             names: {
               type: "array",
               items: { type: "string" },
-              description: "An array of entity names to retrieve",
+              description: "Array of entity names to retrieve",
             },
             project: {
               type: "string",
@@ -277,21 +277,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "Add categorical labels to entities for better organization and filtering. Use this to categorize entities (e.g., 'urgent', 'completed', 'person', 'technical'). Tags enable efficient exact-match searching and grouping of related entities.",
+        description: "ADD categorical tags to entities for filtering and search. PURPOSE: Enable exact-match searching and grouping. FORMAT: Case-sensitive, exact-match strings.",
         inputSchema: {
           type: "object",
           properties: {
             updates: {
               type: "array",
-              description: "An array of tag addition requests specifying which tags to add to which entities",
+              description: "Array of tag addition requests specifying which tags to add to which entities",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "The name of the entity to add tags to" },
+                  entityName: { type: "string", description: "Target entity name (must exist)" },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of tags to add (exact-match, case-sensitive)"
+                    description: "Tags to add (exact-match, case-sensitive)"
                   }
                 },
                 required: ["entityName", "tags"],
@@ -308,21 +308,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "Remove categorical labels from entities when they're no longer applicable (e.g., remove 'in-progress' when task is completed, remove 'urgent' when priority changes). The entity and its other tags remain unchanged.",
+        description: "REMOVE specific tags from entities when no longer applicable. USE CASE: Status changes (remove 'in-progress', 'urgent', etc.). PRESERVATION: Entity and other tags remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
             updates: {
               type: "array",
-              description: "An array of tag removal requests specifying which tags to remove from which entities",
+              description: "Array of tag removal requests specifying which tags to remove from which entities",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "The name of the entity to remove tags from" },
+                  entityName: { type: "string", description: "Target entity name" },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "An array of tags to remove (exact-match, case-sensitive)"
+                    description: "Tags to remove (exact-match, case-sensitive)"
                   }
                 },
                 required: ["entityName", "tags"],

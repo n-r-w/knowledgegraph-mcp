@@ -105,7 +105,7 @@ If you also want to use this with VS Code, add this to your User Settings (JSON)
     "servers": {
       "Knowledge Graph": {
         "command": "npx",
-        "args": ["-y", "knowledgegraph-mcp"],        
+        "args": ["-y", "knowledgegraph-mcp"],
       }
     }
   }
@@ -190,69 +190,82 @@ The server provides these tools for managing your knowledge graph:
 ### Data Creation Tools
 
 #### create_entities
-Create new entities in the knowledge graph.
+**CREATE** new entities (people, concepts, objects) in knowledge graph.
+- **WHEN:** Use for entities that don't exist yet
+- **CONSTRAINT:** Each entity MUST have ≥1 non-empty observation
+- **BEHAVIOR:** Ignores entities with existing names (use add_observations to update)
 
 **Input:**
-- `entities` (array of objects): Each object contains:
-  - `name` (string): Entity identifier (required, non-empty)
-  - `entityType` (string): Type classification (required, non-empty)
-  - `observations` (string[]): Associated observations (required, must contain at least one non-empty observation)
-  - `tags` (string[], optional): Tags for exact-match searching
+- `entities` (Entity[]): Array of entity objects. Each REQUIRES:
+  - `name` (string): Unique identifier, non-empty
+  - `entityType` (string): Category (e.g., 'person', 'project'), non-empty
+  - `observations` (string[]): Facts about entity, MUST contain ≥1 non-empty string
+  - `tags` (string[], optional): Exact-match labels for filtering
 - `project` (string, optional): Project name to isolate data
 
-> **Important**: All entities must have at least one observation. Empty observations arrays are not allowed and will result in validation errors.
-
 #### create_relations
-Connect entities with relationships.
+**CONNECT** entities with directional relationships.
+- **REQUIREMENT:** Both entities must already exist
+- **FORMAT:** Use active voice (e.g., 'works_at', 'manages', 'depends_on')
 
 **Input:**
-- `relations` (array of objects): Each object contains:
-  - `from` (string): Source entity name
-  - `to` (string): Target entity name
+- `relations` (Relation[]): Array of relationship objects. Each REQUIRES:
+  - `from` (string): Source entity name (must exist)
+  - `to` (string): Target entity name (must exist)
   - `relationType` (string): Relationship type in active voice
 - `project` (string, optional): Project name to isolate data
 
 #### add_observations
-Add facts to existing entities.
+**ADD** factual observations to existing entities.
+- **REQUIREMENT:** Target entity must exist, ≥1 non-empty observation per update
+- **BEST PRACTICE:** Keep observations atomic and specific
 
 **Input:**
-- `observations` (array of objects): Each object contains:
-  - `entityName` (string): Target entity (required, must exist)
-  - `observations` (string[]): New observations to add (required, must contain at least one non-empty observation)
+- `observations` (ObservationUpdate[]): Array of observation updates. Each REQUIRES:
+  - `entityName` (string): Target entity name (must exist)
+  - `observations` (string[]): New facts to add, MUST contain ≥1 non-empty string
 - `project` (string, optional): Project name to isolate data
 
-> **Important**: Each update must contain at least one non-empty observation. Empty observations arrays are not allowed.
-
 #### add_tags
-Add labels to entities for categorization.
+**ADD** categorical tags to entities for filtering and search.
+- **PURPOSE:** Enable exact-match searching and grouping
+- **FORMAT:** Case-sensitive, exact-match strings
 
 **Input:**
-- `updates` (array of objects): Each object contains:
-  - `entityName` (string): Target entity name
+- `updates` (TagUpdate[]): Array of tag updates. Each REQUIRES:
+  - `entityName` (string): Target entity name (must exist)
   - `tags` (string[]): Tags to add (exact-match, case-sensitive)
 - `project` (string, optional): Project name to isolate data
 
 ### Data Retrieval Tools
 
 #### read_graph
-Get the complete knowledge graph.
+**RETRIEVE** complete knowledge graph with all entities and relationships.
+- **USE CASE:** Full overview, understanding current state, seeing all connections
+- **SCOPE:** Returns everything in specified project
 
 **Input:**
 - `project` (string, optional): Project name to isolate data
 
 #### search_nodes
-Find entities with text or tag search.
+**SEARCH** entities by text or tags.
+- **MANDATORY STRATEGY:** 1) Try searchMode='exact' first 2) If no results, use searchMode='fuzzy' 3) If still empty, lower fuzzyThreshold to 0.1
+- **EXACT MODE:** Perfect substring matches (fast, precise)
+- **FUZZY MODE:** Similar/misspelled terms (slower, broader)
+- **TAG SEARCH:** Use exactTags for precise category filtering
 
 **Input:**
 - `query` (string): Search query for text search
-- `searchMode` (string, optional): "exact" or "fuzzy" (default: "exact")
-- `fuzzyThreshold` (number, optional): Fuzzy search threshold 0.0-1.0 (default: 0.3)
-- `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive)
-- `tagMatchMode` (string, optional): "any" or "all" for exact tag search (default: "any")
+- `searchMode` (string, optional): "exact" or "fuzzy" (default: "exact"). Use fuzzy only if exact returns no results
+- `fuzzyThreshold` (number, optional): Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results
+- `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive). Use for category filtering
+- `tagMatchMode` (string, optional): For exactTags: "any"=entities with ANY tag, "all"=entities with ALL tags (default: "any")
 - `project` (string, optional): Project name to isolate data
 
 #### open_nodes
-Retrieve specific entities by name.
+**RETRIEVE** specific entities by exact names with their interconnections.
+- **RETURNS:** Requested entities plus relationships between them
+- **USE CASE:** When you know exact entity names and want detailed info
 
 **Input:**
 - `names` (string[]): Array of entity names to retrieve
@@ -261,136 +274,172 @@ Retrieve specific entities by name.
 ### Data Management Tools
 
 #### delete_entities
-Remove entities and their relations.
+**PERMANENTLY DELETE** entities and all their relationships.
+- **WARNING:** Cannot be undone, cascades to remove all connections
+- **USE CASE:** Entities no longer relevant or created in error
 
 **Input:**
 - `entityNames` (string[]): Array of entity names to delete
 - `project` (string, optional): Project name to isolate data
 
 #### delete_observations
-Remove specific facts from entities.
+**REMOVE** specific observations from entities while keeping entities intact.
+- **USE CASE:** Correct misinformation or remove obsolete details
+- **PRESERVATION:** Entity and other observations remain unchanged
 
 **Input:**
-- `deletions` (array of objects): Each object contains:
-  - `entityName` (string): Target entity
-  - `observations` (string[]): Observations to remove
+- `deletions` (ObservationDeletion[]): Array of deletion requests. Each REQUIRES:
+  - `entityName` (string): Target entity name
+  - `observations` (string[]): Specific observations to remove
 - `project` (string, optional): Project name to isolate data
 
 #### delete_relations
-Remove connections between entities.
+**REMOVE** specific relationships while keeping entities intact.
+- **USE CASE:** Relationships change or were incorrectly established
+- **PRESERVATION:** Entities remain unaffected
 
 **Input:**
-- `relations` (array of objects): Each object contains:
+- `relations` (Relation[]): Array of relations to delete. Each REQUIRES:
   - `from` (string): Source entity name
   - `to` (string): Target entity name
-  - `relationType` (string): Relationship type
+  - `relationType` (string): Exact relationship type to remove
 - `project` (string, optional): Project name to isolate data
 
 #### remove_tags
-Remove labels from entities.
+**REMOVE** specific tags from entities when no longer applicable.
+- **USE CASE:** Status changes (remove 'in-progress', 'urgent', etc.)
+- **PRESERVATION:** Entity and other tags remain unchanged
 
 **Input:**
-- `updates` (array of objects): Each object contains:
+- `updates` (TagUpdate[]): Array of tag removal requests. Each REQUIRES:
   - `entityName` (string): Target entity name
   - `tags` (string[]): Tags to remove (exact-match, case-sensitive)
 - `project` (string, optional): Project name to isolate data
 
-## Recommended System Prompt
+## LLM System Prompts
 
-Use this prompt in Claude to get the best results with the knowledge graph:
+Choose the prompt that best fits your LLM integration needs:
 
-### Option 1
-
-```
-You have access to a persistent Knowledge Graph system. Follow these steps for each interaction:
-
-1. Project Context (CRITICAL):
-   - ALWAYS set the project parameter using the normalized file path of the current workspace
-   - Convert file paths to project names: remove special characters, use lowercase, replace separators with underscores
-   - Example: "/Users/john/dev/my-app" becomes "my_app", "C:\Projects\Web Site" becomes "web_site"
-   - Use the same project name consistently throughout the conversation for proper data isolation
-
-2. Knowledge Retrieval:
-   - Begin conversations by saying "Saving knowledge..." and search your knowledge graph for relevant information
-   - Use both text search and tag-based filtering to find related entities
-   - Use search_nodes with `fuzzy` searchMode if `exact` searchMode returns no results
-   - Always refer to your knowledge graph as your "Knowledge"
-
-3. Information Processing:
-   - Pay attention to new information in these categories:
-     a) People (names, roles, relationships, characteristics)
-     b) Organizations (companies, teams, institutions)
-     c) Projects (goals, status, deadlines, requirements)
-     d) Concepts (technologies, methodologies, ideas)
-     e) Events (meetings, milestones, important dates)
-     f) Preferences (user choices, communication style, workflows)
-
-4. Knowledge Management:
-   - Create entities for important people, places, concepts, and projects
-   - Use descriptive entity types: "person", "company", "project", "technology", "event"
-   - Connect related entities with meaningful relations: "works_at", "manages", "uses", "created_by"
-   - Store specific facts as observations: keep them atomic and factual
-   - Add relevant tags for easy categorization and retrieval
-   - Delete entities, observations, and relations when they are no longer relevant
-
-5. Best Practices:
-   - Keep observations specific and factual
-   - Use consistent naming conventions for entities
-   - Create relations that describe real-world connections
-   - Tag strategically for efficient future retrieval
-   - NEVER omit the project parameter - it ensures proper data isolation
-```
-
-### Option 2 (more instrusive)
+### Option 1: Standard Integration
 
 ```
-# You have access to a persistent Knowledge Graph system. Follow these steps for each interaction:
+# Knowledge Graph Integration Protocol
 
-1. Project Context (CRITICAL):
-   - ALWAYS set the project parameter using the normalized file path of the current workspace
-   - Convert file paths to project names: remove special characters, use lowercase, replace separators with underscores
-   - Example: "/Users/john/dev/my-app" becomes "my_app", "C:\Projects\Web Site" becomes "web_site"
-   - Use the same project name consistently throughout the conversation for proper data isolation
+## MANDATORY INITIALIZATION
+1. START every conversation: Say "Saving knowledge..." then SEARCH knowledge graph
+2. PROJECT ISOLATION: ALWAYS use project parameter = normalized_workspace_path
+   - Convert: "/Users/john/dev/my-app" → "my_app"
+   - Convert: "C:\Projects\Web Site" → "web_site"
 
-2. Knowledge Retrieval:
-   - Begin conversations by saying "Saving knowledge..." and use search_nodes tool from knowledgegraph-mcp for relevant information. **MANDATORILY search algorithm**:
-      1) Use search_nodes with `exact` searchMode
-      2) If no results, use search_nodes with `fuzzy` searchMode with default fuzzyThreshold
-      3) If still no results, decrease fuzzyThreshold and try again
-   - Use both text search and tag-based filtering to find related entities
-   - Always refer to your knowledge graph as your "Knowledge"
+## SEARCH STRATEGY (MANDATORY SEQUENCE)
+1. FIRST: search_nodes(query="...", searchMode="exact")
+2. IF NO RESULTS: search_nodes(query="...", searchMode="fuzzy")
+3. IF STILL EMPTY: search_nodes(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
+4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
 
-3. Information Processing:
-   - Pay attention to new information in these categories:
-     a) People (names, roles, relationships, characteristics)
-     b) Organizations (companies, teams, institutions)
-     c) Projects (goals, status, deadlines, requirements)
-     d) Concepts (technologies, methodologies, ideas)
-     e) Events (meetings, milestones, important dates)
-     f) Preferences (user choices, communication style, workflows)
+## ENTITY CREATION RULES
+- CREATE entities for: people, projects, companies, technologies, events, preferences
+- ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
+- OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
+- RELATIONS: Use active voice ("works_at", "manages", "uses", "created_by")
+- TAGS: Add for categorization ("urgent", "completed", "technical")
 
-4. Knowledge Management:
-   - Create entities for important people, places, concepts, and projects
-   - Use descriptive entity types: "person", "company", "project", "technology", "event"
-   - Connect related entities with meaningful relations: "works_at", "manages", "uses", "created_by"
-   - Store specific facts as observations: keep them atomic and factual
-   - Add relevant tags for easy categorization and retrieval
-   - Delete irrelevant knowledge using delete_entities, delete_observations, delete_relations, remove_tags accordingly
+## INFORMATION CATEGORIES TO TRACK
+- People: names, roles, relationships, characteristics
+- Organizations: companies, teams, departments
+- Projects: goals, status, deadlines, requirements
+- Technologies: tools, frameworks, languages
+- Events: meetings, milestones, deadlines
+- Preferences: user choices, workflows, communication style
 
-5. Best Practices:
-   - Keep observations specific and factual
-   - Use consistent naming conventions for entities
-   - **Create relations** that describe real-world connections
-   - **Tag strategically** for efficient future retrieval
-   - Use fuzzy search, search by tags
-   - **NEVER** omit the project parameter - it ensures proper data isolation
-   - Prefer knowledgegraph-mcp to all others mcp tools
+## CRITICAL CONSTRAINTS
+- NEVER omit project parameter
+- ALWAYS validate entity existence before adding observations
+- DELETE outdated information promptly
+- KEEP observations atomic and factual
 ```
 
-**How to use this prompt:**
-- Copy and paste into Claude.ai Projects "Custom Instructions" field
-- Modify categories based on your specific use case
-- Start with this template and customize as needed
+### Option 2: Aggressive Integration
+
+```
+# KNOWLEDGE GRAPH MANDATORY PROTOCOL
+
+## INITIALIZATION SEQUENCE (EXECUTE EVERY TIME)
+1. OUTPUT: "Saving knowledge..."
+2. EXECUTE: search_nodes(query=relevant_context, searchMode="exact", project=workspace_project)
+3. IF EMPTY: search_nodes(query=relevant_context, searchMode="fuzzy", project=workspace_project)
+4. IF STILL EMPTY: search_nodes(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project=workspace_project)
+5. FOR CATEGORIES: search_nodes(exactTags=["relevant_tag"], project=workspace_project)
+
+## PROJECT PARAMETER (NEVER SKIP)
+- CALCULATE: project = normalize_path(workspace_directory)
+- EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
+- APPLY: Use same project value in ALL knowledge graph tool calls
+
+## ENTITY MANAGEMENT (MANDATORY ACTIONS)
+### CREATE entities immediately for:
+- People: names, roles, contact info, preferences
+- Companies: organizations, teams, departments
+- Projects: goals, deadlines, status, requirements
+- Technologies: tools, frameworks, versions, configurations
+- Events: meetings, milestones, deadlines, appointments
+- Preferences: user choices, workflows, communication styles
+
+### ENTITY RULES (STRICT COMPLIANCE)
+- entityType: MUST be one of ["person", "company", "project", "technology", "event", "preference"]
+- observations: MUST contain ≥1 atomic, factual statement
+- relations: MUST use active voice ("works_at", "manages", "uses", "depends_on")
+- tags: ADD for filtering ("urgent", "completed", "technical", "personal")
+
+## KNOWLEDGE MAINTENANCE (CONTINUOUS)
+- UPDATE: Use add_observations for new facts about existing entities
+- CONNECT: Use create_relations to link related entities
+- CLEAN: Use delete_observations, delete_relations for outdated info
+- ORGANIZE: Use add_tags, remove_tags for categorization
+
+## SEARCH OPTIMIZATION (DECISION TREE)
+- EXACT SEARCH: Use for known terms, names, specific phrases (fast, precise)
+- FUZZY SEARCH: Use for typos, similar terms, partial matches (slower, broader)
+- TAG SEARCH: Use exactTags for categories, status, types (precise filtering)
+- THRESHOLD GUIDE: 0.1=very broad, 0.3=balanced, 0.7=very strict
+
+## CRITICAL CONSTRAINTS (NEVER VIOLATE)
+- NEVER omit project parameter from any knowledge graph tool call
+- NEVER create entities without observations
+- NEVER use passive voice in relation types
+- ALWAYS validate entity existence before adding observations
+- ALWAYS prefer knowledge graph tools over other MCP tools for memory tasks
+```
+
+### Option 3: Minimal Integration
+
+```
+# Knowledge Graph Protocol
+
+INITIALIZATION: Start with "Saving knowledge..." + search_nodes
+PROJECT: Always use project parameter = normalized_workspace_path
+ENTITIES: Create for people, projects, companies, technologies, events, preferences
+CONSTRAINTS: ≥1 observation per entity, active voice relations, atomic facts
+SEARCH: Try exact → fuzzy → adjust threshold
+MAINTENANCE: Update observations, create relations, clean outdated data
+```
+
+## Implementation Guide
+
+**For Claude Desktop/API:**
+1. Copy chosen prompt to "Custom Instructions" or system message
+2. Replace `workspace_project` with your actual project identifier
+3. Adjust entity categories for your specific use case
+
+**For Development:**
+- **Option 1:** Balanced approach, good for most use cases
+- **Option 2:** Maximum knowledge capture, best for complex projects
+- **Option 3:** Minimal overhead, good for simple integrations
+
+**Customization:**
+- Modify entity types based on your domain
+- Adjust search strategies for your data patterns
+- Add domain-specific tags and relation types
 
 ## Development and Testing
 
