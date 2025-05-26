@@ -214,27 +214,61 @@ All LLMs behave differently. For some, general instructions are enough, while ot
    - EXAMPLES: "/Users/john/dev/my-app" → "my_app", "C:\Projects\Web Site" → "web_site"
    - CRITICAL: Use EXACT same project_id value throughout entire conversation
 
-## SEARCH STRATEGY (MANDATORY SEQUENCE)
-1. FIRST: search_knowledge(query="...", searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
-2. IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
-3. IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
-4. FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
-5. FOR MULTIPLE OBJECTS: Use query=["term1", "term2", "term3"] for batch searching with automatic deduplication
+## TOOL SELECTION DECISION TREE
+1. **search_knowledge**: ALWAYS START HERE
+   - EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
+   - INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
+   - MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
+   - CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"])
+
+2. **create_entities**: ONLY AFTER search_knowledge confirms non-existence
+   - NEW INFORMATION: "Remember X for future conversations"
+   - STRUCTURED DATA: Track complex information with relationships
+   - PREREQUISITE: Each entity needs ≥1 specific fact
+
+3. **add_observations**: ONLY AFTER search_knowledge confirms entity exists
+   - UPDATING KNOWLEDGE: "Add new information about X"
+   - SUPPLEMENTING ENTITIES: "Add details about X"
+
+4. **create_relations**: AFTER entities exist to connect them
+   - ESTABLISHING CONNECTIONS: "X is related to Y"
+   - DEFINING HIERARCHIES: "X depends on Y"
+
+5. **add_tags/remove_tags**: For status and categorization
+   - STATUS TRACKING: "Task is now in-progress" / "Task is no longer in-progress"
+   - CATEGORIZATION: "Mark entity as technical" / "Entity is no longer urgent"
+
+## SEARCH STRATEGY FLOWCHART
+1. EXACT SEARCH (FASTEST): search_knowledge(query="term", searchMode="exact")
+2. MULTIPLE TERMS: search_knowledge(query=["term1", "term2", "term3"]) for batch search
+3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
+4. BROADER SEARCH (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
+5. CATEGORY SEARCH: search_knowledge(exactTags=["urgent", "completed"])
+
+## COMMON WORKFLOW SEQUENCES
+
+### NEW INFORMATION FLOW:
+1. search_knowledge → Check if exists
+2. IF NOT EXISTS:
+   - create_entities → Create new entity
+   - create_relations → Connect to related entities
+   - add_tags → Categorize for retrieval
+3. IF EXISTS:
+   - add_observations → Add new facts
+   - create_relations → Add new connections
+   - update tags → add_tags/remove_tags
+
+### STATUS UPDATE FLOW:
+1. search_knowledge → Find entity
+2. remove_tags → Remove old status
+3. add_tags → Add new status
 
 ## ENTITY CREATION RULES
 - CREATE entities for: people, projects, companies, technologies, events, preferences
 - ENTITY TYPES: Use "person", "company", "project", "technology", "event", "preference"
 - OBSERVATIONS: Each entity MUST have ≥1 specific, atomic fact
-- RELATIONS: IMMEDIATELY connect related entities ("works_at", "manages", "uses", "depends_on") - this enables powerful discovery
-- TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress", "bug", "feature")
-
-## INFORMATION CATEGORIES TO TRACK
-- People: names, roles, relationships, characteristics
-- Organizations: companies, teams, departments
-- Projects: goals, status, deadlines, requirements
-- Technologies: tools, frameworks, languages
-- Events: meetings, milestones, deadlines
-- Preferences: user choices, workflows, communication style
+- RELATIONS: IMMEDIATELY connect related entities ("works_at", "manages", "uses", "depends_on")
+- TAGS: ALWAYS add status/category tags for instant filtering ("urgent", "completed", "in-progress")
 
 ## CRITICAL CONSTRAINTS
 - NEVER omit project_id parameter
@@ -248,15 +282,52 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 # KNOWLEDGE GRAPH MANDATORY PROTOCOL
 
-## INITIALIZATION SEQUENCE (EXECUTE EVERY TIME)
-1. OUTPUT: `Using knowledgegraph-mcp...`
-2. EXECUTE: search_knowledge(query=relevant_context, searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
-3. IF EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
-4. IF STILL EMPTY: search_knowledge(query=relevant_context, searchMode="fuzzy", fuzzyThreshold=0.1, project_id=YOUR_CALCULATED_PROJECT_ID)
-5. FOR CATEGORIES: search_knowledge(exactTags=["relevant_tag"], project_id=YOUR_CALCULATED_PROJECT_ID)
-6. FOR MULTIPLE OBJECTS: search_knowledge(query=["term1", "term2", "term3"], searchMode="exact", project_id=YOUR_CALCULATED_PROJECT_ID)
+## COMPREHENSIVE TOOL DECISION FRAMEWORK
 
-## PROJECT_ID PARAMETER (NEVER SKIP - CRITICAL FOR DATA INTEGRITY)
+### 1. search_knowledge - MANDATORY FIRST ACTION
+   - USAGE: START EVERY INTERACTION with knowledge search
+   - MULTI-QUERY SUPPORT: search_knowledge(query=["term1", "term2", "term3"])
+   - EXACT MATCH PATH: search_knowledge(query="precise_term", searchMode="exact")
+   - FUZZY MATCH PATH: search_knowledge(query="approximate_term", searchMode="fuzzy")
+   - BROAD MATCH PATH: search_knowledge(query="partial_term", fuzzyThreshold=0.1)
+   - TAG FILTER PATH: search_knowledge(exactTags=["urgent", "technical"])
+
+### 2. create_entities - FOR NEW INFORMATION
+   - PREREQUISITES: MUST confirm non-existence with search_knowledge first
+   - VALIDATION: Each entity MUST have ≥1 observation
+   - USAGE: Persist important information for future conversations
+   - NAMING: Use specific descriptive names (e.g., "React_v18" not just "React")
+   - NEXT STEPS: ALWAYS follow with create_relations and add_tags
+
+### 3. add_observations - FOR EXISTING ENTITIES
+   - PREREQUISITES: Entity MUST exist (verify with search_knowledge)
+   - USAGE: Add new facts, update information, track changes
+   - QUALITY: Keep observations atomic, specific, and factual
+   - LIMIT: Only add new information, don't duplicate existing facts
+
+### 4. create_relations - FOR ENTITY CONNECTIONS
+   - PREREQUISITES: Both entities MUST exist (verify with search_knowledge)
+   - DIRECTIONALITY: Use active voice relationships ("manages" not "managed_by")
+   - COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to, uses
+   - TIMING: Create immediately after entity creation for network building
+
+### 5. add_tags/remove_tags - FOR CATEGORIZATION
+   - STATUS TRACKING: Mark entities as urgent, in-progress, completed
+   - CATEGORIZATION: Tag by type (technical, personal, feature, bug)
+   - FILTERING: Enable precise retrieval by tag combination
+   - LIFECYCLE: Remove old status tags when adding new ones
+
+### 6. read_graph/open_nodes - FOR EXPLORATION
+   - OVERVIEW: read_graph shows complete knowledge structure
+   - SPECIFIC DETAILS: open_nodes for targeted entity inspection
+   - LARGE PROJECTS: Use search_knowledge with tags for filtering
+
+### 7. delete_* tools - FOR MAINTENANCE
+   - HIGH RISK: delete_entities removes permanently with all connections
+   - SELECTIVE: delete_observations removes specific facts only
+   - RELATIONSHIP: delete_relations updates connection structure
+
+## PROJECT_ID PARAMETER (CRITICAL FOR DATA INTEGRITY)
 - CALCULATE ONCE:
     * project_id = workspace_path → lowercase → remove special chars → underscores
     * keep only letters, numbers, spaces, hyphens, including `-` and `_`
@@ -264,33 +335,24 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 - RULE: Use EXACT same project_id value in ALL knowledge graph tool calls
 - WARNING: Different project_id values = data fragmentation and loss
 
-## ENTITY MANAGEMENT (MANDATORY ACTIONS)
-### CREATE entities immediately for:
-- People: names, roles, contact info, preferences
-- Companies: organizations, teams, departments
-- Projects: goals, deadlines, status, requirements
-- Technologies: tools, frameworks, versions, configurations
-- Events: meetings, milestones, deadlines, appointments
-- Preferences: user choices, workflows, communication styles
+## WORKFLOW SEQUENCES (MANDATORY)
 
-### ENTITY RULES (STRICT COMPLIANCE)
-- entityType: MUST be one of ["person", "company", "project", "technology", "event", "preference"]
-- observations: MUST contain ≥1 atomic, factual statement
-- relations: MUST use active voice ("works_at", "manages", "uses", "depends_on")
-- tags: ADD for filtering ("urgent", "completed", "technical", "personal")
+### NEW INFORMATION CAPTURE:
+1. search_knowledge → Verify non-existence
+2. create_entities → Create entity with observations
+3. create_relations → Connect to relevant entities
+4. add_tags → Categorize and enable filtering
 
-## KNOWLEDGE MAINTENANCE (CONTINUOUS)
-- UPDATE: Use add_observations for new facts about existing entities
-- CONNECT: Use create_relations immediately when entities are related (enables discovery queries)
-- CLEAN: Use delete_relations when relationships change (job changes, project completion)
-- STATUS: Use add_tags for new status, remove_tags for old status (critical for project tracking)
-- SEARCH: Use exactTags to find entities by status/category instantly
+### INFORMATION UPDATE:
+1. search_knowledge → Find existing entity
+2. add_observations → Add new facts
+3. create_relations → Add new connections
+4. update_tags → Refresh categorization
 
-## SEARCH OPTIMIZATION (DECISION TREE)
-- EXACT SEARCH: Use for known terms, names, specific phrases (fast, precise)
-- FUZZY SEARCH: Use for typos, similar terms, partial matches (slower, broader)
-- TAG SEARCH: Use exactTags for categories, status, types (precise filtering)
-- THRESHOLD GUIDE: 0.1=very broad, 0.3=balanced, 0.7=very strict
+### STATUS TRANSITION:
+1. search_knowledge → Find entity to update
+2. remove_tags → Remove outdated status
+3. add_tags → Add new status
 
 ## CRITICAL CONSTRAINTS (NEVER VIOLATE)
 - NEVER omit project_id parameter from any knowledge graph tool call
@@ -316,33 +378,56 @@ CALCULATE ONCE:
 EXAMPLES: "/Users/john/dev/My-App" → "my_app", "C:\Code\Web Site" → "web_site"
 RULE: Use EXACT same project_id value in ALL tool calls
 
-## EVERY CONVERSATION:
-1. Say "Using knowledgegraph-mcp..."
-2. search_knowledge(query=context, project_id=YOUR_CALCULATED_PROJECT_ID)
-3. If empty: search_knowledge(query=context, searchMode="fuzzy", project_id=YOUR_CALCULATED_PROJECT_ID)
+## TOOL SELECTION GUIDE:
 
-## WHEN CREATING:
-- Entities: MUST have ≥1 observation + relevant tags
-- Relations: Use active voice (works_at, manages, uses)
-- Tags: Add status (urgent, completed, in-progress)
-- ALWAYS include project_id=YOUR_CALCULATED_PROJECT_ID
+1. ALWAYS START WITH: search_knowledge
+   - Find information: search_knowledge(query="term")
+   - Find multiple items: search_knowledge(query=["term1", "term2"])
+   - Filter by category: search_knowledge(exactTags=["urgent"])
+
+2. ENTITY CREATION: create_entities
+   - ONLY after search_knowledge confirms non-existence
+   - Each entity needs ≥1 specific observation
+   - Follow with relations and tags
+
+3. UPDATING ENTITIES: add_observations
+   - ONLY after search_knowledge confirms existence
+   - For adding new facts to existing entities
+
+4. CONNECTING ENTITIES: create_relations
+   - Link entities that both exist
+   - Use active voice relationships
+
+5. CATEGORIZING: add_tags/remove_tags
+   - For status tracking and filtering
+   - Update when status changes
+
+## ESSENTIAL WORKFLOWS:
+
+### NEW INFO:
+search_knowledge → create_entities → create_relations → add_tags
+
+### UPDATE INFO:
+search_knowledge → add_observations → update relations/tags
+
+### STATUS CHANGE:
+search_knowledge → remove_tags → add_tags
 
 ## SEARCH STRATEGY:
-- Known terms: searchMode="exact"
-- Similar/typos: searchMode="fuzzy"
-- Categories: exactTags=["tag1", "tag2"]
-- Multiple objects: query=["term1", "term2", "term3"]
+- First try: searchMode="exact"
+- If no results: searchMode="fuzzy"
+- Multiple items: query=["term1", "term2", "term3"]
+- By category: exactTags=["tag1", "tag2"]
 
-## MAINTENANCE:
-- Update: add_observations for new facts
-- Connect: create_relations for relationships
-- Clean: delete outdated relations/observations
-- ALWAYS use same project_id in all operations
+## CRITICAL REMINDERS:
+- NEVER omit project_id parameter
+- ALWAYS verify entity existence before updating
+- START EVERY response with "Using knowledgegraph-mcp..."
 ```
 
 #### Prompt 4: Documents and task management with Knowledge Graph integration
 
-This prompt contains some rules to avoid compression of user rules by the llm agents. I don't know for sure if it's useful or not.
+This prompt contains rules to prevent LLMs from compressing user instructions and provides comprehensive guidance for using the knowledge graph effectively.
 
 ```
 # GLOBAL MANDATORY RULES - APPLY TO ENTIRE CONVERSATION
@@ -355,7 +440,7 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 
 ---
 
-## 🏗️ **CODE QUALITY STANDARDS (GLOBAL)**
+## 🛠️ **CODE QUALITY STANDARDS (GLOBAL)**
 **Apply to all code-related tasks:**
 - **ARCHITECTURE**: Follow clean architecture patterns
 - **PRINCIPLES**: Apply SOLID principles consistently
@@ -391,20 +476,69 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
 3. **FINAL UPDATE**: Mark all completed items when plan is finished
 4. **NEVER SKIP**: Status updates are mandatory, not optional
 
-## 🧠 **KNOWLEDGE GRAPH (knowledgegraph-mcp) INTEGRATION PROTOCOL (GLOBAL)**
+## 🧠 **KNOWLEDGE GRAPH TOOL SELECTION FRAMEWORK (GLOBAL)**
 
-### CONTEXTUAL USAGE STRATEGY
-1. **ANALYZE FIRST**: Evaluate each user message to determine if knowledge graph tools would be beneficial
-2. **USE WHEN VALUABLE**: Apply knowledge graph tools only when they provide clear value:
-   - When tracking project information that should persist across conversations
-   - When managing complex relationships between entities
-   - When information retrieval would benefit from structured queries
-   - When building a persistent knowledge base about the project
-   - **FOR ANY QUESTIONS ABOUT THE PROJECT, TECHNOLOGIES, OR SYSTEM** - always use knowledge graph tools
-3. **SKIP WHEN UNNECESSARY**: Don't use knowledge graph tools for:
-   - Simple, one-off questions that don't require persistence
-   - Tasks where the information is fully contained in the current context
-   - When the overhead of knowledge management exceeds the benefit
+### WHEN TO USE EACH TOOL (DECISION TREE)
+
+1. **search_knowledge**: ALWAYS START HERE
+   - EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
+   - INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
+   - MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
+   - CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"])
+
+2. **create_entities**: ONLY AFTER search_knowledge confirms non-existence
+   - NEW INFORMATION: "Remember X for future conversations"
+   - STRUCTURED DATA: Track complex information with relationships
+   - PREREQUISITE: Each entity needs ≥1 specific fact
+
+3. **add_observations**: ONLY AFTER search_knowledge confirms entity exists
+   - UPDATING KNOWLEDGE: "Add new information about X"
+   - SUPPLEMENTING ENTITIES: "Remember additional details about X"
+   - TRACKING CHANGES: "Record that X has changed"
+
+4. **create_relations**: AFTER entities exist to connect them
+   - ESTABLISHING CONNECTIONS: "X is related to Y"
+   - DEFINING HIERARCHIES: "X depends on Y"
+   - OWNERSHIP/ASSIGNMENT: "X is assigned to Y"
+   - BUILDING KNOWLEDGE GRAPH: After creating multiple entities
+
+5. **add_tags/remove_tags**: For status and categorization management
+   - STATUS TRACKING: "Task is now in-progress" / "Task is no longer in-progress"
+   - CATEGORIZATION: "Mark entity as technical" / "Entity is no longer urgent"
+   - FILTERING PREPARATION: Enable efficient search by tag
+
+6. **read_graph/open_nodes**: For exploration and analysis
+   - FULL OVERVIEW: "Show me everything" → read_graph
+   - SPECIFIC ENTITIES: "Show details about X, Y, Z" → open_nodes
+
+7. **delete_** tools: Use with caution for maintenance
+   - CORRECTIONS: For fixing errors
+   - CLEANUP: For removing outdated information
+   - PREREQUISITE: Verify existence first
+
+### COMMON WORKFLOW SEQUENCES
+
+#### NEW INFORMATION FLOW:
+1. search_knowledge → Check if exists
+2. IF NOT EXISTS:
+   - create_entities → Create new entity
+   - create_relations → Connect to related entities
+   - add_tags → Categorize for retrieval
+3. IF EXISTS:
+   - add_observations → Add new facts
+   - create_relations → Add new connections
+   - update tags → add_tags/remove_tags
+
+#### STATUS UPDATE FLOW:
+1. search_knowledge → Find entity
+2. remove_tags → Remove old status
+3. add_tags → Add new status
+
+#### CLEANUP FLOW:
+1. search_knowledge → Find outdated entity
+2. delete_observations → Remove wrong facts OR
+   delete_relations → Remove outdated connections OR
+   delete_entities → Remove completely (last resort)
 
 ### PROJECT ISOLATION
 1. **CALCULATE project ID ONCE**, use SAME value in ALL calls
@@ -417,15 +551,12 @@ This prompt contains some rules to avoid compression of user rules by the llm ag
    - CRITICAL: Use EXACT same project_id value throughout entire conversation
    - **AUTOMATICALLY CALCULATE** project_id during first user interaction
 
-### INTELLIGENT SEARCH WORKFLOW
-1. **ASSESS NEED**: Determine if information might exist in knowledge graph
-2. **SEARCH STRATEGICALLY**: Follow this sequence when searching is valuable:
-   - START with: search_knowledge(query="...", searchMode="exact")
-   - IF NO RESULTS: search_knowledge(query="...", searchMode="fuzzy")
-   - IF STILL EMPTY: search_knowledge(query="...", searchMode="fuzzy", fuzzyThreshold=0.1)
-   - FOR CATEGORIES: Use exactTags=["tag1", "tag2"] instead of text query
-   - FOR MULTIPLE OBJECTS: Use query=["term1", "term2", "term3"] for batch searching
-   - **PERFORM ALL SEARCH STEPS** for any project-related query
+### SEARCH STRATEGY FLOWCHART
+1. EXACT SEARCH (FASTEST): search_knowledge(query="term", searchMode="exact")
+2. MULTIPLE TERMS: search_knowledge(query=["term1", "term2", "term3"]) for batch search
+3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
+4. BROADER SEARCH (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
+5. CATEGORY SEARCH: search_knowledge(exactTags=["urgent", "completed"])
 
 ### ENTITY MANAGEMENT BEST PRACTICES
 - **CREATE** entities for valuable persistent information: people, projects, companies, technologies, events, preferences

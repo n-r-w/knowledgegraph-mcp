@@ -249,7 +249,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "read_graph",
-        description: "📊 RETRIEVE complete knowledge graph with all entities and relationships. WHEN TO USE: Need full overview, understanding current state, seeing all connections. SCOPE: Returns everything in specified project. WARNING: Can be large for big graphs. USE CASE: Initial exploration, debugging, comprehensive analysis.",
+        description: "📊 RETRIEVE complete knowledge graph with all entities and relationships. WHEN TO USE:\n1. FULL OVERVIEW: 'Show me everything in the knowledge graph'\n2. INITIAL EXPLORATION: 'What information is already stored?'\n3. DEBUGGING: 'Why aren't my queries finding expected entities?'\n4. RELATIONSHIP ANALYSIS: 'Show all connections between entities'\n\nKEY USE CASES:\n✓ INITIAL ASSESSMENT: When first working with a project\n✓ COMPREHENSIVE ANALYSIS: When relationships matter\n✓ DEBUGGING SEARCH ISSUES: When search_knowledge isn't finding expected results\n✓ RELATIONSHIP MAPPING: When understanding connections is important\n\nSCOPE & PERFORMANCE:\n✓ RETURNS EVERYTHING: All entities and their relationships in the project\n✓ POTENTIAL LARGE RESPONSE: Can be significant for projects with many entities\n✓ COMPREHENSIVE VIEW: Shows the complete network structure\n\n⚠️ USAGE NOTES:\n- Use search_knowledge for targeted searches instead when possible\n- Use open_nodes for specific entity details when you know their names\n- For large graphs, consider using search_knowledge with tags for filtering",
         inputSchema: {
           type: "object",
           properties: {
@@ -263,7 +263,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "open_nodes",
-        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE: You know exact entity names and want detailed info about them and their connections. RETURNS: Requested entities plus relationships between them. PREREQUISITE: Entity names must be exact matches. USE CASE: Deep dive into specific entities after finding them with search_knowledge.",
+        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE:\n1. TARGETED INSPECTION: 'Show me details about entities X, Y, and Z'\n2. RELATIONSHIP ANALYSIS: 'How are these specific entities connected?'\n3. DETAILED EXAMINATION: After finding entities with search_knowledge\n4. CROSS-ENTITY EXPLORATION: When investigating connections between known entities\n\nKEY BENEFITS:\n✓ PRECISE RETRIEVAL: Gets exactly the entities you specify\n✓ RELATIONSHIP FOCUS: Shows how the specified entities are connected\n✓ NETWORK CONTEXT: Reveals the immediate relationship network\n✓ SELECTIVE DEPTH: Gets detailed information without the entire graph\n\nDECISION CRITERIA:\n✓ KNOW ENTITY NAMES: Must know the exact names of entities to retrieve\n✓ WANT CONNECTIONS: Interested in relationships between these entities\n✓ NEED DETAILS: Require complete entity information, not just search results\n\nTYPICAL WORKFLOW:\n1. DISCOVER: Find entities with search_knowledge first\n2. INSPECT: Use open_nodes with exact entity names for details\n3. ANALYZE: Examine relationships between the specific entities\n\nAVOID: Using when you don't know exact entity names (use search_knowledge instead)",
         inputSchema: {
           type: "object",
           properties: {
