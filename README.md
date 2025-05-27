@@ -493,56 +493,67 @@ Add for filtering and status:
 ```
 # TASK MANAGEMENT PROTOCOL (GLOBAL)
 
-## ACTIVATION TRIGGERS
-Implement this protocol when:
-- Planning features requiring 3+ steps
-- Working on complex implementations
-- Tasks span multiple sessions
-- Collaborating with other team members
-- User explicitly requests task tracking
-- Integrating multiple components/services
-- Debugging critical issues with unclear causes
+## **1. ACTIVATION TRIGGERS**
+Activate this protocol when:
+- Planning features/tasks with **3+ distinct steps**.
+- Undertaking **complex implementations** or **multi-session tasks**.
+- **Collaboration requires shared progress tracking**.
+- User **explicitly requests task tracking**.
+- **Integrating multiple components** or debugging **critical, unclear issues**.
 
-## PRIORITIES
-- **ALWAYS** save implementation plans to files with checkbox tracking
-- **ALWAYS** update status after completing each step
-- **NEVER** skip status updates - they are mandatory, not optional
+## **2. CORE WORKFLOW**
+1)  **PLAN CREATION (Markdown File)**:
+    -   **File Naming**: `implementation_plan_[concise_feature_name].md` (e.g., `implementation_plan_user_auth.md`).
+    -   Use the **IMPLEMENTATION PLAN TEMPLATE** (see below).
+    -   Define Overview, Prerequisites, Implementation Steps (as `[ ]`), and Success Criteria.
+2)  **STATUS TRACKING (in Markdown File)**:
+    -   Update step status diligently:
+        *   `[ ]` = To Do
+        *   `[~]` = In Progress
+        *   `[x]` = Completed
+        *   `[-]` = Blocked/Failed
+    -   Use the "Notes & Blockers" section for details on issues or decisions.
+3)  **KNOWLEDGE GRAPH INTEGRATION**:
+    -   **Project Context**: Ensure all KG operations for this plan use a consistent `project_id` (calculated once per workspace/project, as per KG guidelines).
+    -   **On Plan Creation**:
+        a)  **Verify Existence**: Before creating, use `search_knowledge` to check if an entity like `Plan:[FeatureName]` already exists for the current `project_id`.
+        b)  **Create Entity**: If it doesn't exist, use `create_entities` for the new `project` entity:
+            *   **Name**: `Plan:[FeatureName]`
+            *   **Type**: `project`
+            *   **Observations**: "Plan created for [FeatureName]", "Initial status: Planning", "Associated markdown file: `implementation_plan_[concise_feature_name].md`".
+            *   **Tags**: `planning`, `task_management`, `status_not_started`.
+        c)  **Establish Connections (Optional but Recommended)**: Use `create_relations` to link this plan entity to other relevant existing entities (e.g., team members via `assigned_to`, dependencies via `depends_on`).
+    -   **On Major Status Changes/Completion**:
+        a)  **Update Tags**: Use `add_tags` for the new status (e.g., `status_in_progress`) and `remove_tags` to remove the old status tag (e.g., `status_not_started`).
+        b)  **Log Progress**: Use `add_observations` to record significant updates or milestones (e.g., "Core logic implemented for [FeatureName]", "Deployment successful", "API integration blocked due to [reason]").
 
-## STATUS INDICATORS
-- `[ ]` = Not started
-- `[~]` = In progress
-- `[-]` = Failed/blocked
-- `[x]` = Completed
+## **3. IMPLEMENTATION PLAN TEMPLATE**
+# Implementation Plan: [Feature/Task Name]
 
-## **IMPLEMENTATION PLAN TEMPLATE**
+## Overview
+*Briefly describe the feature/task and its objective.*
 
-### File Naming: `implementation_plan_[feature_name].md`
+## Prerequisites
+*List essential dependencies or resources.*
+- [ ] Prerequisite 1
 
-### Plan Structure:
-- Implementation Plan: [Feature/Task Name]
-- Overview
-- Prerequisites
-- Implementation Steps
-- Success Criteria
-- Notes (key considerations, potential blockers)
+## Implementation Steps
+*Actionable steps for the task.*
+- [ ] Step 1: Description
+- [ ] Step 2: Description
 
-## **WORKFLOW**
-1. **CREATE**: Save plan to file with checkboxes
-2. **EXECUTE**: Update `[ ]` → `[~]` → `[x]` or `[-]`
-3. **DOCUMENT**: Add notes for blockers/decisions
-4. **COMPLETE**: Mark all items finished
+## Success Criteria
+*Measurable outcomes for completion.*
+- Criterion 1
 
-## **STATUS UPDATE EXAMPLES**
-- [x] Setup environment (Completed)
-- [~] Core implementation (In progress - 50% done)
-- [-] API integration (Blocked: missing docs)
+## Notes & Blockers
+*Key considerations, challenges, decisions, blockers.*
+-
 
-## **KNOWLEDGE GRAPH INTEGRATION**
-When creating plans, also create project entities:
-- **Entity Type**: project
-- **Observations**: Plan created, status, timeline
-- **Tags**: ["planning", "in-progress", priority-level]
-- **Relations**: Link to team members, dependencies
+## **4. KEY DIRECTIVES**
+- **ALWAYS** save plans to markdown files with checkbox tracking.
+- **ALWAYS** update step status in the markdown file promptly.
+- **ALWAYS** reflect significant plan milestones and status changes in the Knowledge Graph.
 ```
 
 #### Code Quality Prompt (optional)
