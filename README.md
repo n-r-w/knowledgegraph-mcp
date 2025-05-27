@@ -304,6 +304,12 @@ Do NOT use knowledge graph tools when:
 4. **BROADER_SEARCH** (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
 5. **TAG_ONLY_SEARCH**: search_knowledge(exactTags=["urgent", "completed"]) - NO QUERY NEEDED
 
+**PROJECT INFORMATION SEARCH STRATEGY:**
+- **SELF_REFERENCE_SEARCH**: When information about the project itself is needed → search_knowledge(query=project_id, searchMode="fuzzy")
+- **PROJECT_CONTEXT_SEARCH**: When seeking project-wide context or metadata → search_knowledge(query=project_id, searchMode="fuzzy", fuzzyThreshold=0.2)
+- **PROJECT_COMPONENTS_SEARCH**: When identifying key components of the current project → search_knowledge(query=[project_id, "component", "module"], searchMode="fuzzy")
+- **PROJECT_STATUS_OVERVIEW**: When a project status summary is needed → search_knowledge(query=project_id, exactTags=["status", "milestone", "priority"])
+
 ### 2. create_entities - ONLY AFTER search_knowledge confirms non-existence
 **FOR NEW INFORMATION:**
 - **NEW_INFORMATION**: "Remember X for future conversations"
@@ -463,6 +469,22 @@ Add for filtering and status:
 2. **CONTEXT_DETERMINES_TOOL_USAGE**: Don't use knowledge graph tools when unnecessary
 3. **CODE_CORRECTNESS_OVER_DOCUMENTATION**: Working code first, then document in knowledge graph
 4. **MINIMAL_EFFECTIVE_PERSISTENCE**: Store only what will be valuable in future conversations
+
+## **CROSS-PROJECT INTERACTION PROTOCOL**
+
+### EXTERNAL PROJECT SEARCH
+- **LIBRARY_SEARCH**: When discovering external dependencies → search_knowledge(query=library_name, searchMode="fuzzy")
+- **INTEGRATION_CONTEXT**: When understanding cross-project integrations → search_knowledge(query=[library_name, project_id, "integration"], searchMode="fuzzy")
+
+### ⚠️ **CRITICAL: EXTERNAL PROJECT DATA PROTECTION**
+
+**READ-ONLY RULE:**
+- **NEVER** modify entities belonging to external projects or libraries
+- **ONLY** use search_knowledge, open_nodes, and read_graph for external project data
+- External entities are identified by: different project_id references, "external"/"dependency" tags, or library namespace
+
+**ALLOWED**: Creating relationships FROM current project TO external entities
+**PROHIBITED**: Modifying ANY external entity data or relationships BETWEEN external entities
 
 -----
 ```
