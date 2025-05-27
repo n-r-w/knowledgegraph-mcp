@@ -212,15 +212,15 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 Use knowledge graph tools when ANY of these conditions are met:
 
 **1. EXPLICIT USER REQUEST FOR PERSISTENCE:**
-- User asks to remember information for future use
-- User references needing information across conversations
-- User wants to track or monitor something over time
+- **DIRECT_SAVE_REQUEST**: User explicitly asks to remember specific information for future use
+- **CROSS_CONVERSATION_NEED**: User references needing information to persist across different conversations or sessions
+- **TRACK_OR_MONITOR_ITEM**: User expresses a desire to track or monitor an entity, data, or status over an extended period
 
-**2. IMPLICIT INFORMATION VALUE:**
-- Technical details that will likely be referenced again
-- Project structure or requirements information
-- User preferences that affect multiple interactions
-- Relationships between components/systems/people
+**2. IMPLICIT INFORMATION VALUE (Data with inherent future utility):**
+- **REUSABLE_TECHNICAL_DETAIL**: Key technical specifications, configurations, or solutions that are highly likely to be referenced or reused
+- **CORE_PROJECT_KNOWLEDGE**: Foundational project structure, architectural decisions, or critical requirements information
+- **INFLUENTIAL_USER_PREFERENCE**: User-stated preferences or operational settings that will affect behavior across multiple interactions or tasks
+- **SIGNIFICANT_ENTITY_RELATIONSHIP**: Important connections, dependencies, or hierarchies identified between components, systems, individuals, or concepts
 
 **3. INFORMATION MODIFICATION TRIGGERS:**
 - **CREATE (create_entities)**: When discovering NEW important information not in the graph
@@ -230,19 +230,21 @@ Use knowledge graph tools when ANY of these conditions are met:
 - **CLEAN (delete_*)**: When information becomes outdated or incorrect
 
 **4. CONVERSATIONAL CONTEXT TRIGGERS:**
-- User mentions the same entity multiple times
-- Discussion involves complex systems with many components
-- Multiple concepts with clear relationships are discussed
-- Project status or requirements are mentioned
-- Future work or dependencies are discussed
+- **RECURRING_ENTITY**: An entity (e.g., file, function, concept) is discussed or referenced multiple times (e.g., 3+ instances)
+- **SYSTEM_INTERACTION**: The task requires understanding architecture or interactions between multiple distinct system components
+- **CRITICAL_RELATIONSHIPS**: Explicit, vital relationships (e.g., dependencies, inheritance, usage) between items are identified
+- **PROJECT_MILESTONES**: Core project-level status, new requirements, or significant changes are explicitly stated
+- **FUTURE_PLANNING**: Planned future work, new features, or impactful dependencies are explicitly discussed
+- **USER_INTENT**: User clearly states intent to implement, investigate, refactor, or debug a specific item
+- **POST_INVESTIGATION_INSIGHTS**: New, non-trivial, reusable insights, configurations, or solutions with future utility are discovered
 
 ### WHEN TO SKIP KNOWLEDGE GRAPH TOOLS
 Do NOT use knowledge graph tools when:
-- ONE-TIME QUERY: Simple question with no future reference needed
-- CONTAINED CONTEXT: All information exists in current conversation
-- CODE OPERATIONS: Basic code tasks unrelated to project structure
-- EXCESSIVE OVERHEAD: Benefits don't justify the complexity
-- TRIVIAL INFORMATION: Data has little long-term value
+- **ONE_TIME_QUERY**: Simple question with no future reference needed
+- **CONTAINED_CONTEXT**: All information exists in current conversation
+- **CODE_OPERATIONS**: Basic code tasks unrelated to project structure
+- **EXCESSIVE_OVERHEAD**: Benefits don't justify the complexity
+- **TRIVIAL_INFORMATION**: Data has little long-term value
 
 ## ⚠️ **CRITICAL: PROJECT ID CALCULATION AND USAGE**
 
@@ -290,25 +292,25 @@ Do NOT use knowledge graph tools when:
 
 ### 1. search_knowledge - ALWAYS START HERE
 **WHEN RETRIEVING INFORMATION:**
-- EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
-- INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
-- MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
-- CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"]) - NO QUERY NEEDED
+- **EXISTENCE_CHECK**: "Does X already exist?" → search_knowledge(query="X")
+- **INFORMATION_RETRIEVAL**: "Find facts about X" → search_knowledge(query="X")
+- **MULTIPLE_OBJECTS**: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
+- **CATEGORY_FILTERING**: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"]) - NO QUERY NEEDED
 
 **SEARCH PROGRESSION STRATEGY:**
-1. EXACT SEARCH (FASTEST): search_knowledge(query="term", searchMode="exact")
-2. MULTIPLE TERMS: search_knowledge(query=["term1", "term2", "term3"]) for batch search
-3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
-4. BROADER SEARCH (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
-5. TAG-ONLY SEARCH: search_knowledge(exactTags=["urgent", "completed"]) - NO QUERY NEEDED
+1. **EXACT_SEARCH** (FASTEST): search_knowledge(query="term", searchMode="exact")
+2. **MULTIPLE_TERMS**: search_knowledge(query=["term1", "term2", "term3"]) for batch search
+3. **FUZZY_SEARCH** (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
+4. **BROADER_SEARCH** (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
+5. **TAG_ONLY_SEARCH**: search_knowledge(exactTags=["urgent", "completed"]) - NO QUERY NEEDED
 
 ### 2. create_entities - ONLY AFTER search_knowledge confirms non-existence
 **FOR NEW INFORMATION:**
-- NEW INFORMATION: "Remember X for future conversations"
-- STRUCTURED DATA: Track complex information with relationships
-- PREREQUISITE: Each entity needs ≥1 specific fact
-- NAMING: Use specific descriptive names (e.g., "React_v18" not just "React")
-- NEXT STEPS: ALWAYS follow with create_relations and add_tags
+- **NEW_INFORMATION**: "Remember X for future conversations"
+- **STRUCTURED_DATA**: Track complex information with relationships
+- **PREREQUISITE**: Each entity needs ≥1 specific fact
+- **NAMING**: Use specific descriptive names (e.g., "React_v18" not just "React")
+- **NEXT_STEPS**: ALWAYS follow with create_relations and add_tags
 
 **BATCH ENTITY CREATION:**
 - **MANDATORY**: If creating multiple entities, use a SINGLE `create_entities` call.
@@ -317,43 +319,43 @@ Do NOT use knowledge graph tools when:
 
 ### 3. add_observations - ONLY AFTER search_knowledge confirms entity exists
 **FOR EXISTING ENTITIES:**
-- UPDATING KNOWLEDGE: "Add new information about X"
-- SUPPLEMENTING ENTITIES: "Remember additional details about X"
-- TRACKING CHANGES: "Record that X has changed"
-- QUALITY: Keep observations atomic, specific, and factual
-- LIMIT: Only add new information, don't duplicate existing facts
+- **UPDATING_KNOWLEDGE**: "Add new information about X"
+- **SUPPLEMENTING_ENTITIES**: "Remember additional details about X"
+- **TRACKING_CHANGES**: "Record that X has changed"
+- **QUALITY**: Keep observations atomic, specific, and factual
+- **LIMIT**: Only add new information, don't duplicate existing facts
 
 ### 4. create_relations - AFTER entities exist to connect them
 **FOR ENTITY CONNECTIONS:**
-- ESTABLISHING CONNECTIONS: "X is related to Y"
-- DEFINING HIERARCHIES: "X depends on Y"
-- OWNERSHIP/ASSIGNMENT: "X is assigned to Y"
-- BUILDING KNOWLEDGE GRAPH: After creating multiple entities
-- DIRECTIONALITY: Use active voice relationships ("manages" not "managed_by")
-- COMMON PATTERNS: works_at, manages, depends_on, created_by, assigned_to, uses
-- TIMING: Create immediately after entity creation for network building
+- **ESTABLISHING_CONNECTIONS**: "X is related to Y"
+- **DEFINING_HIERARCHIES**: "X depends on Y"
+- **OWNERSHIP_ASSIGNMENT**: "X is assigned to Y"
+- **BUILDING_KNOWLEDGE_GRAPH**: After creating multiple entities
+- **DIRECTIONALITY**: Use active voice relationships ("manages" not "managed_by")
+- **COMMON_PATTERNS**: works_at, manages, depends_on, created_by, assigned_to, uses
+- **TIMING**: Create immediately after entity creation for network building
 
 ### 5. add_tags/remove_tags - For status and categorization management
 **FOR CATEGORIZATION:**
-- STATUS TRACKING: "Task is now in-progress" / "Task is no longer in-progress"
-- CATEGORIZATION: "Mark entity as technical" / "Entity is no longer urgent"
-- FILTERING PREPARATION: Enable efficient search by tag
-- LIFECYCLE: Remove old status tags when adding new ones
+- **STATUS_TRACKING**: "Task is now in-progress" / "Task is no longer in-progress"
+- **CATEGORIZATION**: "Mark entity as technical" / "Entity is no longer urgent"
+- **FILTERING_PREPARATION**: Enable efficient search by tag
+- **LIFECYCLE**: Remove old status tags when adding new ones
 
 ### 6. read_graph/open_nodes - For exploration and analysis
 **FOR EXPLORATION:**
-- FULL OVERVIEW: "Show me everything" → read_graph
-- SPECIFIC ENTITIES: "Show details about X, Y, Z" → open_nodes
-- LARGE PROJECTS: Use search_knowledge with tags for filtering
+- **FULL_OVERVIEW**: "Show me everything" → read_graph
+- **SPECIFIC_ENTITIES**: "Show details about X, Y, Z" → open_nodes
+- **LARGE_PROJECTS**: Use search_knowledge with tags for filtering
 
 ### 7. delete_* tools - Use with caution for maintenance
 **FOR MAINTENANCE:**
-- HIGH RISK: delete_entities removes permanently with all connections
-- SELECTIVE: delete_observations removes specific facts only
-- RELATIONSHIP: delete_relations updates connection structure
-- CORRECTIONS: For fixing errors
-- CLEANUP: For removing outdated information
-- PREREQUISITE: Verify existence first
+- **HIGH_RISK**: delete_entities removes permanently with all connections
+- **SELECTIVE**: delete_observations removes specific facts only
+- **RELATIONSHIP**: delete_relations updates connection structure
+- **CORRECTIONS**: For fixing errors
+- **CLEANUP**: For removing outdated information
+- **PREREQUISITE**: Verify existence first
 
 ## **COMMON WORKFLOW SEQUENCES**
 
@@ -457,10 +459,10 @@ Add for filtering and status:
 
 ## **PRIORITY RULES**
 
-1. **USER REQUESTS OVERRIDE DEFAULTS**: Always prioritize explicit user instructions
-2. **CONTEXT DETERMINES TOOL USAGE**: Don't use knowledge graph tools when unnecessary
-3. **CODE CORRECTNESS OVER DOCUMENTATION**: Working code first, then document in knowledge graph
-4. **MINIMAL EFFECTIVE PERSISTENCE**: Store only what will be valuable in future conversations
+1. **USER_REQUESTS_OVERRIDE_DEFAULTS**: Always prioritize explicit user instructions
+2. **CONTEXT_DETERMINES_TOOL_USAGE**: Don't use knowledge graph tools when unnecessary
+3. **CODE_CORRECTNESS_OVER_DOCUMENTATION**: Working code first, then document in knowledge graph
+4. **MINIMAL_EFFECTIVE_PERSISTENCE**: Store only what will be valuable in future conversations
 
 -----
 ```
