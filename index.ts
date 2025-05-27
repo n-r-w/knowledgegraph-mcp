@@ -31,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_knowledge",
-        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE:\n1. EXISTENCE CHECK: 'Does X already exist?'\n2. INFORMATION RETRIEVAL: 'Find facts about X'\n3. MULTIPLE OBJECT SEARCH: 'Find X, Y and Z at once'\n4. CATEGORY FILTERING: 'Find all urgent tasks'\n\nSEARCH STRATEGY FLOWCHART:\n1. EXACT SEARCH (FASTEST): search_knowledge(query='term', searchMode='exact')\n2. MULTIPLE TERMS: search_knowledge(query=['term1', 'term2', 'term3']) for batch search\n3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query='term', searchMode='fuzzy')\n4. BROADER SEARCH (LAST RESORT): search_knowledge(query='term', fuzzyThreshold=0.1)\n5. TAG-ONLY SEARCH: search_knowledge(exactTags=['urgent', 'completed']) - NO QUERY NEEDED\n6. TAG + QUERY COMBO: search_knowledge(query='term', exactTags=['category'])\n\nMUST USE BEFORE:\n✓ create_entities: Verify non-existence first\n✓ add_observations: Confirm entity exists first\n✓ create_relations: Verify both entities exist\n\nAVOID: Starting with fuzzy search (slower and less precise)",
+        description: "SEARCH ENTITIES by TEXT or TAGS across names, types, observations, and tags. Supports exact/fuzzy search modes, multiple query batching, and tag filtering. Returns entities and their relationships. MUST USE BEFORE create_entities, add_observations, and create_relations to verify entity existence.",
         inputSchema: {
           type: "object",
           properties: {
@@ -40,32 +40,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 { type: "string" },
                 { type: "array", items: { type: "string" } }
               ],
-              description: "Text to search for across entity names, types, observations, and tags. Can be a single string or array of strings for multiple object search (e.g., 'JavaScript' or ['JavaScript', 'React', 'Node.js']). OPTIONAL when exactTags is provided for tag-only searches."
+              description: "Search text (string or array of strings for batch search). Searches across entity names, types, observations, and tags. Optional when exactTags is provided."
             },
             exactTags: {
               type: "array",
               items: { type: "string" },
-              description: "Tags for exact-match searching (case-sensitive). When provided, general query is ignored. Use for category filtering."
+              description: "Array of tags for exact-match filtering (case-sensitive). Enables tag-only search when query is omitted."
             },
             tagMatchMode: {
               type: "string",
               enum: ["any", "all"],
-              description: "For exactTags: 'any'=entities with ANY tag, 'all'=entities with ALL tags (default: any)"
+              description: "Tag matching mode: 'any' finds entities with ANY specified tag, 'all' requires ALL tags (default: 'any')"
             },
             searchMode: {
               type: "string",
               enum: ["exact", "fuzzy"],
-              description: "EXACT: substring matching (fast, precise). FUZZY: similarity matching (slower, broader). DEFAULT: exact. Use fuzzy only if exact returns no results."
+              description: "Search algorithm: 'exact' for substring matching (fast), 'fuzzy' for similarity matching (slower, broader results). Default: 'exact'"
             },
             fuzzyThreshold: {
               type: "number",
               minimum: 0.0,
               maximum: 1.0,
-              description: "Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results."
+              description: "Similarity threshold for fuzzy search (0.0-1.0). Lower values = more results. Default: 0.3"
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -74,27 +74,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_entities",
-        description: "🆕 CREATE new entities for persistent memory. WHEN TO USE:\n1. NEW INFORMATION: 'Remember X for future conversations'\n2. AFTER SEARCH FAILS: search_knowledge returned empty results\n3. STRUCTURED DATA: Need to track complex information with relationships\n\nPREREQUISITE CHECKLIST:\n✓ VERIFIED NON-EXISTENCE: Always run search_knowledge first\n✓ VALID ENTITY TYPE: Must be one of: person, technology, project, company, concept, event, preference\n✓ MEANINGFUL OBSERVATIONS: Each entity needs ≥1 specific fact\n✓ DESCRIPTIVE NAMING: Use specific names (e.g., 'John_Smith_Engineer' not just 'John')\n\nNEXT STEPS AFTER CREATION:\n1. create_relations: Connect to other entities\n2. add_tags: Categorize for easy retrieval\n\nAVOID: Creating duplicate entities or using generic names",
+        description: "CREATE new entities with OBSERVATIONS and optional tags. Each entity requires a unique name, type, and at least one observation. Ignores entities with existing names. Use search_knowledge first to verify non-existence.",
         inputSchema: {
           type: "object",
           properties: {
             entities: {
               type: "array",
-              description: "Array of entity objects. Each entity must have at least one observation.",
+              description: "Array of entity objects to create. Each entity must have at least one observation.",
               items: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Unique identifier, non-empty. BEST PRACTICE: Use descriptive, unique identifiers. GOOD: 'John_Smith_Engineer', 'React_v18', 'Sprint_Planning_Q1'. AVOID: 'John', 'React', 'Meeting' (too generic)" },
-                  entityType: { type: "string", description: "Category, non-empty. MUST BE ONE OF: 'person', 'technology', 'project', 'company', 'concept', 'event', 'preference'" },
+                  name: { type: "string", description: "Unique entity identifier. Use descriptive names (e.g., 'John_Smith_Engineer', 'React_v18')" },
+                  entityType: { type: "string", description: "Entity category. Valid types: 'person', 'technology', 'project', 'company', 'concept', 'event', 'preference'" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Facts about entity. REQUIRED: Must contain ≥1 non-empty string (e.g., ['Software engineer at Google', 'Lives in San Francisco'])"
+                    description: "Array of factual statements about the entity. Must contain at least one non-empty string."
                   },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Optional exact-match labels for filtering (e.g., ['urgent', 'technical', 'completed'])"
+                    description: "Optional tags for categorization and filtering (e.g., ['urgent', 'technical', 'completed'])"
                   },
                 },
                 required: ["name", "entityType", "observations"],
@@ -102,7 +102,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -111,21 +111,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_observations",
-        description: "📝 ADD factual observations to existing entities. WHEN TO USE:\n1. UPDATING KNOWLEDGE: 'Add new information about X'\n2. SUPPLEMENTING ENTITIES: 'Remember additional details about X'\n3. TRACKING CHANGES: 'Record that X has changed'\n\nDECISION CRITERIA:\n✓ ENTITY EXISTS: Must verify with search_knowledge first\n✓ NEW INFORMATION: Don't duplicate existing observations\n✓ ATOMIC FACTS: Keep each observation focused on a single fact\n\nINPUT REQUIREMENTS:\n✓ TARGET ENTITY: Must be exact entity name that exists\n✓ OBSERVATIONS: At least one non-empty string per update\n\nEXAMPLES:\n- 'User prefers dark mode' (for a preference entity)\n- 'React v18 released March 2022' (for a technology entity)\n\nAVOID: Adding to non-existent entities or duplicate observations",
+        description: "ADD new factual observations to existing entities. Requires exact entity names that exist in the knowledge graph. Use search_knowledge first to verify entity existence.",
         inputSchema: {
           type: "object",
           properties: {
             observations: {
               type: "array",
-              description: "Array of observation updates to add to existing entities. Each update must contain at least one observation.",
+              description: "Array of observation updates. Each update specifies an entity and new observations to add.",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "Target entity name (must exist)" },
+                  entityName: { type: "string", description: "Exact name of existing entity to update" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "New facts to add. REQUIRED: Must contain ≥1 non-empty string"
+                    description: "Array of new factual statements to add. Must contain at least one non-empty string."
                   },
                 },
                 required: ["entityName", "observations"],
@@ -133,7 +133,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -142,26 +142,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_relations",
-        description: "🔗 CONNECT entities to build relationship network. WHEN TO USE:\n1. ESTABLISHING CONNECTIONS: 'X is related to Y'\n2. DEFINING HIERARCHIES: 'X depends on Y'\n3. OWNERSHIP/ASSIGNMENT: 'X is assigned to Y'\n4. BUILDING KNOWLEDGE GRAPH: After creating multiple entities\n\nPREREQUISITE VALIDATION:\n✓ ENTITY EXISTENCE: Both entities MUST exist (verify with search_knowledge)\n✓ DIRECTIONALITY: Always use active voice relationships\n - CORRECT: 'person works_at company'\n - INCORRECT: 'company employs person'\n✓ SEMANTIC CORRECTNESS: Relationship must make logical sense\n\nCOMMON RELATIONSHIP PATTERNS:\n- works_at: Person → Company\n- manages: Person → Project/Person\n- depends_on: Technology → Technology\n- created_by: Project → Person\n- assigned_to: Task → Person\n- uses: Project → Technology\n\nAVOID: Relations with non-existent entities or illogical connections",
+        description: "CREATE directional RELATIONSHIPS between existing entities. Both source and target entities must exist. Use active voice relationship types (e.g., 'works_at', 'manages', 'depends_on'). Verify entity existence with search_knowledge first.",
         inputSchema: {
           type: "object",
           properties: {
             relations: {
               type: "array",
-              description: "Array of relationship objects to create between entities",
+              description: "Array of relationship objects to create between existing entities",
               items: {
                 type: "object",
                 properties: {
-                  from: { type: "string", description: "Source entity name (must exist)" },
-                  to: { type: "string", description: "Target entity name (must exist)" },
-                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on')" },
+                  from: { type: "string", description: "Source entity name (must exist in knowledge graph)" },
+                  to: { type: "string", description: "Target entity name (must exist in knowledge graph)" },
+                  relationType: { type: "string", description: "Relationship type in active voice (e.g., 'works_at', 'manages', 'created_by', 'depends_on', 'uses')" },
                 },
                 required: ["from", "to", "relationType"],
               },
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -170,18 +170,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_entities",
-        description: "🗑️ PERMANENTLY DELETE entities and all their relationships. WHEN TO USE:\n1. ERROR CORRECTION: 'Remove entity created by mistake'\n2. OUTDATED INFORMATION: 'Delete obsolete entity'\n3. CLEANUP: 'Remove test entities'\n\n⚠️ HIGH-RISK OPERATION: This action is destructive and irreversible\n\nPREREQUISITE SAFETY CHECKS:\n✓ ENTITY EXISTS: Verify with search_knowledge first\n✓ INTENTIONAL DELETION: Confirm this entity should be permanently removed\n✓ CASCADING EFFECTS: All relations involving this entity will also be deleted\n✓ NO ALTERNATIVES: Consider if add_observations or delete_observations would be better\n\nSAFER ALTERNATIVES:\n- delete_observations: To remove specific facts while keeping entity\n- remove_tags: To change entity status without deletion\n\nAVOID: Deleting entities that might be needed later (cannot be recovered)",
+        description: "Permanently DELETE entities and all their RELATIONSHIPS. This action is irreversible and cascades to remove all connections. Verify entity existence with search_knowledge first. Consider delete_observations for partial updates.",
         inputSchema: {
           type: "object",
           properties: {
             entityNames: {
               type: "array",
               items: { type: "string" },
-              description: "Array of entity names to delete"
+              description: "Array of exact entity names to permanently delete"
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -190,21 +190,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_observations",
-        description: "🗑️ SELECTIVELY REMOVE specific facts while preserving entity. WHEN TO USE:\n1. CORRECT ERRORS: 'Fix incorrect information about X'\n2. UPDATE INFORMATION: 'Remove outdated facts about X'\n3. PRECISION EDITING: 'Delete specific details while keeping entity'\n\nSAFETY ADVANTAGES:\n✓ NON-DESTRUCTIVE: Entity remains intact\n✓ SELECTIVE: Only removes specified observations\n✓ PRESERVES RELATIONS: All entity connections remain unchanged\n✓ KEEPS TAGS: Entity categorization remains intact\n\nDECISION CRITERIA:\n✓ ENTITY EXISTS: Verify with search_knowledge first\n✓ SPECIFIC OBSERVATIONS: Know exactly which facts to remove\n✓ PARTIAL UPDATE: Only want to remove some facts, not the entire entity\n\nUSE INSTEAD OF delete_entities WHEN:\n- Information is partially correct (remove only wrong facts)\n- Entity should continue to exist in knowledge graph\n\nAVOID: Removing all observations without deleting entity",
+        description: "DELETE specific OBSERVATIONS from entities while preserving the entity, its relationships, and tags. Use for correcting errors or removing outdated facts without deleting the entire entity.",
         inputSchema: {
           type: "object",
           properties: {
             deletions: {
               type: "array",
-              description: "Array of observation deletion requests specifying which observations to remove from entities",
+              description: "Array of deletion requests specifying which observations to remove from which entities",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "Target entity name" },
+                  entityName: { type: "string", description: "Exact name of entity to update" },
                   observations: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Specific observations to remove"
+                    description: "Array of exact observation strings to remove from the entity"
                   },
                 },
                 required: ["entityName", "observations"],
@@ -212,7 +212,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -221,26 +221,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_relations",
-        description: "🗑️ UPDATE relationship network when connections change. WHEN TO USE:\n1. STATUS CHANGES: 'Person no longer works at Company'\n2. PROJECT COMPLETION: 'Task is no longer assigned to Person'\n3. ROLE CHANGES: 'Person no longer manages Project'\n4. DEPENDENCY UPDATES: 'Project no longer uses Technology'\n\nKEY SITUATIONS REQUIRING RELATION UPDATES:\n✓ JOB CHANGES: Remove old 'works_at' relations when someone changes jobs\n✓ PROJECT COMPLETION: Remove 'assigned_to' when tasks are finished\n✓ TECHNOLOGY MIGRATION: Remove 'uses' when systems are upgraded\n✓ RESPONSIBILITY SHIFTS: Remove 'manages' when roles change\n\nDECISION CRITERIA:\n✓ RELATIONSHIP EXISTED: Verify with search_knowledge or read_graph first\n✓ RELATIONSHIP IS OUTDATED: Connection no longer accurate\n✓ ENTITIES STILL VALID: Both entities should continue to exist\n\nSAFETY FEATURES:\n✓ PRESERVES ENTITIES: Both connected entities remain intact\n✓ SELECTIVE REMOVAL: Only specified relations are removed\n✓ DATA INTEGRITY: Maintains accurate knowledge graph\n\nAVOID: Leaving outdated relationships in the knowledge graph",
+        description: "DELETE specific RELATIONSHIPS between entities while preserving both entities. Use for updating connection status when relationships change (job changes, project completion, etc.).",
         inputSchema: {
           type: "object",
           properties: {
             relations: {
               type: "array",
+              description: "Array of specific relationships to delete",
               items: {
                 type: "object",
                 properties: {
                   from: { type: "string", description: "Source entity name" },
                   to: { type: "string", description: "Target entity name" },
-                  relationType: { type: "string", description: "Exact relationship type to remove" },
+                  relationType: { type: "string", description: "Exact relationship type to remove (must match existing relation)" },
                 },
                 required: ["from", "to", "relationType"],
               },
-              description: "Array of relations to delete"
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -249,13 +249,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "read_graph",
-        description: "📊 RETRIEVE complete knowledge graph with all entities and relationships. WHEN TO USE:\n1. FULL OVERVIEW: 'Show me everything in the knowledge graph'\n2. INITIAL EXPLORATION: 'What information is already stored?'\n3. DEBUGGING: 'Why aren't my queries finding expected entities?'\n4. RELATIONSHIP ANALYSIS: 'Show all connections between entities'\n\nKEY USE CASES:\n✓ INITIAL ASSESSMENT: When first working with a project\n✓ COMPREHENSIVE ANALYSIS: When relationships matter\n✓ DEBUGGING SEARCH ISSUES: When search_knowledge isn't finding expected results\n✓ RELATIONSHIP MAPPING: When understanding connections is important\n\nSCOPE & PERFORMANCE:\n✓ RETURNS EVERYTHING: All entities and their relationships in the project\n✓ POTENTIAL LARGE RESPONSE: Can be significant for projects with many entities\n✓ COMPREHENSIVE VIEW: Shows the complete network structure\n\n⚠️ USAGE NOTES:\n- Use search_knowledge for targeted searches instead when possible\n- Use open_nodes for specific entity details when you know their names\n- For large graphs, consider using search_knowledge with tags for filtering",
+        description: "RETRIEVE the complete KNOWLEDGE GRAPH with all entities and relationships for a project. Returns comprehensive view of the entire network structure. Can be large for projects with many entities.",
         inputSchema: {
           type: "object",
           properties: {
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -263,18 +263,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "open_nodes",
-        description: "📋 RETRIEVE specific entities by exact names with their interconnections. WHEN TO USE:\n1. TARGETED INSPECTION: 'Show me details about entities X, Y, and Z'\n2. RELATIONSHIP ANALYSIS: 'How are these specific entities connected?'\n3. DETAILED EXAMINATION: After finding entities with search_knowledge\n4. CROSS-ENTITY EXPLORATION: When investigating connections between known entities\n\nKEY BENEFITS:\n✓ PRECISE RETRIEVAL: Gets exactly the entities you specify\n✓ RELATIONSHIP FOCUS: Shows how the specified entities are connected\n✓ NETWORK CONTEXT: Reveals the immediate relationship network\n✓ SELECTIVE DEPTH: Gets detailed information without the entire graph\n\nDECISION CRITERIA:\n✓ KNOW ENTITY NAMES: Must know the exact names of entities to retrieve\n✓ WANT CONNECTIONS: Interested in relationships between these entities\n✓ NEED DETAILS: Require complete entity information, not just search results\n\nTYPICAL WORKFLOW:\n1. DISCOVER: Find entities with search_knowledge first\n2. INSPECT: Use open_nodes with exact entity names for details\n3. ANALYZE: Examine relationships between the specific entities\n\nAVOID: Using when you don't know exact entity names (use search_knowledge instead)",
+        description: "RETRIEVE specific ENTITIES by exact names along with their interconnections. Returns detailed information about the specified entities and relationships between them. Requires knowing exact entity names.",
         inputSchema: {
           type: "object",
           properties: {
             names: {
               type: "array",
               items: { type: "string" },
-              description: "Array of entity names to retrieve",
+              description: "Array of exact entity names to retrieve with their details and interconnections",
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -283,21 +283,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add_tags",
-        description: "🏷️ ADD categorical tags for INSTANT filtering. WHEN TO USE:\n1. CATEGORIZATION: 'Mark entity X as urgent/completed/etc'\n2. STATUS TRACKING: 'Update task status to in-progress'\n3. TYPE ASSIGNMENT: 'Tag as technical/personal/feature'\n4. PRIORITY MARKING: 'Flag entity as important/urgent'\n\nKEY TAGGING SCENARIOS:\n✓ PROJECT MANAGEMENT: Track task status (urgent, in-progress, completed)\n✓ CONTENT ORGANIZATION: Categorize by type (technical, personal, feature)\n✓ PRIORITY TRACKING: Assign importance (high, medium, low)\n✓ FILTERING PREPARATION: Enable precise searching by tag\n\nCOMMON TAG CATEGORIES:\n- STATUS: ['urgent', 'in-progress', 'completed', 'blocked']\n- TYPE: ['bug', 'feature', 'enhancement', 'technical', 'personal']\n- PRIORITY: ['high', 'medium', 'low']\n- DOMAIN: ['frontend', 'backend', 'database', 'documentation']\n\nQUICK RETRIEVAL:\n- Use search_knowledge(exactTags=['tag']) to instantly find all entities with specific tag\n\nAVOID: Using tags when observations would be more appropriate for descriptive content",
+        description: "ADD categorical TAGS to existing entities for filtering and organization. Tags are case-sensitive exact-match labels used for quick retrieval with search_knowledge. Common categories: status, priority, type, domain.",
         inputSchema: {
           type: "object",
           properties: {
             updates: {
               type: "array",
-              description: "Array of tag addition requests specifying which tags to add to which entities",
+              description: "Array of tag updates specifying which tags to add to which entities",
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "Target entity name (must exist)" },
+                  entityName: { type: "string", description: "Exact name of existing entity to tag" },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Tags to add (exact-match, case-sensitive)"
+                    description: "Array of tags to add (case-sensitive, exact-match labels)"
                   }
                 },
                 required: ["entityName", "tags"],
@@ -305,7 +305,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
@@ -314,7 +314,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "remove_tags",
-        description: "🏷️ REMOVE outdated tags to maintain accurate categorization. WHEN TO USE:\n1. STATUS UPDATES: 'Task is no longer in-progress'\n2. PRIORITY CHANGES: 'Issue is no longer urgent'\n3. CATEGORY CHANGES: 'Project is no longer backend-focused'\n4. TAG CLEANUP: After entity purpose or classification changes\n\nCRITICAL STATUS MANAGEMENT SCENARIOS:\n✓ TASK COMPLETION: Remove 'in-progress' tag when adding 'completed'\n✓ PRIORITY RESOLUTION: Remove 'urgent' tag when issue addressed\n✓ ROLE CHANGES: Remove domain tags when project focus shifts\n✓ CLASSIFICATION CLEANUP: Remove incorrect or outdated categorization\n\nTAG LIFECYCLE MANAGEMENT:\n1. SEARCH entity with search_knowledge to confirm current tags\n2. REMOVE outdated tags with remove_tags\n3. ADD new status tags with add_tags\n\nDECISION CRITERIA:\n✓ TAG EXISTS: Verify entity has the tag before removing\n✓ TAG IS OUTDATED: Status or classification no longer applies\n✓ STATUS TRANSITION: Entity is changing state/category\n\nAVOID: Leaving contradictory tags (e.g., both 'in-progress' and 'completed')",
+        description: "REMOVE specific TAGS from existing entities to maintain accurate categorization. Use for status updates, priority changes, or cleaning up outdated classifications. Tags must match exactly (case-sensitive).",
         inputSchema: {
           type: "object",
           properties: {
@@ -324,11 +324,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               items: {
                 type: "object",
                 properties: {
-                  entityName: { type: "string", description: "Target entity name" },
+                  entityName: { type: "string", description: "Exact name of entity to update" },
                   tags: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Tags to remove (exact-match, case-sensitive)"
+                    description: "Array of exact tags to remove (case-sensitive, must match existing tags)"
                   }
                 },
                 required: ["entityName", "tags"],
@@ -336,7 +336,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             project_id: {
               type: "string",
-              description: "MANDATORY parameter for data isolation. CALCULATION ALGORITHM: 1) EXTRACT last directory segment from path 2) LOWERCASE all characters 3) KEEP only letters, numbers, hyphens, underscores 4) REPLACE spaces and hyphens with underscores. EXAMPLES: '/Users/john/dev/My-App' → 'my_app', 'C:\Projects\Web Site' → 'web_site'. ⚠️ CRITICAL: Calculate ONCE and use EXACT SAME project_id for ALL knowledge graph calls in entire conversation. Data will be LOST if different project_id values are used.",
+              description: "Project identifier for data isolation. Must be consistent across all calls in a conversation",
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },

@@ -475,29 +475,13 @@ Add for filtering and status:
 
 ### File Naming: `implementation_plan_[feature_name].md`
 
-```markdown
-# Implementation Plan: [Feature/Task Name]
-
-## Overview
-Brief description of goals and scope.
-
-## Prerequisites
-- [ ] Requirement 1
-- [ ] Requirement 2
-
-## Implementation Steps
-- [ ] Step 1: Description
-- [ ] Step 2: Description
-- [ ] Step 3: Description
-
-## Success Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-
-## Notes
-- Key considerations
-- Potential blockers
-```
+### Plan Structure:
+- Implementation Plan: [Feature/Task Name]
+- Overview
+- Prerequisites
+- Implementation Steps
+- Success Criteria
+- Notes (key considerations, potential blockers)
 
 ## **WORKFLOW**
 1. **CREATE**: Save plan to file with checkboxes
@@ -506,11 +490,9 @@ Brief description of goals and scope.
 4. **COMPLETE**: Mark all items finished
 
 ## **STATUS UPDATE EXAMPLES**
-```markdown
-- [x] Setup environment (Completed 2024-01-15)
+- [x] Setup environment (Completed)
 - [~] Core implementation (In progress - 50% done)
 - [-] API integration (Blocked: missing docs)
-```
 
 ## **KNOWLEDGE GRAPH INTEGRATION**
 When creating plans, also create project entities:
