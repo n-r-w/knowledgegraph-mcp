@@ -74,7 +74,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_entities",
-        description: "CREATE new entities with OBSERVATIONS and optional tags. Each entity requires a unique name, type, and at least one observation. Ignores entities with existing names. Use search_knowledge first to verify non-existence.",
+        description: "CREATE new entities with OBSERVATIONS and optional tags. MANDATORY: If creating multiple entities, use a SINGLE call (batch). Each entity requires a unique name, type, and at least one observation. Ignores existing names. Use search_knowledge first.",
         inputSchema: {
           type: "object",
           properties: {
@@ -439,9 +439,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(allResults, null, 2)}` }] };
     }
     case "create_entities": {
-      const result = await knowledgeGraphManager.createEntities(args.entities as Entity[], project);
+      const entities = args.entities as Entity[];
+      const result = await knowledgeGraphManager.createEntities(entities, project);
       const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
-      const nextSteps = result.length > 0 ? "\n� NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
+      let nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
+      
+      // Add warning message when only a single entity is created
+      if (entities.length === 1) {
+        nextSteps += "\n⚠️ NOTE: For multiple entities, use a single batch call to create_entities.";
+      }
+      
       return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "add_observations": {

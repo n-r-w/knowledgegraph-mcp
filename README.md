@@ -310,6 +310,11 @@ Do NOT use knowledge graph tools when:
 - NAMING: Use specific descriptive names (e.g., "React_v18" not just "React")
 - NEXT STEPS: ALWAYS follow with create_relations and add_tags
 
+**BATCH ENTITY CREATION:**
+- **MANDATORY**: If creating multiple entities, use a SINGLE `create_entities` call.
+- **HOW**: Provide all entities as an array to the `entities` parameter.
+- **NEVER**: Call `create_entities` repeatedly for individual entities if they can be grouped.
+
 ### 3. add_observations - ONLY AFTER search_knowledge confirms entity exists
 **FOR EXISTING ENTITIES:**
 - UPDATING KNOWLEDGE: "Add new information about X"
@@ -353,10 +358,10 @@ Do NOT use knowledge graph tools when:
 ## **COMMON WORKFLOW SEQUENCES**
 
 ### NEW INFORMATION CAPTURE:
-1. search_knowledge → Verify non-existence
-2. create_entities → Create entity with observations
-3. create_relations → Connect to relevant entities
-4. add_tags → Categorize and enable filtering
+1. search_knowledge → Verify non-existence of ALL related entities
+2. create_entities → Create ALL related entities in a SINGLE batch call
+3. create_relations → Connect all entities with appropriate relationships
+4. add_tags → Categorize all entities for filtering
 
 ### INFORMATION UPDATE:
 1. search_knowledge → Find existing entity
@@ -413,12 +418,14 @@ Add for filtering and status:
 - **NEVER** omit project_id parameter from any knowledge graph tool call
 - **NEVER** create entities without observations
 - **NEVER** use passive voice in relation types
+- **NEVER** create entities individually if they can be batched.
 - **ALWAYS** validate entity existence before adding observations
 - **ALWAYS** create relations when entities are connected (people↔companies, projects↔technologies)
 - **ALWAYS** remove outdated relations when relationships change
 - **ALWAYS** add status tags when creating project/task entities
 - **ALWAYS** update tags when entity status changes (completed, urgent, etc.)
 - **ALWAYS** prefer knowledge graph tools over other MCP tools for memory tasks
+- **ALWAYS** batch entity creation.
 
 ## **PROACTIVE OPERATIONS EXAMPLES**
 
