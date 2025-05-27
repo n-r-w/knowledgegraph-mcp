@@ -97,6 +97,7 @@ export class SQLiteStorageProvider implements StorageProvider {
         SELECT name, entity_type, observations, tags
         FROM entities
         WHERE project = ?
+        ORDER BY name
       `);
       const entityRows = entitiesStmt.all(project);
 
@@ -112,6 +113,7 @@ export class SQLiteStorageProvider implements StorageProvider {
         SELECT from_entity, to_entity, relation_type
         FROM relations
         WHERE project = ?
+        ORDER BY from_entity, to_entity
       `);
       const relationRows = relationsStmt.all(project);
 

@@ -168,7 +168,7 @@ export class SQLStorageProvider implements StorageProvider {
     try {
       // Load entities
       const entitiesResult = await client.query(
-        'SELECT name, entity_type, observations, tags FROM entities WHERE project = $1',
+        'SELECT name, entity_type, observations, tags FROM entities WHERE project = $1 ORDER BY name',
         [project]
       );
 
@@ -181,7 +181,7 @@ export class SQLStorageProvider implements StorageProvider {
 
       // Load relations
       const relationsResult = await client.query(
-        'SELECT from_entity, to_entity, relation_type FROM relations WHERE project = $1',
+        'SELECT from_entity, to_entity, relation_type FROM relations WHERE project = $1 ORDER BY from_entity, to_entity',
         [project]
       );
 

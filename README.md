@@ -461,6 +461,18 @@ Add for filtering and status:
 #### Task Management Prompt (optional)
 ```
 # TASK MANAGEMENT PROTOCOL (GLOBAL)
+
+## ACTIVATION TRIGGERS
+Implement this protocol when:
+- Planning features requiring 3+ steps
+- Working on complex implementations
+- Tasks span multiple sessions
+- Collaborating with other team members
+- User explicitly requests task tracking
+- Integrating multiple components/services
+- Debugging critical issues with unclear causes
+
+## PRIORITIES
 - **ALWAYS** save implementation plans to files with checkbox tracking
 - **ALWAYS** update status after completing each step
 - **NEVER** skip status updates - they are mandatory, not optional
