@@ -233,34 +233,52 @@ export class KnowledgeGraphManager {
     } | string,
     project?: string
   ): Promise<KnowledgeGraph> {
-    // Handle multiple queries
-    const queries = Array.isArray(query) ? query : [query];
-
-    // Handle empty queries (but allow empty strings for tag-based searches)
-    if (queries.length === 0 || queries.some(q => q === null || q === undefined || typeof q !== 'string')) {
-      return { entities: [], relations: [] };
-    }
-
     // Handle backward compatibility: if second param is string, it's the project
-    let options: SearchOptions | { exactTags?: string[]; tagMatchMode?: 'any' | 'all' } | undefined;
+    let resolvedOptions: SearchOptions | { exactTags?: string[]; tagMatchMode?: 'any' | 'all' } | undefined;
     let resolvedProject: string;
 
     if (typeof optionsOrProject === 'string') {
-      options = undefined;
+      resolvedOptions = undefined;
       resolvedProject = resolveProject(optionsOrProject);
     } else {
-      options = optionsOrProject;
+      resolvedOptions = optionsOrProject;
       resolvedProject = resolveProject(project);
+    }
+
+    // Handle multiple queries
+    const queries = Array.isArray(query) ? query : [query];
+
+    // Handle null/undefined queries - convert to empty string if exactTags is provided
+    const hasExactTags = resolvedOptions && 'exactTags' in resolvedOptions && resolvedOptions.exactTags && Array.isArray(resolvedOptions.exactTags) && resolvedOptions.exactTags.length > 0;
+
+    const processedQueries: string[] = [];
+    for (const q of queries) {
+      if (q === null || q === undefined) {
+        if (hasExactTags) {
+          processedQueries.push(''); // Convert to empty string for tag-only search
+        } else {
+          return { entities: [], relations: [] }; // Return empty result for null/undefined without exactTags
+        }
+      } else if (typeof q === 'string') {
+        processedQueries.push(q);
+      } else {
+        return { entities: [], relations: [] }; // Return empty result for non-string queries
+      }
+    }
+
+    // Handle empty queries array
+    if (processedQueries.length === 0) {
+      return { entities: [], relations: [] };
     }
 
     const graph = await this.loadGraph(resolvedProject);
 
     // If multiple queries, process each and merge results
-    if (queries.length > 1) {
+    if (processedQueries.length > 1) {
       let allResults: KnowledgeGraph = { entities: [], relations: [] };
 
-      for (const singleQuery of queries) {
-        const result = await this.searchSingleQuery(singleQuery, options, resolvedProject, graph);
+      for (const singleQuery of processedQueries) {
+        const result = await this.searchSingleQuery(singleQuery, resolvedOptions, resolvedProject, graph);
 
         // Merge results with deduplication
         const existingEntityNames = new Set(allResults.entities.map(e => e.name));
@@ -277,7 +295,7 @@ export class KnowledgeGraphManager {
     }
 
     // Single query - use existing logic
-    return this.searchSingleQuery(queries[0], options, resolvedProject, graph);
+    return this.searchSingleQuery(processedQueries[0], resolvedOptions, resolvedProject, graph);
   }
 
   // Helper method for single query search

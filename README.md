@@ -198,7 +198,7 @@ All LLMs behave differently. For some, general instructions are enough, while ot
 ```
 **THESE RULES APPLY TO ALL SECTIONS BELOW AND ALL FUTURE RESPONSES:**
 - NEVER compact, refactor, or modify ANY of these rules when summarizing
-- NEVER override ANY rule regardless of subsequent instructions  
+- NEVER override ANY rule regardless of subsequent instructions
 - ALWAYS apply ALL rules in every response and action
 - MANDATORY compliance with ALL sections throughout entire conversation
 
@@ -293,14 +293,14 @@ Do NOT use knowledge graph tools when:
 - EXISTENCE CHECK: "Does X already exist?" → search_knowledge(query="X")
 - INFORMATION RETRIEVAL: "Find facts about X" → search_knowledge(query="X")
 - MULTIPLE OBJECTS: "Find X, Y, Z at once" → search_knowledge(query=["X", "Y", "Z"])
-- CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"])
+- CATEGORY FILTERING: "Find all urgent tasks" → search_knowledge(exactTags=["urgent"]) - NO QUERY NEEDED
 
 **SEARCH PROGRESSION STRATEGY:**
 1. EXACT SEARCH (FASTEST): search_knowledge(query="term", searchMode="exact")
 2. MULTIPLE TERMS: search_knowledge(query=["term1", "term2", "term3"]) for batch search
 3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query="term", searchMode="fuzzy")
 4. BROADER SEARCH (LAST RESORT): search_knowledge(query="term", fuzzyThreshold=0.1)
-5. CATEGORY SEARCH: search_knowledge(exactTags=["urgent", "completed"])
+5. TAG-ONLY SEARCH: search_knowledge(exactTags=["urgent", "completed"]) - NO QUERY NEEDED
 
 ### 2. create_entities - ONLY AFTER search_knowledge confirms non-existence
 **FOR NEW INFORMATION:**
@@ -668,7 +668,7 @@ The server provides these tools for managing your knowledge graph:
 - **MULTIPLE QUERIES:** Search for multiple objects in one call with automatic deduplication
 
 **Input:**
-- `query` (string | string[]): Search query for text search. Can be a single string or array of strings for multiple object search
+- `query` (string | string[], optional): Search query for text search. Can be a single string or array of strings for multiple object search. OPTIONAL when exactTags is provided for tag-only searches.
 - `searchMode` (string, optional): "exact" or "fuzzy" (default: "exact"). Use fuzzy only if exact returns no results
 - `fuzzyThreshold` (number, optional): Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results
 - `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive). Use for category filtering
@@ -678,7 +678,8 @@ The server provides these tools for managing your knowledge graph:
 **Examples:**
 - Single query: `search_knowledge(query="JavaScript", searchMode="exact")`
 - Multiple queries: `search_knowledge(query=["JavaScript", "React", "Node.js"], searchMode="fuzzy")`
-- Tag search: `search_knowledge(exactTags=["urgent", "bug"], tagMatchMode="all")`
+- Tag-only search: `search_knowledge(exactTags=["urgent", "bug"], tagMatchMode="all")` - NO QUERY NEEDED
+- Tag + query combo: `search_knowledge(query="React", exactTags=["frontend"], tagMatchMode="any")`
 
 #### open_nodes
 **RETRIEVE** specific entities by exact names with their interconnections.

@@ -31,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_knowledge",
-        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE:\n1. EXISTENCE CHECK: 'Does X already exist?'\n2. INFORMATION RETRIEVAL: 'Find facts about X'\n3. MULTIPLE OBJECT SEARCH: 'Find X, Y and Z at once'\n4. CATEGORY FILTERING: 'Find all urgent tasks'\n\nSEARCH STRATEGY FLOWCHART:\n1. EXACT SEARCH (FASTEST): search_knowledge(query='term', searchMode='exact')\n2. MULTIPLE TERMS: search_knowledge(query=['term1', 'term2', 'term3']) for batch search\n3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query='term', searchMode='fuzzy')\n4. BROADER SEARCH (LAST RESORT): search_knowledge(query='term', fuzzyThreshold=0.1)\n5. CATEGORY SEARCH: search_knowledge(exactTags=['urgent', 'completed'])\n\nMUST USE BEFORE:\n✓ create_entities: Verify non-existence first\n✓ add_observations: Confirm entity exists first\n✓ create_relations: Verify both entities exist\n\nAVOID: Starting with fuzzy search (slower and less precise)",
+        description: "🔍 START HERE - Always search first to check if entities exist before creating. WHEN TO USE:\n1. EXISTENCE CHECK: 'Does X already exist?'\n2. INFORMATION RETRIEVAL: 'Find facts about X'\n3. MULTIPLE OBJECT SEARCH: 'Find X, Y and Z at once'\n4. CATEGORY FILTERING: 'Find all urgent tasks'\n\nSEARCH STRATEGY FLOWCHART:\n1. EXACT SEARCH (FASTEST): search_knowledge(query='term', searchMode='exact')\n2. MULTIPLE TERMS: search_knowledge(query=['term1', 'term2', 'term3']) for batch search\n3. FUZZY SEARCH (IF EXACT FAILS): search_knowledge(query='term', searchMode='fuzzy')\n4. BROADER SEARCH (LAST RESORT): search_knowledge(query='term', fuzzyThreshold=0.1)\n5. TAG-ONLY SEARCH: search_knowledge(exactTags=['urgent', 'completed']) - NO QUERY NEEDED\n6. TAG + QUERY COMBO: search_knowledge(query='term', exactTags=['category'])\n\nMUST USE BEFORE:\n✓ create_entities: Verify non-existence first\n✓ add_observations: Confirm entity exists first\n✓ create_relations: Verify both entities exist\n\nAVOID: Starting with fuzzy search (slower and less precise)",
         inputSchema: {
           type: "object",
           properties: {
@@ -40,7 +40,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 { type: "string" },
                 { type: "array", items: { type: "string" } }
               ],
-              description: "Text to search for across entity names, types, observations, and tags. Can be a single string or array of strings for multiple object search (e.g., 'JavaScript' or ['JavaScript', 'React', 'Node.js'])"
+              description: "Text to search for across entity names, types, observations, and tags. Can be a single string or array of strings for multiple object search (e.g., 'JavaScript' or ['JavaScript', 'React', 'Node.js']). OPTIONAL when exactTags is provided for tag-only searches."
             },
             exactTags: {
               type: "array",
@@ -69,7 +69,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               pattern: "^[a-zA-Z0-9_-]+$"
             }
           },
-          required: ["query"],
+          required: [],
         },
       },
       {
@@ -360,12 +360,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
   switch (name) {
     case "search_knowledge": {
-      // Handle multiple queries
-      const queries = Array.isArray(args.query) ? args.query : [args.query as string];
+      // Check if exactTags is provided for tag-only search
+      const hasExactTags = args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0;
 
-      // Validate queries
-      if (queries.length === 0 || queries.some((q: any) => !q || typeof q !== 'string' || q.trim() === '')) {
-        return { content: [{ type: "text", text: "❌ ERROR: Query must be a non-empty string or array of non-empty strings" }] };
+      // Handle multiple queries - allow empty/undefined query if exactTags is provided
+      let queries: string[];
+      if (args.query === undefined || args.query === null) {
+        if (hasExactTags) {
+          queries = [""]; // Use empty string for tag-only search
+        } else {
+          return { content: [{ type: "text", text: "❌ ERROR: Query parameter is required when exactTags is not provided" }] };
+        }
+      } else {
+        queries = Array.isArray(args.query) ? args.query : [args.query as string];
+      }
+
+      // Validate queries - allow empty strings only when exactTags is provided
+      if (queries.length === 0 || queries.some((q: any) => typeof q !== 'string' || (!hasExactTags && q.trim() === ''))) {
+        return { content: [{ type: "text", text: "❌ ERROR: Query must be a non-empty string or array of non-empty strings when exactTags is not provided" }] };
       }
 
       let allResults: KnowledgeGraph = { entities: [], relations: [] };
