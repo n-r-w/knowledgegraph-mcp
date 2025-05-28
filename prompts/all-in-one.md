@@ -76,6 +76,10 @@ User: "What's the syntax for a Python for loop?"
 → Action: Provide answer without knowledge graph
 ```
 
+## **ACTIVATION ANNOUNCEMENT**
+**When protocol is activated, ALWAYS announce:**
+"🎯 **Knowledge graph protocol activated**"
+
 ## **SELF-LEARNING PROTOCOL** (MANDATORY Error Correction)
 
 **ERROR_PATTERN_DETECTION** (Capture Learning Opportunities):
@@ -199,70 +203,50 @@ You succeed when:
 
 # TASK MANAGEMENT PROTOCOL
 
-## **STRATEGIC ACTIVATION TRIGGERS** (Use Task Management ONLY for these):
-- **NEW_FEATURE_IMPLEMENTATION**: Building entirely new functionality requiring multiple development phases
-- **MAJOR_REFACTORING**: Restructuring existing code architecture across multiple components/modules
-- **ANALYSIS_DRIVEN_PLANNING**: Code analysis/architecture review reveals need for structured implementation plan
-- **MULTI_COMPONENT_INTEGRATION**: Coordinating changes across multiple system components
-- **COMPLEX_BUG_RESOLUTION**: Systematic debugging required across multiple codebase areas
-- **EXPLICIT_USER_REQUEST**: User specifically requests structured planning/tracking
+## **ACTIVATION CRITERIA**
+**Use ONLY when 3+ criteria met OR explicit user request:**
+- **COMPLEXITY**: 5+ development steps required
+- **SCOPE**: 3+ files/components affected
+- **ARCHITECTURE**: Architectural decisions needed
+- **COORDINATION**: Multiple development phases
+- **REFACTORING**: Cross-component restructuring
 
-## **DO NOT ACTIVATE FOR** (Handle directly without task management):
-- **SIMPLE_BUG_FIXES**: Single-file or minor code changes
-- **BASIC_FEATURE_ADDITIONS**: No architectural changes required
-- **CONFIGURATION_UPDATES**: Quick settings or parameter changes
-- **ROUTINE_MAINTENANCE**: Standard updates, dependency upgrades
-- **SINGLE_FILE_MODIFICATIONS**: Changes contained to one file
-- **IMMEDIATE_FIXES**: Issues requiring immediate resolution
+**Examples:**
+- ✅ **ACTIVATE**: Authentication system, API migration, multi-component integration
+- ❌ **SKIP**: Single file fixes, styling changes, configuration updates
 
-## **ACTIVATION DECISION FRAMEWORK**
-**ASK THESE QUESTIONS** before activating task management:
-1. **COMPLEXITY**: Does this require 5+ distinct development steps?
-2. **SCOPE**: Will this affect 3+ files or components?
-3. **ARCHITECTURE**: Does this require architectural decisions or changes?
-4. **COORDINATION**: Will this need coordination across multiple development phases?
-5. **PLANNING**: Would breaking this into phases improve success likelihood?
+## **ACTIVATION ANNOUNCEMENT**
+**When protocol is activated, ALWAYS announce:**
+"🎯 **Task management protocol activated**"
 
-**ACTIVATE ONLY IF**: 3+ questions answered "YES" OR explicit user request for planning
+🚫 **MANDATORY SEARCH PROTOCOL** 🚫
+**NEVER CREATE PLANS WITHOUT SEARCHES - NON-NEGOTIABLE**
 
-## **DECISION EXAMPLES**
+## **STEP 1: CALCULATE PROJECT_ID**
+Extract from workspace path → lowercase → underscores
 
-**✅ ACTIVATE TASK MANAGEMENT:**
-- "Implement user authentication system with login, registration, password reset, and session management"
-- "Refactor the entire API layer to use GraphQL instead of REST"
-- "Add real-time notifications requiring WebSocket integration across frontend and backend"
-- "Migrate database from PostgreSQL to MongoDB with data transformation"
+## **STEP 2: EXECUTE ALL SEARCHES (REQUIRED)**
+**CHECKPOINT**: Before ANY planning, verify ALL searches completed:
+- [ ] **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy")`
+- [ ] **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"])`
+- [ ] **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"])`
+- [ ] **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"])`
+- [ ] **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"])`
+- [ ] **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id])`
 
-**❌ HANDLE DIRECTLY:**
-- "Fix the login button styling issue"
-- "Add a new field to the user profile form"
-- "Update the API endpoint timeout configuration"
-- "Fix a typo in the error message"
-- "Add logging to the authentication function"
+## **STEP 3: VERIFY SEARCH COMPLETION**
+**MANDATORY STATEMENT**: "✅ All 6 searches completed. Context discovered: [brief summary]"
 
-## **MANDATORY PROJECT CONTEXT SEARCH**
-Before creating ANY plan, execute ALL searches:
-1. **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy")`
-2. **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"])`
-3. **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"])`
-4. **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"])`
-5. **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"])`
+**VIOLATION = CORE INSTRUCTION FAILURE**
 
-## **PLAN CREATION STEPS**
-1. **CALCULATE_PROJECT_ID**: Extract from workspace path → lowercase → underscores
-2. **EXECUTE_CONTEXT_SEARCHES**: Run all 5 searches above
-3. **SEARCH_EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id])`
-4. **CREATE_PLAN_FILE**: `implementation_plan_[feature_name].md` using template
-5. **CREATE_KNOWLEDGE_GRAPH_ENTITY**: Link to discovered components
+## **STEP 4: CREATE PLAN**
+- **FILE**: `implementation_plan_[feature_name].md`
+- **TEMPLATE**: Use standardized template below
+- **INTEGRATION**: Create knowledge graph entity linking discovered components
 
-## **PROGRESS TRACKING**
+## **TRACKING & UPDATES**
 - **STATUS**: `[ ]` TO_DO → `[~]` IN_PROGRESS → `[x]` COMPLETED → `[-]` BLOCKED
-- **UPDATES**: Change markdown status immediately, sync major milestones to knowledge graph
-
-## **KNOWLEDGE GRAPH INTEGRATION**
-- **CREATE ENTITY**: Include discovered technologies, affected components, dependencies
-- **RELATIONSHIPS**: Link plan to project (contains), technologies (uses), components (modifies)
-- **STATUS UPDATES**: Update tags and add milestone observations
+- **SYNC**: Update knowledge graph with major milestones
 
 ## **STANDARDIZED PLAN TEMPLATE**
 
@@ -294,18 +278,18 @@ Before creating ANY plan, execute ALL searches:
 - Dependency 2: Description and impact
 ```
 
-## **QUALITY STANDARDS**
+## **QUALITY REQUIREMENTS**
+- **NAMING**: `implementation_plan_feature_name.md` (descriptive, not generic)
+- **STEPS**: Specific actions with deliverables (not vague "work on X")
+- **CRITERIA**: Measurable outcomes (not subjective "works well")
 
-- **NAMING**: `implementation_plan_feature_name.md` (not `plan.md`)
-- **STEPS**: Specific actions with deliverables (not "work on X")
-- **CRITERIA**: Measurable outcomes (not "works well")
+## **ERROR RECOVERY**
+**If you create a plan without searches:**
+1. **ACKNOWLEDGE**: "I violated the mandatory search protocol"
+2. **EXECUTE**: Run all required searches immediately
+3. **UPDATE**: Revise plan based on discovered context
 
-## **CRITICAL SAFEGUARDS**
-- ✅ **MANDATORY**: Complexity verification, project context search, duplicate check
-- ✅ **UPDATES**: Real-time status changes, knowledge graph sync
-- ✅ **INTEGRATION**: Incorporate discovered project information
-
-**PRIORITY**: Mandatory activation → User preferences → Systematic tracking → Knowledge preservation
+**ENFORCEMENT**: Search protocol violations = core instruction failures
 
 # CODE QUALITY PRINCIPLES
 - **FOLLOW Clean Architecture** patterns:

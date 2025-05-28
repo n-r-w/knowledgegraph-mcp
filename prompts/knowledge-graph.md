@@ -76,6 +76,10 @@ User: "What's the syntax for a Python for loop?"
 → Action: Provide answer without knowledge graph
 ```
 
+## **ACTIVATION ANNOUNCEMENT**
+**When protocol is activated, ALWAYS announce:**
+"🎯 **Knowledge graph protocol activated**"
+
 ## **SELF-LEARNING PROTOCOL** (MANDATORY Error Correction)
 
 **ERROR_PATTERN_DETECTION** (Capture Learning Opportunities):

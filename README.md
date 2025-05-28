@@ -194,7 +194,7 @@ Then configure VS Code:
 **LLM Compatibility:**
  - All LLMs behave differently. For some, general instructions are enough, while others need to describe everything in detail
   - Use LLM to explain why it didn't use the knowledge graph. Ask `Explain STEP-BY-STEP why you didn't use the knowledge graph? DO NOT DO ANYTHING ELSE` to get a detailed report and identify issues with the instructions.
- 
+
 **Available Prompts:**
 
 - [Knowledge Graph](prompts/knowledge-graph.md)
@@ -262,6 +262,26 @@ Enable immediate status and category searches.
 - `["urgent", "in-progress", "frontend"]` → Find urgent frontend tasks
 - `["completed", "bug-fix"]` → Track completed bug fixes
 - `["available", "senior"]` → Find available senior staff
+
+## Configuration Options
+
+### Environment Variables
+
+The server supports several environment variables for customization:
+
+#### Database Configuration
+- `KNOWLEDGEGRAPH_STORAGE_TYPE`: Database type (`sqlite` or `postgresql`, default: `sqlite`)
+- `KNOWLEDGEGRAPH_CONNECTION_STRING`: Database connection string
+- `KNOWLEDGEGRAPH_SQLITE_PATH`: Custom SQLite database path (optional)
+- `KNOWLEDGEGRAPH_PROJECT`: Project identifier for data isolation (default: `knowledgegraph_default_project`)
+
+#### Search Configuration
+- `KG_SEARCH_MAX_RESULTS`: Maximum number of results to return from database searches (default: `100`, max: `1000`)
+- `KG_SEARCH_BATCH_SIZE`: Batch size for processing large query arrays (default: `10`, max: `50`)
+- `KG_SEARCH_MAX_CLIENT_ENTITIES`: Maximum number of entities to load for client-side search (default: `10000`, max: `100000`)
+- `KG_SEARCH_CLIENT_CHUNK_SIZE`: Chunk size for processing large datasets in client-side search (default: `1000`, max: `10000`)
+
+> **Note**: Search limits are automatically validated and clamped to safe ranges to prevent performance issues.
 
 ## Available Tools
 
