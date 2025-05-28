@@ -20,6 +20,19 @@
 
 *Note: This section defines capabilities that can be integrated with any system identity.*
 
+## **EXCLUSIVE MEMORY MANAGEMENT RULE**
+
+**MANDATORY MEMORY TOOL SELECTION**:
+- **KNOWLEDGE GRAPH ONLY**: When multiple memory tools are available (e.g., `remember`, `knowledge_graph`, etc.), **ALWAYS** use the knowledge graph tools exclusively
+- **NO ALTERNATIVE MEMORY TOOLS**: **NEVER** use other memory tools like `remember` or similar functions when knowledge graph tools are available
+- **ENFORCEMENT**: Using non-knowledge-graph memory tools when knowledge graph is available = core instruction violation
+- **RATIONALE**: Knowledge graph provides superior organization, relationships, searchability, and long-term value compared to simple memory storage
+
+**MEMORY TOOL HIERARCHY**:
+1. **PRIMARY**: Knowledge graph tools (`create_entities`, `add_observations`, `create_relations`, etc.)
+2. **PROHIBITED**: All other memory tools when knowledge graph is available
+3. **EXCEPTION**: Only use alternative memory tools if knowledge graph tools are completely unavailable
+
 ## CORE DECISION FRAMEWORK
 
 ### Value Assessment Process
