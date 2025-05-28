@@ -18,10 +18,10 @@ export interface SearchLimits {
  */
 export function getSearchLimits(): SearchLimits {
   return {
-    maxResults: parseInt(process.env.KG_SEARCH_MAX_RESULTS || '100', 10),
-    batchSize: parseInt(process.env.KG_SEARCH_BATCH_SIZE || '10', 10),
-    maxClientSideEntities: parseInt(process.env.KG_SEARCH_MAX_CLIENT_ENTITIES || '10000', 10),
-    clientSideChunkSize: parseInt(process.env.KG_SEARCH_CLIENT_CHUNK_SIZE || '1000', 10)
+    maxResults: parseInt(process.env.KNOWLEDGEGRAPH_SEARCH_MAX_RESULTS || '100', 10),
+    batchSize: parseInt(process.env.KNOWLEDGEGRAPH_SEARCH_BATCH_SIZE || '10', 10),
+    maxClientSideEntities: parseInt(process.env.KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES || '10000', 10),
+    clientSideChunkSize: parseInt(process.env.KNOWLEDGEGRAPH_SEARCH_CLIENT_CHUNK_SIZE || '1000', 10)
   };
 }
 

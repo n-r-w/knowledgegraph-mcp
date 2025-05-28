@@ -85,7 +85,7 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
 
       // Log warning if we hit the limit
       if (rows.length === this.searchLimits.maxClientSideEntities) {
-        console.warn(`SQLite getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KG_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
+        console.warn(`SQLite getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
       }
 
       return rows.map((row: any) => ({

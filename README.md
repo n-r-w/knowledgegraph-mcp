@@ -276,10 +276,10 @@ The server supports several environment variables for customization:
 - `KNOWLEDGEGRAPH_PROJECT`: Project identifier for data isolation (default: `knowledgegraph_default_project`)
 
 #### Search Configuration
-- `KG_SEARCH_MAX_RESULTS`: Maximum number of results to return from database searches (default: `100`, max: `1000`)
-- `KG_SEARCH_BATCH_SIZE`: Batch size for processing large query arrays (default: `10`, max: `50`)
-- `KG_SEARCH_MAX_CLIENT_ENTITIES`: Maximum number of entities to load for client-side search (default: `10000`, max: `100000`)
-- `KG_SEARCH_CLIENT_CHUNK_SIZE`: Chunk size for processing large datasets in client-side search (default: `1000`, max: `10000`)
+- `KNOWLEDGEGRAPH_SEARCH_MAX_RESULTS`: Maximum number of results to return from database searches (default: `100`, max: `1000`)
+- `KNOWLEDGEGRAPH_SEARCH_BATCH_SIZE`: Batch size for processing large query arrays (default: `10`, max: `50`)
+- `KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES`: Maximum number of entities to load for client-side search (default: `10000`, max: `100000`)
+- `KNOWLEDGEGRAPH_SEARCH_CLIENT_CHUNK_SIZE`: Chunk size for processing large datasets in client-side search (default: `1000`, max: `10000`)
 
 > **Note**: Search limits are automatically validated and clamped to safe ranges to prevent performance issues.
 
@@ -288,21 +288,21 @@ The server supports several environment variables for customization:
 The search system includes several performance optimizations:
 
 **Entity Loading Limits:**
-- `KG_SEARCH_MAX_CLIENT_ENTITIES` limits how many entities are loaded for client-side search
+- `KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES` limits how many entities are loaded for client-side search
 - Prevents memory issues with large datasets
 - Warning logged when limit is reached
 - Applies to both SQLite and PostgreSQL backends
 
 **Chunked Processing:**
-- `KG_SEARCH_CLIENT_CHUNK_SIZE` controls chunk size for large entity sets
+- `KNOWLEDGEGRAPH_SEARCH_CLIENT_CHUNK_SIZE` controls chunk size for large entity sets
 - Automatically used when entity count exceeds chunk size
 - Improves memory usage and search performance
 - Maintains result accuracy with deduplication
 
 **Recommended Values by Dataset Size:**
 - **Small (< 1,000 entities)**: Default values work well
-- **Medium (1,000 - 10,000 entities)**: Consider `KG_SEARCH_MAX_CLIENT_ENTITIES=5000`, `KG_SEARCH_CLIENT_CHUNK_SIZE=500`
-- **Large (> 10,000 entities)**: Use database-level search when possible, or `KG_SEARCH_MAX_CLIENT_ENTITIES=2000`, `KG_SEARCH_CLIENT_CHUNK_SIZE=200`
+- **Medium (1,000 - 10,000 entities)**: Consider `KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES=5000`, `KNOWLEDGEGRAPH_SEARCH_CLIENT_CHUNK_SIZE=500`
+- **Large (> 10,000 entities)**: Use database-level search when possible, or `KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES=2000`, `KNOWLEDGEGRAPH_SEARCH_CLIENT_CHUNK_SIZE=200`
 
 **Performance Monitoring:**
 - Warnings logged when limits are applied

@@ -119,7 +119,7 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
 
       // Log warning if we hit the limit
       if (result.rows.length === this.searchLimits.maxClientSideEntities) {
-        console.warn(`PostgreSQL getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KG_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
+        console.warn(`PostgreSQL getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KNOWLEDGEGRAPH_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
       }
 
       return result.rows.map(row => ({
