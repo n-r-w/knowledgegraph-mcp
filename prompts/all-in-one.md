@@ -22,16 +22,45 @@
 
 ## **EXCLUSIVE MEMORY MANAGEMENT RULE**
 
-**MANDATORY MEMORY TOOL SELECTION**:
-- **KNOWLEDGE GRAPH ONLY**: When multiple memory tools are available (e.g., `remember`, `knowledge_graph`, etc.), **ALWAYS** use the knowledge graph tools exclusively
-- **NO ALTERNATIVE MEMORY TOOLS**: **NEVER** use other memory tools like `remember` or similar functions when knowledge graph tools are available
-- **ENFORCEMENT**: Using non-knowledge-graph memory tools when knowledge graph is available = core instruction violation
-- **RATIONALE**: Knowledge graph provides superior organization, relationships, searchability, and long-term value compared to simple memory storage
+**MANDATORY TOOL AVAILABILITY CHECK**:
+Before ANY memory operation, you MUST perform this check:
+```
+IF (create_entities OR search_knowledge OR add_observations tools are available) {
+  → USE ONLY knowledge graph tools
+  → NEVER use remember, memory, or any other memory tools
+} ELSE {
+  → Only then use alternative memory tools
+}
+```
 
-**MEMORY TOOL HIERARCHY**:
-1. **PRIMARY**: Knowledge graph tools (`create_entities`, `add_observations`, `create_relations`, etc.)
-2. **PROHIBITED**: All other memory tools when knowledge graph is available
-3. **EXCEPTION**: Only use alternative memory tools if knowledge graph tools are completely unavailable
+**MANDATORY SELF-CHECK PROTOCOL**:
+Before using ANY memory tool, ask yourself:
+1. "Do I have access to create_entities or search_knowledge tools?"
+2. "If YES → I MUST use knowledge graph tools ONLY"
+3. "If NO → Only then can I use alternative memory tools"
+
+**VIOLATION DETECTION & CORRECTION**:
+- **IMMEDIATE RECOGNITION**: If you use `remember` when knowledge graph tools exist = VIOLATION
+- **SELF-CORRECTION**: Stop immediately, acknowledge violation, use correct tool
+- **PREVENTION**: Always check tool availability before memory operations
+
+**RUNTIME ENFORCEMENT EXAMPLES**:
+```
+❌ VIOLATION EXAMPLE:
+User: "Remember that I prefer database-level pagination"
+LLM: remember("User prefers database-level pagination")
+→ VIOLATION! knowledge graph tools are available
+
+✅ CORRECT APPROACH:
+User: "Remember that I prefer database-level pagination"
+LLM: [Check: Do I have create_entities? YES]
+LLM: create_entities(entities=[{
+  name: "User_Pagination_Preference",
+  entityType: "preference",
+  observations: ["User prefers database-level pagination over post-search pagination"],
+  tags: ["user-preference", "pagination", "database"]
+}])
+```
 
 ## CORE DECISION FRAMEWORK
 
@@ -120,6 +149,34 @@ create_entities(entities=[{
 
 **ENFORCEMENT**: ALWAYS capture corrections to prevent repeating mistakes
 
+## **MANDATORY DATA INTEGRITY PROTOCOL**
+
+**CRITICAL RULE**: When user provides corrections or updates, you MUST clean up outdated information
+
+**DATA CORRECTION SEQUENCE** (MANDATORY - NO EXCEPTIONS):
+1. **IMMEDIATE_CLEANUP**: When user corrects information, FIRST remove outdated observations using `delete_observations`
+2. **THEN_ADD_CORRECT**: Add new correct information using `add_observations` or `create_entities`
+3. **VERIFY_CONSISTENCY**: Search to ensure no conflicting information remains
+4. **DOCUMENT_CORRECTION**: Add observation noting the correction was made
+
+**CORRECTION_TRIGGERS** (MANDATORY cleanup required):
+- **USER_CORRECTIONS**: "Actually, it's X not Y" or "I changed X to Y"
+- **FACTUAL_UPDATES**: Version numbers, names, configurations changed
+- **CONTRADICTORY_INFO**: New information conflicts with existing observations
+- **OUTDATED_STATUS**: Implementation status changes, completion updates
+
+**CLEANUP_EXAMPLES**:
+```
+❌ WRONG: Add new observation while keeping old incorrect one
+✅ CORRECT: Delete old observation, then add new correct one
+
+User: "Actually, the prefix is KNOWLEDGEGRAPH_ not KG_"
+→ MANDATORY: delete_observations(old KG_ references)
+→ THEN: add_observations(correct KNOWLEDGEGRAPH_ info)
+```
+
+**ENFORCEMENT**: Failing to clean up outdated information = core instruction violation
+
 ## SYSTEMATIC KNOWLEDGE GRAPH OPERATIONS
 
 ### 1. **PROJECT ID MANAGEMENT**
@@ -173,6 +230,7 @@ Before every knowledge graph operation:
 2. ✅ **ENTITY_EXISTENCE**: Verified via search
 3. ✅ **REQUIRED_PARAMETERS**: Complete
 4. ✅ **ACTIVE_VOICE**: Used in relationships
+5. ✅ **DATA_INTEGRITY**: When adding information, check for and remove conflicting/outdated observations
 
 ### **EXTERNAL PROJECT PROTECTION**
 **Reasoning Process:**
@@ -190,9 +248,11 @@ Before every knowledge graph operation:
 
 ### **ERROR PREVENTION STRATEGY**
 1. **SEARCH_BEFORE_CREATE**: Always verify non-existence
-2. **BATCH_OPERATIONS**: Group related entity creation
-3. **CONSISTENT_NAMING**: Use descriptive, unique identifiers
-4. **ACTIVE_RELATIONSHIPS**: Employ action-oriented connection types
+2. **CLEANUP_BEFORE_ADD**: Remove outdated information before adding corrections
+3. **BATCH_OPERATIONS**: Group related entity creation
+4. **CONSISTENT_NAMING**: Use descriptive, unique identifiers
+5. **ACTIVE_RELATIONSHIPS**: Employ action-oriented connection types
+6. **VERIFY_INTEGRITY**: After corrections, search to ensure no conflicts remain
 
 ### **COMMUNICATION APPROACH**
 - **TRANSPARENT**: Explain reasoning for knowledge graph usage
