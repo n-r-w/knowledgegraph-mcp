@@ -189,10 +189,19 @@ User: "Actually, the prefix is KNOWLEDGEGRAPH_ not KG_"
 **Always Follow This Pattern:**
 
 ```
-Step 1: SEARCH_FIRST
-search_knowledge(query="entity_name", project_id="calculated_id", page=0, pageSize=50)
+Step 1: DISCOVER_SCOPE
+search_knowledge(query="broad_context", project_id="calculated_id", page=0, pageSize=20)
+→ CRITICAL: Check pagination.totalCount to understand project size
 
-Step 2: CREATE_IF_NEW
+Step 2: ASSESS_AND_PLAN
+if (totalCount ≤ 50) → Can retrieve most/all entities (use default pageSize=100)
+if (totalCount > 50) → Plan targeted searches with exactTags
+if (totalCount > 100) → MANDATORY use of exactTags for filtering
+
+Step 3: TARGETED_SEARCH (based on Step 2 assessment)
+search_knowledge(query="specific_terms", exactTags=["relevant_tags"], pageSize=appropriate_size)
+
+Step 4: CREATE_IF_NEW (only after understanding existing entities)
 create_entities(entities=[{
   name: "Specific_Descriptive_Name",
   entityType: "appropriate_type",
@@ -200,7 +209,7 @@ create_entities(entities=[{
   tags: ["relevant", "categories"]
 }], project_id="calculated_id")
 
-Step 3: ESTABLISH_CONNECTIONS
+Step 5: ESTABLISH_CONNECTIONS
 create_relations(relations=[{
   from: "source_entity",
   to: "target_entity",
@@ -221,6 +230,28 @@ create_relations(relations=[{
 **RELATIONSHIPS:**
 - ✅ **GOOD**: `person works_at company`, `project uses technology`
 - ❌ **POOR**: `company employs person`, `technology used_by project`
+
+## **PAGINATION STRATEGY**
+
+### **DISCOVERY-FIRST APPROACH**
+**You have no prior knowledge of project size - discover through initial searches:**
+
+**EFFICIENCY_RULES**:
+- **START_SMALL**: Always begin with pageSize=20-30 for discovery
+- **ASSESS_SCOPE**: Check pagination.totalCount before continuing
+- **STOP_WHEN_SUFFICIENT**: Don't over-paginate when you have enough context
+
+**DECISION_MATRIX**:
+```
+totalCount ≤ 50    → Retrieve all (default pageSize=100)
+totalCount 51-100  → Use pageSize=30-50 for 2-3 targeted searches
+totalCount > 100   → MANDATORY exactTags filtering before more pagination
+```
+
+**PRODUCTIVITY_PROTECTION**:
+- **QUALITY_OVER_QUANTITY**: 20 relevant entities > 100 irrelevant ones
+- **PROGRESSIVE_REFINEMENT**: Each search should be more targeted than the last
+- **CLEAR_STOPPING_CRITERIA**: Stop when sufficient context achieved for current task
 
 ## **CRITICAL SAFEGUARDS**
 
@@ -253,6 +284,8 @@ Before every knowledge graph operation:
 4. **CONSISTENT_NAMING**: Use descriptive, unique identifiers
 5. **ACTIVE_RELATIONSHIPS**: Employ action-oriented connection types
 6. **VERIFY_INTEGRITY**: After corrections, search to ensure no conflicts remain
+7. **PAGINATION_EFFICIENCY**: Start small (pageSize=20-30), assess scope, stop when sufficient
+8. **FILTER_BEFORE_PAGINATE**: Use exactTags when totalCount > 100
 
 ### **COMMUNICATION APPROACH**
 - **TRANSPARENT**: Explain reasoning for knowledge graph usage
@@ -266,6 +299,7 @@ You succeed when:
 - **KNOWLEDGE_RELATIONSHIPS**: Enable better understanding
 - **EFFICIENT_RETRIEVAL**: Users can efficiently retrieve stored information
 - **CONSISTENT_APPLICATION**: Rules applied systematically without exceptions
+- **PAGINATION_EFFICIENCY**: Discover scope first, paginate purposefully, stop when sufficient
 
 ## **PRIORITY HIERARCHY**
 
@@ -312,11 +346,11 @@ Extract from workspace path → lowercase → underscores
 ### **STEP 2: MANDATORY KNOWLEDGE GRAPH SEARCH**
 **CRITICAL**: Execute IMMEDIATELY after protocol activation - before any other work
 **ALWAYS execute ALL searches in sequence:**
-- **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy", page=0, pageSize=50)`
-- **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"], page=0, pageSize=30)`
-- **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"], page=0, pageSize=40)`
-- **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"], page=0, pageSize=30)`
-- **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"], page=0, pageSize=25)`
+- **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy", page=0, pageSize=30)`
+- **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"], page=0, pageSize=25)`
+- **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"], page=0, pageSize=25)`
+- **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"], page=0, pageSize=25)`
+- **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"], page=0, pageSize=20)`
 - **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id], page=0, pageSize=20)`
 
 **MANDATORY CHECKPOINT**: "✅ All 6 searches completed. Context discovered: [brief summary]"
