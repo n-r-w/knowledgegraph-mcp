@@ -26,7 +26,7 @@ docker build -t knowledgegraph-mcp .
 
 **SQLite (Default - No setup needed):**
 - No database installation required
-- Database file created automatically in `{home}/.knowledge-graph/`
+- Database file created automatically in `[you home folder]/.knowledge-graph/`
 - Perfect for personal use and most scenarios
 - **This is the default backend**
 
@@ -58,7 +58,7 @@ Edit your Claude Desktop configuration file:
 }
 ```
 
-> **Note**: SQLite will automatically create the database in `{home}/.knowledge-graph/knowledgegraph.db`. To use a custom location, add: `"KNOWLEDGEGRAPH_SQLITE_PATH": "/path/to/your/database.db"`
+> **Note**: SQLite will automatically create the database in `[you home folder]/.knowledge-graph/knowledgegraph.db`. To use a custom location, add: `"KNOWLEDGEGRAPH_SQLITE_PATH": "/path/to/your/database.db"`
 
 **If you chose Docker + SQLite (default):**
 ```json
@@ -68,7 +68,7 @@ Edit your Claude Desktop configuration file:
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "-v", "${HOME}/.knowledge-graph:/app/.knowledge-graph",
+        "-v", "[you home folder]/.knowledge-graph:/app/.knowledge-graph",
         "knowledgegraph-mcp"
       ]
     }
