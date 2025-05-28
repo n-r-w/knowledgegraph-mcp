@@ -26,6 +26,11 @@ class TestSearchStrategy extends BaseSearchStrategy {
     // Simple implementation for testing
     return entities.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
   }
+
+  async getAllEntities(project?: string): Promise<Entity[]> {
+    // Simple implementation for testing
+    return [];
+  }
 }
 
 describe('BaseSearchStrategy', () => {

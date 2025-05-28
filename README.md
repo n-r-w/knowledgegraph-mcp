@@ -283,6 +283,32 @@ The server supports several environment variables for customization:
 
 > **Note**: Search limits are automatically validated and clamped to safe ranges to prevent performance issues.
 
+#### Performance Optimization
+
+The search system includes several performance optimizations:
+
+**Entity Loading Limits:**
+- `KG_SEARCH_MAX_CLIENT_ENTITIES` limits how many entities are loaded for client-side search
+- Prevents memory issues with large datasets
+- Warning logged when limit is reached
+- Applies to both SQLite and PostgreSQL backends
+
+**Chunked Processing:**
+- `KG_SEARCH_CLIENT_CHUNK_SIZE` controls chunk size for large entity sets
+- Automatically used when entity count exceeds chunk size
+- Improves memory usage and search performance
+- Maintains result accuracy with deduplication
+
+**Recommended Values by Dataset Size:**
+- **Small (< 1,000 entities)**: Default values work well
+- **Medium (1,000 - 10,000 entities)**: Consider `KG_SEARCH_MAX_CLIENT_ENTITIES=5000`, `KG_SEARCH_CLIENT_CHUNK_SIZE=500`
+- **Large (> 10,000 entities)**: Use database-level search when possible, or `KG_SEARCH_MAX_CLIENT_ENTITIES=2000`, `KG_SEARCH_CLIENT_CHUNK_SIZE=200`
+
+**Performance Monitoring:**
+- Warnings logged when limits are applied
+- Chunking automatically logged for transparency
+- Configuration validation prevents suboptimal settings
+
 ## Available Tools
 
 The server provides these tools for managing your knowledge graph:

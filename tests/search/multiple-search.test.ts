@@ -69,6 +69,11 @@ class MockMultipleSearchStrategy implements SearchStrategy {
     // Single query - simple name matching
     return entities.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
   }
+
+  async getAllEntities(project?: string): Promise<Entity[]> {
+    // Mock implementation for testing
+    return [];
+  }
 }
 
 describe('SearchManager - Multiple Query Support', () => {
@@ -242,7 +247,7 @@ describe('SearchManager - Multiple Query Support', () => {
     test('should handle large number of queries efficiently', async () => {
       const queries = Array.from({ length: 10 }, (_, i) => `query${i}`);
       const options: SearchOptions = { searchMode: 'exact' };
-      
+
       const startTime = Date.now();
       const results = await searchManager.search(queries, testEntities, options);
       const endTime = Date.now();
@@ -269,7 +274,7 @@ describe('SearchManager - Multiple Query Support', () => {
       // Should not have duplicate results
       const jsResults = results.filter(r => r.name === 'JavaScript');
       expect(jsResults).toHaveLength(1);
-      
+
       const tsResults = results.filter(r => r.name === 'TypeScript');
       expect(tsResults).toHaveLength(1);
     });

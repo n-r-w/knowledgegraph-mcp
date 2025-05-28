@@ -79,6 +79,12 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
   }
 
   private searchSingleClientSide(entities: Entity[], query: string): Entity[] {
+    // Use chunking for large entity sets to improve performance
+    if (entities.length > this.searchLimits.clientSideChunkSize) {
+      console.log(`PostgreSQL: Using chunked search for ${entities.length} entities (chunk size: ${this.searchLimits.clientSideChunkSize})`);
+      return this.searchClientSideChunked(entities, query, this.searchLimits.clientSideChunkSize);
+    }
+
     const fuseOptions = {
       threshold: this.config.threshold,
       distance: 100,
@@ -91,6 +97,43 @@ export class PostgreSQLFuzzyStrategy extends BaseSearchStrategy {
     const results = fuse.search(query);
 
     return results.map(result => result.item);
+  }
+
+  /**
+   * Get all entities for a project from PostgreSQL database
+   * This is used to load entities for client-side search
+   * Respects maxClientSideEntities limit to prevent memory issues
+   */
+  async getAllEntities(project?: string): Promise<Entity[]> {
+    const client = await this.pgPool.connect();
+    try {
+      const searchProject = project || this.project;
+
+      const result = await client.query(`
+        SELECT name, entity_type, observations, tags
+        FROM entities
+        WHERE project = $1
+        ORDER BY updated_at DESC, name
+        LIMIT $2
+      `, [searchProject, this.searchLimits.maxClientSideEntities]);
+
+      // Log warning if we hit the limit
+      if (result.rows.length === this.searchLimits.maxClientSideEntities) {
+        console.warn(`PostgreSQL getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KG_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
+      }
+
+      return result.rows.map(row => ({
+        name: row.name,
+        entityType: row.entity_type,
+        observations: row.observations || [],
+        tags: row.tags || []
+      }));
+    } catch (error) {
+      console.error('Failed to load entities from PostgreSQL:', error);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**

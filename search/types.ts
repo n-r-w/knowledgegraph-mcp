@@ -4,6 +4,7 @@ export interface SearchStrategy {
   canUseDatabase(): boolean;
   searchDatabase(query: string | string[], threshold: number, project?: string): Promise<Entity[]>;
   searchClientSide(entities: Entity[], query: string | string[]): Entity[];
+  getAllEntities(project?: string): Promise<Entity[]>;
 }
 
 export interface SearchConfig {

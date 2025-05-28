@@ -60,6 +60,11 @@ class MockSearchStrategy implements SearchStrategy {
     // Mock client-side search - simple name matching
     return entities.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
   }
+
+  async getAllEntities(project?: string): Promise<Entity[]> {
+    // Mock implementation for testing
+    return [];
+  }
 }
 
 describe('SearchManager', () => {
@@ -210,7 +215,8 @@ describe('SearchManager', () => {
       const spyStrategy = {
         canUseDatabase: jest.fn().mockReturnValue(true),
         searchDatabase: jest.fn().mockResolvedValue([]),
-        searchClientSide: jest.fn().mockReturnValue([])
+        searchClientSide: jest.fn().mockReturnValue([]),
+        getAllEntities: jest.fn().mockResolvedValue([])
       };
 
       const spyManager = new SearchManager(config, spyStrategy);
@@ -225,7 +231,8 @@ describe('SearchManager', () => {
       const spyStrategy = {
         canUseDatabase: jest.fn().mockReturnValue(true),
         searchDatabase: jest.fn().mockResolvedValue([]),
-        searchClientSide: jest.fn().mockReturnValue([])
+        searchClientSide: jest.fn().mockReturnValue([]),
+        getAllEntities: jest.fn().mockResolvedValue([])
       };
 
       const spyManager = new SearchManager(config, spyStrategy);

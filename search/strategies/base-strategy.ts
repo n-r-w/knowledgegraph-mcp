@@ -10,6 +10,7 @@ export abstract class BaseSearchStrategy implements SearchStrategy {
   abstract canUseDatabase(): boolean;
   abstract searchDatabase(query: string | string[], threshold: number, project?: string): Promise<Entity[]>;
   abstract searchClientSide(entities: Entity[], query: string | string[]): Entity[];
+  abstract getAllEntities(project?: string): Promise<Entity[]>;
 
   /**
    * Exact search implementation for backward compatibility
@@ -76,6 +77,57 @@ export abstract class BaseSearchStrategy implements SearchStrategy {
 
       // Add only new entities (deduplication)
       const newEntities = results.filter(e => !existingEntityNames.has(e.name));
+      allResults.push(...newEntities);
+
+      // Update the set of existing entity names
+      newEntities.forEach(e => existingEntityNames.add(e.name));
+    }
+
+    return allResults;
+  }
+
+  /**
+   * Chunked client-side search for large entity sets
+   * Processes entities in chunks to improve performance and memory usage
+   */
+  protected searchClientSideChunked(entities: Entity[], query: string | string[], chunkSize: number): Entity[] {
+    // Handle multiple queries
+    if (Array.isArray(query)) {
+      return this.searchMultipleClientSideChunked(entities, query, chunkSize);
+    }
+
+    // Single query chunked processing
+    let allResults: Entity[] = [];
+    const existingEntityNames = new Set<string>();
+
+    // Process entities in chunks
+    for (let i = 0; i < entities.length; i += chunkSize) {
+      const chunk = entities.slice(i, i + chunkSize);
+      const chunkResults = this.searchClientSide(chunk, query);
+
+      // Add only new entities (deduplication)
+      const newEntities = chunkResults.filter(e => !existingEntityNames.has(e.name));
+      allResults.push(...newEntities);
+
+      // Update the set of existing entity names
+      newEntities.forEach(e => existingEntityNames.add(e.name));
+    }
+
+    return allResults;
+  }
+
+  /**
+   * Chunked client-side search for multiple queries
+   */
+  protected searchMultipleClientSideChunked(entities: Entity[], queries: string[], chunkSize: number): Entity[] {
+    let allResults: Entity[] = [];
+    const existingEntityNames = new Set<string>();
+
+    for (const query of queries) {
+      const queryResults = this.searchClientSideChunked(entities, query, chunkSize);
+
+      // Add only new entities (deduplication)
+      const newEntities = queryResults.filter(e => !existingEntityNames.has(e.name));
       allResults.push(...newEntities);
 
       // Update the set of existing entity names

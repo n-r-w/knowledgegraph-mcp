@@ -10,7 +10,13 @@
 # TASK MANAGEMENT PROTOCOL
 
 ## **ACTIVATION CRITERIA**
-**Use ONLY when 3+ criteria met OR explicit user request:**
+**MANDATORY activation for ANY of these scenarios:**
+
+### **PLAN IMPLEMENTATION** (MANDATORY)
+- **IMPLEMENTING ANY EXISTING PLAN**: Always activate when executing implementation plans
+- **FOLLOWING TASK DOCUMENTS**: Always activate when user references implementation files
+
+### **COMPLEX DEVELOPMENT** (any of the following criteria OR explicit request)
 - **COMPLEXITY**: 5+ development steps required
 - **SCOPE**: 3+ files/components affected
 - **ARCHITECTURE**: Architectural decisions needed
@@ -18,6 +24,7 @@
 - **REFACTORING**: Cross-component restructuring
 
 **Examples:**
+- ✅ **MANDATORY**: Implementing @implementation_plan_*.md, following task documents
 - ✅ **ACTIVATE**: Authentication system, API migration, multi-component integration
 - ❌ **SKIP**: Single file fixes, styling changes, configuration updates
 
@@ -25,76 +32,52 @@
 **When protocol is activated, ALWAYS announce:**
 "🎯 **Task management protocol activated**"
 
-🚫 **MANDATORY SEARCH PROTOCOL** 🚫
-**NEVER CREATE PLANS WITHOUT SEARCHES - NON-NEGOTIABLE**
+**IMMEDIATELY AFTER ACTIVATION**: Execute knowledge graph searches - NO EXCEPTIONS
 
-## **STEP 1: CALCULATE PROJECT_ID**
+## **EXECUTION STEPS**
+
+### **STEP 1: CALCULATE PROJECT_ID**
 Extract from workspace path → lowercase → underscores
 
-## **STEP 2: EXECUTE ALL SEARCHES (REQUIRED)**
-**CHECKPOINT**: Before ANY planning, verify ALL searches completed:
-- [ ] **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy")`
-- [ ] **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"])`
-- [ ] **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"])`
-- [ ] **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"])`
-- [ ] **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"])`
-- [ ] **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id])`
+### **STEP 2: MANDATORY KNOWLEDGE GRAPH SEARCH**
+**CRITICAL**: Execute IMMEDIATELY after protocol activation - before any other work
+**ALWAYS execute ALL searches in sequence:**
+- **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy")`
+- **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"])`
+- **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"])`
+- **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"])`
+- **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"])`
+- **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id])`
 
-## **STEP 3: VERIFY SEARCH COMPLETION**
-**MANDATORY STATEMENT**: "✅ All 6 searches completed. Context discovered: [brief summary]"
+**MANDATORY CHECKPOINT**: "✅ All 6 searches completed. Context discovered: [brief summary]"
+**VIOLATION**: Starting work before completing searches = core instruction failure
 
-**VIOLATION = CORE INSTRUCTION FAILURE**
+### **STEP 3: PLAN EXECUTION WITH MANDATORY UPDATES**
+**For existing plans**: Execute steps while tracking progress
+**For new plans**: Create `implementation_plan_[feature_name].md` using template
 
-## **STEP 4: CREATE PLAN**
-- **FILE**: `implementation_plan_[feature_name].md`
-- **TEMPLATE**: Use standardized template below
-- **INTEGRATION**: Create knowledge graph entity linking discovered components
+**TASK STATUS TRACKING**:
+- **STATUS UPDATES**: `[ ]` TO_DO → `[~]` IN_PROGRESS → `[x]` COMPLETED → `[-]` BLOCKED
+- **PROGRESS DOCUMENTATION**: Keep implementation notes for future reference
+- **MILESTONE TRACKING**: Document major achievements and blockers
 
-## **TRACKING & UPDATES**
-- **STATUS**: `[ ]` TO_DO → `[~]` IN_PROGRESS → `[x]` COMPLETED → `[-]` BLOCKED
-- **SYNC**: Update knowledge graph with major milestones
+**MANDATORY**: Update knowledge graph after each step (see Continuous Updates section below)
 
-## **STANDARDIZED PLAN TEMPLATE**
+## **CONTINUOUS KNOWLEDGE GRAPH UPDATES**
+**MANDATORY AFTER EVERY IMPLEMENTATION STEP**:
+- **STEP COMPLETION**: `add_observations` documenting what was accomplished
+- **NEW DISCOVERIES**: `create_entities` for components, technologies, or concepts discovered
+- **DEPENDENCIES FOUND**: `create_relations` linking discovered relationships
+- **PROGRESS STATUS**: `add_tags` marking current status (in-progress, completed, blocked, tested)
+- **LESSONS LEARNED**: `add_observations` capturing insights and solutions
 
-```markdown
-# Implementation Plan: [Feature/Task Name]
+**TIMING**: Update immediately after completing each step - not at the end
 
-## Overview
-*Concise description of the feature/task and its primary objective.*
-
-## Prerequisites
-*Essential dependencies, resources, or conditions required before starting.*
-- [ ] Prerequisite 1: Specific requirement
-- [ ] Prerequisite 2: Specific requirement
-
-## Implementation Steps
-*Detailed, actionable steps in logical sequence.*
-- [ ] Step 1: Specific action with clear deliverable
-- [ ] Step 2: Specific action with clear deliverable
-- [ ] Step 3: Specific action with clear deliverable
-
-## Success Criteria
-*Measurable, verifiable outcomes that define completion.*
-- Criterion 1: Specific, testable outcome
-- Criterion 2: Specific, testable outcome
-
-## Dependencies
-*External factors or other tasks this plan depends on.*
-- Dependency 1: Description and impact
-- Dependency 2: Description and impact
-```
-
-## **QUALITY REQUIREMENTS**
-- **NAMING**: `implementation_plan_feature_name.md` (descriptive, not generic)
-- **STEPS**: Specific actions with deliverables (not vague "work on X")
-- **CRITERIA**: Measurable outcomes (not subjective "works well")
-
-## **ERROR RECOVERY**
-**If you create a plan without searches:**
-1. **ACKNOWLEDGE**: "I violated the mandatory search protocol"
-2. **EXECUTE**: Run all required searches immediately
-3. **UPDATE**: Revise plan based on discovered context
-
-**ENFORCEMENT**: Search protocol violations = core instruction failures
+## **ENFORCEMENT**
+- **ACTIVATION VIOLATIONS**: Not activating for existing plans = core instruction failure
+- **SEARCH VIOLATIONS**: Skipping knowledge graph searches after activation = core instruction failure
+- **SEQUENCE VIOLATIONS**: Starting work before completing all 6 searches = core instruction failure
+- **UPDATE VIOLATIONS**: Not updating knowledge graph after each step = core instruction failure
+- **RECOVERY**: Acknowledge violation → Execute missing steps → Continue with protocol
 
 ----

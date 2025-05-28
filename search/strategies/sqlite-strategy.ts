@@ -44,6 +44,12 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
   }
 
   private searchSingleClientSide(entities: Entity[], query: string): Entity[] {
+    // Use chunking for large entity sets to improve performance
+    if (entities.length > this.searchLimits.clientSideChunkSize) {
+      console.log(`SQLite: Using chunked search for ${entities.length} entities (chunk size: ${this.searchLimits.clientSideChunkSize})`);
+      return this.searchClientSideChunked(entities, query, this.searchLimits.clientSideChunkSize);
+    }
+
     const fuseOptions = {
       threshold: this.config.threshold,
       distance: 100,
@@ -61,6 +67,7 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
   /**
    * Get all entities for a project from SQLite database
    * This is used to load entities for client-side search
+   * Respects maxClientSideEntities limit to prevent memory issues
    */
   async getAllEntities(project?: string): Promise<Entity[]> {
     const searchProject = project || this.project;
@@ -71,9 +78,15 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
         FROM entities
         WHERE project = ?
         ORDER BY updated_at DESC, name
+        LIMIT ?
       `);
 
-      const rows = stmt.all(searchProject);
+      const rows = stmt.all(searchProject, this.searchLimits.maxClientSideEntities);
+
+      // Log warning if we hit the limit
+      if (rows.length === this.searchLimits.maxClientSideEntities) {
+        console.warn(`SQLite getAllEntities: Hit maxClientSideEntities limit of ${this.searchLimits.maxClientSideEntities}. Consider increasing KG_SEARCH_MAX_CLIENT_ENTITIES or using database-level search.`);
+      }
 
       return rows.map((row: any) => ({
         name: row.name,

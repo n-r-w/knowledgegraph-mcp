@@ -29,12 +29,29 @@ export function getSearchLimits(): SearchLimits {
  * Validate search limits to ensure they are within reasonable bounds
  */
 export function validateSearchLimits(limits: SearchLimits): SearchLimits {
-  return {
+  const validated = {
     maxResults: Math.max(1, Math.min(limits.maxResults, 1000)),
     batchSize: Math.max(1, Math.min(limits.batchSize, 50)),
     maxClientSideEntities: Math.max(100, Math.min(limits.maxClientSideEntities, 100000)),
     clientSideChunkSize: Math.max(100, Math.min(limits.clientSideChunkSize, 10000))
   };
+
+  // Ensure maxClientSideEntities is at least as large as clientSideChunkSize
+  if (validated.maxClientSideEntities < validated.clientSideChunkSize) {
+    console.warn(`Search config warning: maxClientSideEntities (${validated.maxClientSideEntities}) is smaller than clientSideChunkSize (${validated.clientSideChunkSize}). Adjusting maxClientSideEntities to match.`);
+    validated.maxClientSideEntities = validated.clientSideChunkSize;
+  }
+
+  // Log performance recommendations
+  if (validated.maxClientSideEntities > 50000) {
+    console.warn(`Search config warning: maxClientSideEntities (${validated.maxClientSideEntities}) is very high. Consider using database-level search for better performance.`);
+  }
+
+  if (validated.clientSideChunkSize > 5000) {
+    console.warn(`Search config warning: clientSideChunkSize (${validated.clientSideChunkSize}) is very high. Consider smaller chunks for better memory usage.`);
+  }
+
+  return validated;
 }
 
 /**

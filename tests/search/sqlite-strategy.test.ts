@@ -170,9 +170,9 @@ describe('SQLiteFuzzyStrategy', () => {
       const results = await strategy.getAllEntities();
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringMatching(/SELECT name, entity_type, observations, tags\s+FROM entities\s+WHERE project = \?/)
+        expect.stringMatching(/SELECT name, entity_type, observations, tags\s+FROM entities\s+WHERE project = \?\s+ORDER BY updated_at DESC, name\s+LIMIT \?/)
       );
-      expect(mockStatement.all).toHaveBeenCalledWith('test-project');
+      expect(mockStatement.all).toHaveBeenCalledWith('test-project', 10000);
       expect(results).toHaveLength(2);
       expect(results[0]).toEqual({
         name: 'JavaScript',
@@ -187,7 +187,7 @@ describe('SQLiteFuzzyStrategy', () => {
 
       await strategy.getAllEntities('custom-project');
 
-      expect(mockStatement.all).toHaveBeenCalledWith('custom-project');
+      expect(mockStatement.all).toHaveBeenCalledWith('custom-project', 10000);
     });
 
     test('should handle database errors by throwing', async () => {
