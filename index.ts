@@ -31,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_knowledge",
-        description: "SEARCH ENTITIES by TEXT or TAGS across names, types, observations, and tags. Supports exact/fuzzy search modes, multiple query batching, and tag filtering. Returns entities and their relationships. MUST USE BEFORE create_entities, add_observations, and create_relations to verify entity existence.",
+        description: "SEARCH ENTITIES by TEXT or TAGS across names, types, observations, and tags. Supports exact/fuzzy search modes, multiple query batching, tag filtering, and pagination. Returns entities and their relationships. MUST USE BEFORE create_entities, add_observations, and create_relations to verify entity existence. PAGINATION: Use page parameter to navigate large result sets (page=0 for first page, page=1 for second, etc.).",
         inputSchema: {
           type: "object",
           properties: {
@@ -62,6 +62,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               minimum: 0.0,
               maximum: 1.0,
               description: "Similarity threshold for fuzzy search (0.0-1.0). Lower values = more results. Default: 0.3"
+            },
+            page: {
+              type: "number",
+              minimum: 0,
+              description: "Page number for pagination (0-based). Use 0 or omit for first page."
+            },
+            pageSize: {
+              type: "number",
+              minimum: 1,
+              maximum: 1000,
+              description: "Number of results per page (default: 100, max: 1000)"
             },
             project_id: {
               type: "string",
@@ -380,75 +391,100 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
         return { content: [{ type: "text", text: "❌ ERROR: Query must be a non-empty string or array of non-empty strings when exactTags is not provided" }] };
       }
 
-      let allResults: KnowledgeGraph = { entities: [], relations: [] };
+      // Validate pagination parameters
+      const page = args.page !== undefined ? args.page as number : 0;
+      const pageSize = args.pageSize !== undefined ? args.pageSize as number : 100;
+
+      if (typeof page !== 'number' || page < 0 || !Number.isInteger(page)) {
+        return { content: [{ type: "text", text: "❌ ERROR: Page must be a non-negative integer (0, 1, 2, ...)" }] };
+      }
+
+      if (typeof pageSize !== 'number' || pageSize < 1 || pageSize > 1000 || !Number.isInteger(pageSize)) {
+        return { content: [{ type: "text", text: "❌ ERROR: PageSize must be an integer between 1 and 1000" }] };
+      }
+
+      // Set up pagination options
+      const paginationOptions = { page, pageSize };
+
       let searchType = "";
       const isMultipleQueries = queries.length > 1;
 
-      // Process each query
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i].trim();
-        let result;
-
-        if (args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0) {
-          // Exact tag search mode
-          const options = {
-            exactTags: args.exactTags as string[],
-            tagMatchMode: (args.tagMatchMode as 'any' | 'all') || 'any'
-          };
-          result = await knowledgeGraphManager.searchNodes(query, options, project);
-          searchType = isMultipleQueries ? `tag search (${args.exactTags.join(', ')}) for ${queries.length} queries` : `tag search (${args.exactTags.join(', ')})`;
-        } else if (args.searchMode === 'fuzzy') {
-          // Fuzzy search mode
-          const options = {
-            searchMode: 'fuzzy' as const,
-            fuzzyThreshold: args.fuzzyThreshold as number || 0.3
-          };
-          result = await knowledgeGraphManager.searchNodes(query, options, project);
-          searchType = isMultipleQueries ? `fuzzy search for ${queries.length} queries` : `fuzzy search "${query}"`;
-        } else {
-          // General text search mode (exact)
-          result = await knowledgeGraphManager.searchNodes(query, project);
-          searchType = isMultipleQueries ? `exact search for ${queries.length} queries` : `exact search "${query}"`;
-        }
-
-        // Merge results with deduplication
-        const existingEntityNames = new Set(allResults.entities.map(e => e.name));
-        const newEntities = result.entities.filter(e => !existingEntityNames.has(e.name));
-        allResults.entities.push(...newEntities);
-
-        // Merge relations with deduplication
-        const existingRelations = new Set(allResults.relations.map(r => `${r.from}-${r.relationType}-${r.to}`));
-        const newRelations = result.relations.filter(r => !existingRelations.has(`${r.from}-${r.relationType}-${r.to}`));
-        allResults.relations.push(...newRelations);
+      // Determine search options and type
+      let searchOptions: any = {};
+      if (args.exactTags && Array.isArray(args.exactTags) && args.exactTags.length > 0) {
+        // Exact tag search mode
+        searchOptions = {
+          exactTags: args.exactTags as string[],
+          tagMatchMode: (args.tagMatchMode as 'any' | 'all') || 'any'
+        };
+        searchType = isMultipleQueries ? `tag search (${args.exactTags.join(', ')}) for ${queries.length} queries` : `tag search (${args.exactTags.join(', ')})`;
+      } else if (args.searchMode === 'fuzzy') {
+        // Fuzzy search mode
+        searchOptions = {
+          searchMode: 'fuzzy' as const,
+          fuzzyThreshold: args.fuzzyThreshold as number || 0.3
+        };
+        searchType = isMultipleQueries ? `fuzzy search for ${queries.length} queries` : `fuzzy search "${queries[0]}"`;
+      } else {
+        // General text search mode (exact)
+        searchType = isMultipleQueries ? `exact search for ${queries.length} queries` : `exact search "${queries[0]}"`;
       }
 
-      const entityCount = allResults.entities.length;
-      const relationCount = allResults.relations.length;
-      let successMsg = `� SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
+      // Use paginated search
+      const paginatedResult = await knowledgeGraphManager.searchNodesPaginated(
+        queries.length === 1 ? queries[0] : queries,
+        paginationOptions,
+        searchOptions,
+        project
+      );
+
+      const entityCount = paginatedResult.entities.length;
+      const relationCount = paginatedResult.relations.length;
+      const { pagination } = paginatedResult;
+
+      let successMsg = `🔍 SEARCH RESULTS: Found ${entityCount} entities, ${relationCount} relations (${searchType})`;
+
+      // Add pagination information
+      successMsg += `\n📄 PAGE ${pagination.currentPage + 1} of ${pagination.totalPages} (${pagination.totalCount} total entities, ${pageSize} per page)`;
+
+      if (pagination.hasNextPage) {
+        successMsg += `\n➡️ NEXT PAGE: Use page=${pagination.currentPage + 1} to see more results`;
+      }
+
+      if (pagination.hasPreviousPage) {
+        successMsg += `\n⬅️ PREVIOUS PAGE: Use page=${pagination.currentPage - 1} to see previous results`;
+      }
 
       if (isMultipleQueries) {
         successMsg += `\n📋 QUERIES: [${queries.map((q: string) => `"${q}"`).join(', ')}]`;
       }
 
-      if (entityCount === 0) {
+      if (pagination.totalCount === 0) {
         successMsg += "\n💡 TIP: Try fuzzy search or check spelling. Use search_knowledge(searchMode='fuzzy')";
-      } else if (entityCount > 20) {
+      } else if (pagination.totalCount > 100) {
         successMsg += "\n⚠️ MANY RESULTS: Consider adding tags for filtering. Use exactTags=['category']";
       }
 
-      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(allResults, null, 2)}` }] };
+      // Prepare the result object
+      const result = {
+        entities: paginatedResult.entities,
+        relations: paginatedResult.relations,
+        pagination: pagination
+      };
+
+      return { content: [{ type: "text", text: `${successMsg}\n\n${JSON.stringify(result, null, 2)}` }] };
     }
     case "create_entities": {
       const entities = args.entities as Entity[];
       const result = await knowledgeGraphManager.createEntities(entities, project);
       const successMsg = `✅ SUCCESS: Created ${result.length} entities`;
       let nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: 1) Add relations with create_relations 2) Add status tags with add_tags" : "";
-      
+
       // Add warning message when only a single entity is created
       if (entities.length === 1) {
         nextSteps += "\n⚠️ NOTE: For multiple entities, use a single batch call to create_entities.";
       }
-      
+
       return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
     }
     case "add_observations": {

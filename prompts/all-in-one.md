@@ -190,7 +190,7 @@ User: "Actually, the prefix is KNOWLEDGEGRAPH_ not KG_"
 
 ```
 Step 1: SEARCH_FIRST
-search_knowledge(query="entity_name", project_id="calculated_id")
+search_knowledge(query="entity_name", project_id="calculated_id", page=0, pageSize=50)
 
 Step 2: CREATE_IF_NEW
 create_entities(entities=[{
@@ -312,12 +312,12 @@ Extract from workspace path → lowercase → underscores
 ### **STEP 2: MANDATORY KNOWLEDGE GRAPH SEARCH**
 **CRITICAL**: Execute IMMEDIATELY after protocol activation - before any other work
 **ALWAYS execute ALL searches in sequence:**
-- **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy")`
-- **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"])`
-- **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"])`
-- **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"])`
-- **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"])`
-- **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id])`
+- **PROJECT_OVERVIEW**: `search_knowledge(query=project_id, searchMode="fuzzy", page=0, pageSize=50)`
+- **TECHNOLOGY_STACK**: `search_knowledge(query=[project_id, "technology", "framework", "library"], page=0, pageSize=30)`
+- **COMPONENTS**: `search_knowledge(query=[project_id, "component", "module", "service"], page=0, pageSize=40)`
+- **FEATURES**: `search_knowledge(query=[project_id, "feature", "functionality"], page=0, pageSize=30)`
+- **DEPENDENCIES**: `search_knowledge(query=[project_id, "dependency", "integration"], page=0, pageSize=25)`
+- **EXISTING_PLANS**: `search_knowledge(query=["plan", feature_name, project_id], page=0, pageSize=20)`
 
 **MANDATORY CHECKPOINT**: "✅ All 6 searches completed. Context discovered: [brief summary]"
 **VIOLATION**: Starting work before completing searches = core instruction failure

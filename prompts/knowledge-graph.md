@@ -190,7 +190,7 @@ User: "Actually, the prefix is KNOWLEDGEGRAPH_ not KG_"
 
 ```
 Step 1: SEARCH_FIRST
-search_knowledge(query="entity_name", project_id="calculated_id")
+search_knowledge(query="entity_name", project_id="calculated_id", page=0, pageSize=50)
 
 Step 2: CREATE_IF_NEW
 create_entities(entities=[{

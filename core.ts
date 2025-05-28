@@ -4,7 +4,7 @@ import { SQLStorageProvider } from './storage/providers/sql-storage.js';
 import { SQLiteStorageProvider } from './storage/providers/sqlite-storage.js';
 import { resolveProject } from './utils.js';
 import { SearchManager } from './search/search-manager.js';
-import { SearchConfig, SearchOptions } from './search/types.js';
+import { SearchConfig, SearchOptions, PaginationOptions, PaginationResult } from './search/types.js';
 import { PostgreSQLFuzzyStrategy } from './search/strategies/postgresql-strategy.js';
 import { SQLiteFuzzyStrategy } from './search/strategies/sqlite-strategy.js';
 
@@ -25,6 +25,19 @@ export interface Relation {
 export interface KnowledgeGraph {
   entities: Entity[];
   relations: Relation[];
+}
+
+export interface PaginatedKnowledgeGraph {
+  entities: Entity[];
+  relations: Relation[];
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }
 
 // The KnowledgeGraphManager class contains all operations to interact with the knowledge graph
@@ -352,6 +365,97 @@ export class KnowledgeGraphManager {
     });
 
     return this.buildFilteredGraph(filteredEntities, graph);
+  }
+
+  /**
+   * Paginated search function with database-level pagination when possible
+   */
+  async searchNodesPaginated(
+    query: string | string[],
+    pagination: PaginationOptions,
+    optionsOrProject?: SearchOptions | {
+      exactTags?: string[];
+      tagMatchMode?: 'any' | 'all';
+    } | string,
+    project?: string
+  ): Promise<PaginatedKnowledgeGraph> {
+    // Handle backward compatibility: if third param is string, it's the project
+    let resolvedOptions: SearchOptions | { exactTags?: string[]; tagMatchMode?: 'any' | 'all' } | undefined;
+    let resolvedProject: string;
+
+    if (typeof optionsOrProject === 'string') {
+      resolvedOptions = undefined;
+      resolvedProject = resolveProject(optionsOrProject);
+    } else {
+      resolvedOptions = optionsOrProject;
+      resolvedProject = resolveProject(project);
+    }
+
+    // Use SearchManager for pagination if available
+    if (this.searchManager) {
+      try {
+        const paginatedResult = await this.searchManager.searchPaginated(
+          query,
+          pagination,
+          resolvedOptions as SearchOptions,
+          resolvedProject
+        );
+
+        // Build relations for the paginated entities
+        const graph = await this.loadGraph(resolvedProject);
+        const entityNames = new Set(paginatedResult.data.map(e => e.name));
+        const filteredRelations = graph.relations.filter(r =>
+          entityNames.has(r.from) && entityNames.has(r.to)
+        );
+
+        return {
+          entities: paginatedResult.data,
+          relations: filteredRelations,
+          pagination: paginatedResult.pagination
+        };
+      } catch (error) {
+        console.warn('Paginated search failed, falling back to post-search pagination:', error);
+      }
+    }
+
+    // Fallback: Use regular search and apply post-search pagination
+    const fullResult = await this.searchNodes(query, resolvedOptions, resolvedProject);
+    return this.applyPostSearchPagination(fullResult, pagination);
+  }
+
+  /**
+   * Apply pagination to a full KnowledgeGraph result (post-search pagination)
+   */
+  private applyPostSearchPagination(
+    graph: KnowledgeGraph,
+    pagination: PaginationOptions
+  ): PaginatedKnowledgeGraph {
+    const page = pagination.page || 0;
+    const pageSize = pagination.pageSize || 100;
+    const offset = page * pageSize;
+
+    const totalCount = graph.entities.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const paginatedEntities = graph.entities.slice(offset, offset + pageSize);
+
+    // Filter relations to only include those between paginated entities
+    const entityNames = new Set(paginatedEntities.map(e => e.name));
+    const paginatedRelations = graph.relations.filter(r =>
+      entityNames.has(r.from) && entityNames.has(r.to)
+    );
+
+    return {
+      entities: paginatedEntities,
+      relations: paginatedRelations,
+      pagination: {
+        currentPage: page,
+        pageSize: pageSize,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        hasNextPage: page < totalPages - 1,
+        hasPreviousPage: page > 0
+      }
+    };
   }
 
   async openNodes(names: string[], project?: string): Promise<KnowledgeGraph> {

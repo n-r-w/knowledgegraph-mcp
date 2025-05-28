@@ -389,13 +389,23 @@ The server provides these tools for managing your knowledge graph:
 - `fuzzyThreshold` (number, optional): Fuzzy similarity threshold. 0.3=default, 0.1=very broad, 0.7=very strict. Lower values find more results
 - `exactTags` (string[], optional): Tags for exact-match searching (case-sensitive). Use for category filtering
 - `tagMatchMode` (string, optional): For exactTags: "any"=entities with ANY tag, "all"=entities with ALL tags (default: "any")
+- `page` (number, optional): Page number for pagination (0-based, default: 0)
+- `pageSize` (number, optional): Number of results per page (1-1000, default: 50)
 - `project_id` (string, optional): Project name to isolate data
 
 **Examples:**
-- Single query: `search_knowledge(query="JavaScript", searchMode="exact")`
-- Multiple queries: `search_knowledge(query=["JavaScript", "React", "Node.js"], searchMode="fuzzy")`
+- Basic search: `search_knowledge(query="JavaScript", searchMode="exact")`
+- Paginated search: `search_knowledge(query="React", page=0, pageSize=20)`
+- Large dataset: `search_knowledge(query="components", page=2, pageSize=100)`
+- Multiple queries: `search_knowledge(query=["JavaScript", "React"], page=0, pageSize=30)`
+- Tag + pagination: `search_knowledge(query="React", exactTags=["frontend"], page=1, pageSize=25)`
 - Tag-only search: `search_knowledge(exactTags=["urgent", "bug"], tagMatchMode="all")` - NO QUERY NEEDED
-- Tag + query combo: `search_knowledge(query="React", exactTags=["frontend"], tagMatchMode="any")`
+
+**Pagination Benefits:**
+- **Performance**: Database-level pagination with OFFSET/LIMIT for efficient large dataset handling
+- **Memory**: Reduces memory usage by limiting results per request
+- **Navigation**: Pagination metadata provides totalPages, currentPage, and navigation hints
+- **Scalability**: Handles knowledge graphs with thousands of entities efficiently
 
 #### open_nodes
 **RETRIEVE** specific entities by exact names with their interconnections.

@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js';
 import Database from 'better-sqlite3';
 import { Entity } from '../../core.js';
-import { SearchConfig } from '../types.js';
+import { SearchConfig, PaginationOptions, PaginationResult } from '../types.js';
 import { BaseSearchStrategy } from './base-strategy.js';
 import { getValidatedSearchLimits } from '../config.js';
 
@@ -197,6 +197,228 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
     } catch (error) {
       console.error('Failed to perform exact search in SQLite:', error);
       throw error; // Throw to be consistent with PostgreSQL behavior
+    }
+  }
+
+  /**
+   * Get all entities with pagination support
+   */
+  async getAllEntitiesPaginated(pagination: PaginationOptions, project?: string): Promise<PaginationResult<Entity>> {
+    const searchProject = project || this.project;
+    const page = pagination.page || 0;
+    const pageSize = pagination.pageSize || 100;
+    const offset = page * pageSize;
+
+    try {
+      // Get total count
+      const countStmt = this.db.prepare(`
+        SELECT COUNT(*) as total_count
+        FROM entities
+        WHERE project = ?
+      `);
+      const countResult = countStmt.get(searchProject) as { total_count: number };
+      const totalCount = countResult.total_count;
+
+      // Get paginated data
+      const dataStmt = this.db.prepare(`
+        SELECT name, entity_type, observations, tags
+        FROM entities
+        WHERE project = ?
+        ORDER BY updated_at DESC, name
+        LIMIT ? OFFSET ?
+      `);
+
+      const rows = dataStmt.all(searchProject, pageSize, offset);
+
+      const entities = rows.map((row: any) => ({
+        name: row.name,
+        entityType: row.entity_type,
+        observations: this.safeJsonParse(row.observations, []),
+        tags: this.safeJsonParse(row.tags, [])
+      }));
+
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      return {
+        data: entities,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalCount: totalCount,
+          totalPages: totalPages,
+          hasNextPage: page < totalPages - 1,
+          hasPreviousPage: page > 0
+        }
+      };
+    } catch (error) {
+      console.error('Failed to load paginated entities from SQLite:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Perform exact search with pagination support
+   */
+  async searchExactPaginated(query: string | string[], pagination: PaginationOptions, project?: string): Promise<PaginationResult<Entity>> {
+    // Handle multiple queries
+    if (Array.isArray(query)) {
+      return this.searchExactMultiplePaginated(query, pagination, project);
+    }
+
+    // Single query
+    return this.searchExactSinglePaginated(query, pagination, project);
+  }
+
+  /**
+   * Single exact search with pagination
+   */
+  private async searchExactSinglePaginated(query: string, pagination: PaginationOptions, project?: string): Promise<PaginationResult<Entity>> {
+    const searchProject = project || this.project;
+    const lowerQuery = query.toLowerCase();
+    const page = pagination.page || 0;
+    const pageSize = pagination.pageSize || 100;
+    const offset = page * pageSize;
+
+    try {
+      const searchPattern = `%${lowerQuery}%`;
+
+      // Get total count
+      const countStmt = this.db.prepare(`
+        SELECT COUNT(*) as total_count
+        FROM entities
+        WHERE project = ?
+          AND (
+            LOWER(name) LIKE ?
+            OR LOWER(entity_type) LIKE ?
+            OR LOWER(observations) LIKE ?
+            OR LOWER(tags) LIKE ?
+          )
+      `);
+      const countResult = countStmt.get(searchProject, searchPattern, searchPattern, searchPattern, searchPattern) as { total_count: number };
+      const totalCount = countResult.total_count;
+
+      // Get paginated data
+      const dataStmt = this.db.prepare(`
+        SELECT name, entity_type, observations, tags
+        FROM entities
+        WHERE project = ?
+          AND (
+            LOWER(name) LIKE ?
+            OR LOWER(entity_type) LIKE ?
+            OR LOWER(observations) LIKE ?
+            OR LOWER(tags) LIKE ?
+          )
+        ORDER BY updated_at DESC, name
+        LIMIT ? OFFSET ?
+      `);
+
+      const rows = dataStmt.all(searchProject, searchPattern, searchPattern, searchPattern, searchPattern, pageSize, offset);
+
+      const entities = rows.map((row: any) => ({
+        name: row.name,
+        entityType: row.entity_type,
+        observations: this.safeJsonParse(row.observations, []),
+        tags: this.safeJsonParse(row.tags, [])
+      }));
+
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      return {
+        data: entities,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalCount: totalCount,
+          totalPages: totalPages,
+          hasNextPage: page < totalPages - 1,
+          hasPreviousPage: page > 0
+        }
+      };
+    } catch (error) {
+      console.error('Failed to perform paginated exact search in SQLite:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Multiple exact search with pagination
+   */
+  private async searchExactMultiplePaginated(queries: string[], pagination: PaginationOptions, project?: string): Promise<PaginationResult<Entity>> {
+    if (queries.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          currentPage: pagination.page || 0,
+          pageSize: pagination.pageSize || 100,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        }
+      };
+    }
+
+    const searchProject = project || this.project;
+    const page = pagination.page || 0;
+    const pageSize = pagination.pageSize || 100;
+    const offset = page * pageSize;
+
+    try {
+      // Build OR conditions for multiple terms
+      const conditions = queries.map(() =>
+        `(LOWER(name) LIKE ? OR LOWER(entity_type) LIKE ? OR LOWER(observations) LIKE ? OR LOWER(tags) LIKE ?)`
+      ).join(' OR ');
+
+      // Create parameters array for patterns
+      const params: any[] = [];
+      for (const query of queries) {
+        const pattern = `%${query.toLowerCase()}%`;
+        params.push(pattern, pattern, pattern, pattern);
+      }
+
+      // Get total count
+      const countStmt = this.db.prepare(`
+        SELECT COUNT(DISTINCT name) as total_count
+        FROM entities
+        WHERE project = ? AND (${conditions})
+      `);
+      const countResult = countStmt.get(searchProject, ...params) as { total_count: number };
+      const totalCount = countResult.total_count;
+
+      // Get paginated data
+      const dataStmt = this.db.prepare(`
+        SELECT DISTINCT name, entity_type, observations, tags
+        FROM entities
+        WHERE project = ? AND (${conditions})
+        ORDER BY updated_at DESC, name
+        LIMIT ? OFFSET ?
+      `);
+
+      const rows = dataStmt.all(searchProject, ...params, pageSize, offset);
+
+      const entities = rows.map((row: any) => ({
+        name: row.name,
+        entityType: row.entity_type,
+        observations: this.safeJsonParse(row.observations, []),
+        tags: this.safeJsonParse(row.tags, [])
+      }));
+
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      return {
+        data: entities,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalCount: totalCount,
+          totalPages: totalPages,
+          hasNextPage: page < totalPages - 1,
+          hasPreviousPage: page > 0
+        }
+      };
+    } catch (error) {
+      console.error('Failed to perform paginated multiple exact search in SQLite:', error);
+      throw error;
     }
   }
 
