@@ -1,6 +1,11 @@
 # KnowledgeGraph MCP Server
 
-A simple way to give Claude persistent memory across conversations. This server lets Claude remember information about you, your projects, and your preferences using a local knowledge graph.
+A simple way to give LLMs persistent memory across conversations. This server lets Claude or vscode remember information about you, your projects, and your preferences using a knowledge graph.
+
+Key Features:
+- **Multiple Storage Backends**: PostgreSQL (recommended) or SQLite (local file)
+- **Project Separation**: Keep different projects isolated (auto-detected using prompts)
+- **Better Search**: Find information with fuzzy search and pagination
 
 ## Complete Setup Guide
 
