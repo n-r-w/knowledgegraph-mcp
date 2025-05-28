@@ -70,6 +70,7 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
         SELECT name, entity_type, observations, tags
         FROM entities
         WHERE project = ?
+        ORDER BY updated_at DESC, name
       `);
 
       const rows = stmt.all(searchProject);
@@ -123,6 +124,7 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
         SELECT DISTINCT name, entity_type, observations, tags
         FROM entities
         WHERE project = ? AND (${conditions})
+        ORDER BY updated_at DESC, name
         LIMIT ?
       `);
 
@@ -166,6 +168,7 @@ export class SQLiteFuzzyStrategy extends BaseSearchStrategy {
             OR LOWER(observations) LIKE ?
             OR LOWER(tags) LIKE ?
           )
+        ORDER BY updated_at DESC, name
         LIMIT ?
       `);
 

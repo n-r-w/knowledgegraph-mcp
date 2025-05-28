@@ -97,7 +97,7 @@ export class SQLiteStorageProvider implements StorageProvider {
         SELECT name, entity_type, observations, tags
         FROM entities
         WHERE project = ?
-        ORDER BY name
+        ORDER BY updated_at DESC, name
       `);
       const entityRows = entitiesStmt.all(project);
 
@@ -113,7 +113,7 @@ export class SQLiteStorageProvider implements StorageProvider {
         SELECT from_entity, to_entity, relation_type
         FROM relations
         WHERE project = ?
-        ORDER BY from_entity, to_entity
+        ORDER BY from_entity, to_entity, created_at DESC
       `);
       const relationRows = relationsStmt.all(project);
 
@@ -144,8 +144,8 @@ export class SQLiteStorageProvider implements StorageProvider {
 
         // Insert entities
         const insertEntity = this.db!.prepare(`
-          INSERT INTO entities (project, name, entity_type, observations, tags, updated_at)
-          VALUES (?, ?, ?, ?, ?, datetime('now'))
+          INSERT INTO entities (project, name, entity_type, observations, tags, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
         `);
 
         for (const entity of graph.entities) {
@@ -160,8 +160,8 @@ export class SQLiteStorageProvider implements StorageProvider {
 
         // Insert relations
         const insertRelation = this.db!.prepare(`
-          INSERT INTO relations (project, from_entity, to_entity, relation_type, updated_at)
-          VALUES (?, ?, ?, ?, datetime('now'))
+          INSERT INTO relations (project, from_entity, to_entity, relation_type, created_at, updated_at)
+          VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
         `);
 
         for (const relation of graph.relations) {
@@ -218,7 +218,8 @@ export class SQLiteStorageProvider implements StorageProvider {
         entity_type TEXT NOT NULL,
         observations TEXT DEFAULT '[]',
         tags TEXT DEFAULT '[]',
-        updated_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(project, name)
       )
     `);
@@ -231,7 +232,8 @@ export class SQLiteStorageProvider implements StorageProvider {
         from_entity TEXT NOT NULL,
         to_entity TEXT NOT NULL,
         relation_type TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(project, from_entity, to_entity, relation_type)
       )
     `);
