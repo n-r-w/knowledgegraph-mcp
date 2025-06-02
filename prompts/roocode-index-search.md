@@ -25,7 +25,7 @@
 
 ## **ACTIVATION ANNOUNCEMENT**
 **When protocol is activated, ALWAYS announce:**
-"🎯 **Codebase exploration protocol activated**"
+"🔍 **Codebase exploration activated**"
 
 ## **EXECUTION STEPS**
 
