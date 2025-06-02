@@ -12,6 +12,13 @@
 ## **ACTIVATION CRITERIA**
 **MANDATORY activation for ANY of these scenarios:**
 
+### **PLAN CREATION** (MANDATORY)
+- **CREATE ANY PLAN**: Always activate when user requests creating, generating, or designing any plan
+- **STEP-BY-STEP PLANNING**: Always activate when user asks for phased, staged, or step-by-step approaches
+- **PROJECT ANALYSIS PLANS**: Always activate for code review plans, audit plans, migration plans, etc.
+- **TASK BREAKDOWN**: Always activate when user requests breaking down work into phases/stages
+- **PLANNING KEYWORDS**: Always activate for requests containing: "plan", "step-by-step", "stages", "phases"
+
 ### **PLAN IMPLEMENTATION** (MANDATORY)
 - **IMPLEMENTING ANY EXISTING PLAN**: Always activate when executing implementation plans
 - **FOLLOWING TASK DOCUMENTS**: Always activate when user references implementation files
@@ -25,7 +32,13 @@
 - **COORDINATION**: Multiple development phases
 - **REFACTORING**: Cross-component restructuring
 
+**MULTILINGUAL ACTIVATION KEYWORDS** (MANDATORY activation for ANY of these):
+- **English**: plan, planning, step-by-step, phases, stages, roadmap, breakdown, strategy
+- **Russian**: план, планирование, поэтапный, этапы, фазы, стратегия, разбивка
+- **Phrases**: "create plan", "создай план", "step by step", "по этапам", "code review plan", "план кодревью"
+
 **Examples:**
+- ✅ **MANDATORY**: "Create step-by-step plan", "step-by-step plan", "code review plan"
 - ✅ **MANDATORY**: Implementing @implementation_plan_*.md, following task documents
 - ✅ **MANDATORY**: Reviewing plan files, updating task status, analyzing progress
 - ✅ **ACTIVATE**: Authentication system, API migration, multi-component integration
@@ -57,7 +70,12 @@ Extract from workspace path → lowercase → underscores
 
 ### **STEP 3: PLAN EXECUTION WITH MANDATORY FILE UPDATES**
 **For existing plans**: Execute steps while tracking progress **AND** updating plan files
-**For new plans**: Create `implementation_plan_[feature_name].md` using template
+**For new plans**: Create plan file using appropriate naming:
+- **Implementation plans**: `implementation_plan_[feature_name].md`
+- **Review plans**: `review_plan_[scope].md`
+- **Migration plans**: `migration_plan_[target].md`
+- **Audit plans**: `audit_plan_[area].md`
+- **General plans**: `[plan_type]_plan_[identifier].md`
 
 **MANDATORY PLAN FILE STATUS UPDATES**:
 **CRITICAL**: EVERY implementation step MUST update the corresponding plan file status
