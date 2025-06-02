@@ -1,6 +1,6 @@
 {
   "name": "knowledgegraph-mcp",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "MCP server for enabling persistent knowledge storage for Claude through a knowledge graph with multiple storage backends",
   "license": "MIT",
   "author": "Roman Nikulenkov",
