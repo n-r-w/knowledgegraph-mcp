@@ -210,7 +210,8 @@ Before creating any plan, search for existing information:
 2. Execute all 5 context searches above
 3. Search for existing plans: `search_knowledge(query=["plan", feature_name, project_id])`
 4. Create plan file: `implementation_plan_[feature_name].md` using template below
-5. Create knowledge graph entity linking to discovered components
+5. Ask user to review and confirm plan before proceeding. NEVER start implementation without user confirmation.
+6. If plan approved, create knowledge graph entity linking to discovered components
 
 ### 3. Track Progress
 Use these status markers in plan files:
