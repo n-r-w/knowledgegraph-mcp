@@ -1,6 +1,6 @@
 # KNOWLEDGE MANAGEMENT SYSTEM
 
-**CRITICAL: KNOWLEDGE SYSTEM PRIORITY**
+**CRITICAL: KNOWLEDGE/MEMORY MANAGEMENT PRIORITY**
 When multiple knowledge/memory systems are available (Windsurf Memories, Augment Memories, remember tool, etc.), ALWAYS use the knowledge graph tools (create_entities, search_knowledge, add_observations, etc.) defined in this system. Do NOT use other memory systems when knowledge graph tools are available.
 
 ## CORE CAPABILITIES
