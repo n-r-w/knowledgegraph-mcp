@@ -1,4 +1,5 @@
 import { KnowledgeGraphManager } from '../core.js';
+import { StorageType } from '../storage/types.js';
 
 /**
  * Test suite for MCP layer validation logic
@@ -9,8 +10,12 @@ describe('MCP Validation Layer Tests', () => {
   const testProject = 'mcp_validation_test';
 
   beforeEach(async () => {
-    manager = new KnowledgeGraphManager();
-    
+    // Use in-memory SQLite to avoid disk I/O issues
+    manager = new KnowledgeGraphManager({
+      type: StorageType.SQLITE,
+      connectionString: 'sqlite://:memory:'
+    });
+
     // Create test entities with tags for validation testing
     const testEntities = [
       {
@@ -43,7 +48,7 @@ describe('MCP Validation Layer Tests', () => {
     function simulateMCPValidation(query: any, exactTags: any): { isValid: boolean; error?: string; processedQuery?: string[] } {
       // Check if exactTags is provided for tag-only search
       const hasExactTags = exactTags && Array.isArray(exactTags) && exactTags.length > 0;
-      
+
       // Handle multiple queries - allow empty/undefined query if exactTags is provided
       let queries: string[];
       if (query === undefined || query === null) {
@@ -175,7 +180,7 @@ describe('MCP Validation Layer Tests', () => {
     it('should work with the actual core when validation passes', async () => {
       // Test the actual core behavior with the scenarios that should pass validation
       const result = await manager.searchNodes('', { exactTags: ['validation'] }, testProject);
-      
+
       expect(result.entities).toHaveLength(2);
       expect(result.entities.map(e => e.name)).toContain('MCP_Test_Entity_1');
       expect(result.entities.map(e => e.name)).toContain('MCP_Test_Entity_2');
@@ -183,13 +188,13 @@ describe('MCP Validation Layer Tests', () => {
 
     it('should handle null query with exactTags in core', async () => {
       const result = await manager.searchNodes(null as any, { exactTags: ['validation'] }, testProject);
-      
+
       expect(result.entities).toHaveLength(2);
     });
 
     it('should handle undefined query with exactTags in core', async () => {
       const result = await manager.searchNodes(undefined as any, { exactTags: ['validation'] }, testProject);
-      
+
       expect(result.entities).toHaveLength(2);
     });
   });
