@@ -144,6 +144,16 @@ describe('Search Pagination', () => {
 
   describe('Tag Search Pagination', () => {
     beforeEach(async () => {
+      // Clean up any existing entities first
+      try {
+        const existingEntities = await manager.readGraph(testProject);
+        if (existingEntities.entities.length > 0) {
+          await manager.deleteEntities(existingEntities.entities.map(e => e.name), testProject);
+        }
+      } catch (error) {
+        // Ignore errors if project doesn't exist
+      }
+
       const entities: Entity[] = [];
       for (let i = 1; i <= 15; i++) {
         entities.push({
@@ -158,7 +168,7 @@ describe('Search Pagination', () => {
 
     test('should paginate tag search results', async () => {
       const result = await manager.searchNodesPaginated(
-        'tool',
+        '', // Use empty query to test pure tag filtering
         { page: 0, pageSize: 5 },
         { exactTags: ['frontend'], tagMatchMode: 'any' },
         testProject

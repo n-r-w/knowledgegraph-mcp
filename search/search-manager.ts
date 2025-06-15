@@ -125,6 +125,11 @@ export class SearchManager {
     options?: SearchOptions,
     project?: string
   ): Promise<PaginationResult<Entity>> {
+    // Handle exact tags search - this takes priority over other search modes
+    if (options?.exactTags && options.exactTags.length > 0) {
+      return this.exactTagsSearchPaginated(options.exactTags, options.tagMatchMode || 'any', pagination, project);
+    }
+
     // Handle exact search mode with database-level pagination
     if (options?.searchMode === 'exact') {
       // Try database-level exact search pagination if available
@@ -162,6 +167,11 @@ export class SearchManager {
     options?: SearchOptions,
     project?: string
   ): Promise<PaginationResult<Entity>> {
+    // Handle exact tags search - this takes priority over other search modes
+    if (options?.exactTags && options.exactTags.length > 0) {
+      return this.exactTagsSearchPaginated(options.exactTags, options.tagMatchMode || 'any', pagination, project);
+    }
+
     // For multiple queries, we need to aggregate results and then paginate
     // This is complex with database-level pagination, so we'll use post-search pagination
 
@@ -189,6 +199,36 @@ export class SearchManager {
 
     // Apply post-search pagination
     return this.applyPostSearchPagination(searchResults, pagination);
+  }
+
+  /**
+   * Exact tags search with pagination support
+   */
+  private async exactTagsSearchPaginated(
+    exactTags: string[],
+    tagMatchMode: 'any' | 'all',
+    pagination: PaginationOptions,
+    project?: string
+  ): Promise<PaginationResult<Entity>> {
+    // Load all entities first (we need to do client-side filtering for exact tags)
+    const entities = await this.strategy.getAllEntities(project);
+
+    // Apply exact tag filtering using the same logic as in core.ts
+    const filteredEntities = entities.filter(entity => {
+      const entityTags = entity.tags || [];
+
+      // Ensure entity has tags array (backward compatibility)
+      if (entityTags.length === 0) return false;
+
+      if (tagMatchMode === 'all') {
+        return exactTags.every(tag => entityTags.includes(tag));
+      } else {
+        return exactTags.some(tag => entityTags.includes(tag));
+      }
+    });
+
+    // Apply post-search pagination
+    return this.applyPostSearchPagination(filteredEntities, pagination);
   }
 
   /**
