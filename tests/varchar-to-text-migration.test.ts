@@ -87,8 +87,8 @@ describe('VARCHAR to TEXT Migration Verification', () => {
       }];
 
       const created = await manager.createRelations(relations, testProject);
-      expect(created).toHaveLength(1);
-      expect(created[0].relationType).toBe(longRelationType);
+      expect(created.newRelations).toHaveLength(1);
+      expect(created.newRelations[0].relationType).toBe(longRelationType);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('database') || error.message.includes('connection'))) {
         console.warn('Skipping SQLite test - database not available');

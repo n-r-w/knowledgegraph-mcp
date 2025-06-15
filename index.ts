@@ -495,9 +495,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     }
     case "create_relations": {
       const result = await knowledgeGraphManager.createRelations(args.relations as Relation[], project);
-      const successMsg = `✅ SUCCESS: Created ${result.length} relations`;
-      const nextSteps = result.length > 0 ? "\n🔍 NEXT STEPS: Use search_knowledge to explore connected entities" : "";
-      return { content: [{ type: "text", text: `${successMsg}${nextSteps}` }] };
+      const successMsg = `✅ SUCCESS: Created ${result.newRelations.length} relations`;
+
+      let detailsMsg = "";
+      if (result.skippedRelations.length > 0) {
+        detailsMsg += `\n⚠️ SKIPPED: ${result.skippedRelations.length} duplicate relations:`;
+        result.skippedRelations.forEach(skip => {
+          detailsMsg += `\n   • ${skip.reason}`;
+        });
+      }
+
+      if (result.totalRequested > 1) {
+        detailsMsg += `\n📊 SUMMARY: ${result.newRelations.length} created, ${result.skippedRelations.length} skipped, ${result.totalRequested} total requested`;
+      }
+
+      const nextSteps = result.newRelations.length > 0 ? "\n🔍 NEXT STEPS: Use search_knowledge to explore connected entities" : "";
+      return { content: [{ type: "text", text: `${successMsg}${detailsMsg}${nextSteps}` }] };
     }
     case "delete_entities": {
       const entityNames = args.entityNames as string[];

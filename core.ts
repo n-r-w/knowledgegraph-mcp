@@ -144,7 +144,11 @@ export class KnowledgeGraphManager {
     return newEntities;
   }
 
-  async createRelations(relations: Relation[], project?: string): Promise<Relation[]> {
+  async createRelations(relations: Relation[], project?: string): Promise<{
+    newRelations: Relation[];
+    skippedRelations: Array<{ relation: Relation; reason: string }>;
+    totalRequested: number;
+  }> {
     const resolvedProject = resolveProject(project);
 
     // Validate input relations
@@ -165,14 +169,35 @@ export class KnowledgeGraphManager {
       }
     });
 
-    const newRelations = relations.filter(r => !graph.relations.some(existingRelation =>
-      existingRelation.from === r.from &&
-      existingRelation.to === r.to &&
-      existingRelation.relationType === r.relationType
-    ));
+    // Separate new relations from duplicates with detailed tracking
+    const newRelations: Relation[] = [];
+    const skippedRelations: Array<{ relation: Relation; reason: string }> = [];
+
+    relations.forEach(relation => {
+      const existingRelation = graph.relations.find(existingRelation =>
+        existingRelation.from === relation.from &&
+        existingRelation.to === relation.to &&
+        existingRelation.relationType === relation.relationType
+      );
+
+      if (existingRelation) {
+        skippedRelations.push({
+          relation,
+          reason: `Relation already exists: ${relation.from} → ${relation.relationType} → ${relation.to}`
+        });
+      } else {
+        newRelations.push(relation);
+      }
+    });
+
     graph.relations.push(...newRelations);
     await this.saveGraph(graph, resolvedProject);
-    return newRelations;
+
+    return {
+      newRelations,
+      skippedRelations,
+      totalRequested: relations.length
+    };
   }
 
   async addObservations(observations: { entityName: string; observations: string[] }[], project?: string): Promise<{ entityName: string; addedObservations: string[] }[]> {
