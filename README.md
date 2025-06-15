@@ -206,6 +206,7 @@ Then configure VS Code:
 - [Task Management](prompts/task-management.md)
 - [Code Quality](prompts/code-quality.md)
 - [All-in-One](prompts/all-in-one.md)
+- [Maintenance knowledge graph](prompts/maintenance.md)
 
 ### Step 5: Restart Claude Desktop (or VS Code)
 
