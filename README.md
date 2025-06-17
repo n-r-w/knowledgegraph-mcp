@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/n-r-w-knowledgegraph-mcp-badge.png)](https://mseep.ai/app/n-r-w-knowledgegraph-mcp)
+
 # KnowledgeGraph MCP Server
 
 A simple way to give LLMs persistent memory across conversations. This server lets Claude or vscode remember information about you, your projects, and your preferences using a knowledge graph.
