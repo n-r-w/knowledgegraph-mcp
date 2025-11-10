@@ -1,5 +1,9 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/n-r-w-knowledgegraph-mcp-badge.png)](https://mseep.ai/app/n-r-w-knowledgegraph-mcp)
 
+# WARNING
+I've become disillusioned with automated context management tools like this, as it's nearly impossible to control. After a while, I always have to manually clean up the mess or correct inappropriate LLM notes.
+Instead, I created a tool that gives the LLM agent access to dynamically loaded context. However, the context itself is user-created: https://github.com/n-r-w/agent-standards-mcp
+
 # KnowledgeGraph MCP Server
 
 A simple way to give LLMs persistent memory across conversations. This server lets Claude or vscode remember information about you, your projects, and your preferences using a knowledge graph.
